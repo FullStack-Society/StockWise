@@ -1,0 +1,30 @@
+# Dependencies
+client/node_modules/
+server/.venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+client/.env
+client/.env.*
+!client/.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
+# Build outputs
+client/.next/
+client/out/
+server/__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE and operating system files
+.vscode/
+.DS_Store
+Thumbs.db
