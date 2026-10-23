@@ -301,3 +301,4 @@ ALTER TABLE ONLY public.inventory_transactions
 
 \unrestrict pszfzYX85Ek1lpwUjda3Nc2MAtzBQZW5tfkpAnmt0vBprvzdPKTPNHO0sdasXmy
 
+ 
