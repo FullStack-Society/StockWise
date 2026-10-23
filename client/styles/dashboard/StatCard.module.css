@@ -1,0 +1,39 @@
+.statCard {
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  backdrop-filter: blur(4px);
+  padding: 24px;
+}
+.statHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.statLabel {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.statIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+.statValue {
+  margin: 12px 0 0;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.statNote {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}

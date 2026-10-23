@@ -1,0 +1,15 @@
+.tablePanel {
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  backdrop-filter: blur(4px);
+}
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 20px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}

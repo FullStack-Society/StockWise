@@ -1,0 +1,60 @@
+.panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+}
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.statCard {
+  composes: panel;
+  padding: 20px;
+}
+.statTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.statLabel {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.statIcon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.statValue {
+  margin-top: 14px;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.changeUp,
+.changeDown {
+  margin-top: 8px;
+  font-size: 11px;
+}
+.changeUp {
+  color: #3fb97a;
+}
+.changeDown {
+  color: var(--color-danger);
+}
+@media (max-width: 1100px) {
+.statGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 700px) {
+.statGrid,
+  .footerGrid {
+    grid-template-columns: 1fr;
+  }
+}

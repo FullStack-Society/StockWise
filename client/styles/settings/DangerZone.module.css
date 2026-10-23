@@ -1,0 +1,37 @@
+.danger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  background: var(--color-danger-soft);
+  border: 1px solid var(--color-danger);
+}
+.dangerTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-danger);
+}
+.dangerText {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.dangerBtn {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-danger);
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  cursor: pointer;
+}
+.dangerBtn:hover {
+  background: var(--color-danger);
+  color: var(--color-text);
+}

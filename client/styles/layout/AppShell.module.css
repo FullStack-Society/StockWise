@@ -1,0 +1,46 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Scrolling area under the top bar, with the teal -> orange -> dark gradient */
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 32px;
+  background:
+    radial-gradient(
+      60% 40% at 50% 0%,
+      rgba(29, 87, 100, 0.75) 0%,
+      rgba(38, 112, 128, 0) 70%
+    ),
+    radial-gradient(
+      200% 45% at 50% 55%,
+      rgba(183, 103, 50, 0.65) 30%,
+      rgba(190, 100, 40, 0) 75%
+    ),
+    linear-gradient(
+      180deg,
+      #12303ccc 0%,
+      #2b5867cc 25%,
+      #b55923cc 55%,
+      #301e1fcc 85%,
+      #06090ecc 100%
+    );
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+}

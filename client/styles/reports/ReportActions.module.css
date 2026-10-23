@@ -1,0 +1,26 @@
+.actions {
+  display: flex;
+  gap: 12px;
+}
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent);
+  cursor: pointer;
+}
+.actionBtn:hover {
+  background: var(--color-accent);
+  color: var(--color-text);
+}
+@media print {
+.actions {
+    display: none;
+  }
+}

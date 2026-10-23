@@ -1,0 +1,38 @@
+.panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+}
+.footerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.footerCard {
+  composes: panel;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+}
+.footerIcon {
+  color: var(--color-text-muted);
+  flex: none;
+}
+.footerLabel {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.footerValue {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+@media (max-width: 700px) {
+.statGrid,
+  .footerGrid {
+    grid-template-columns: 1fr;
+  }
+}

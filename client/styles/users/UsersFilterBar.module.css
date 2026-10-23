@@ -1,0 +1,58 @@
+.filterBar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.searchWrap {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+}
+.searchInput,
+.select,
+.input,
+.roleSelect {
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-border);
+  outline: none;
+}
+.searchInput {
+  width: 100%;
+  padding: 11px 12px 11px 34px;
+}
+.select {
+  padding: 11px 12px;
+  min-width: 140px;
+}
+.searchInput:focus,
+.select:focus,
+.input:focus,
+.roleSelect:focus {
+  border-color: var(--color-accent);
+}
+.select option {
+  color: #000;
+}
+.clearBtn {
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-accent);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.clearBtn:hover {
+  text-decoration: underline;
+}

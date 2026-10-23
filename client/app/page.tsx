@@ -1,6 +1,9 @@
-"use client";
-import SideBar from "@/components/SideBar";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth/session";
+import { ROUTES } from "./routes";
 
-export default function Home() {
-  return <SideBar />;
+export const instant = false;
+
+export default async function Home() {
+  redirect((await getSession()) ? ROUTES.dashboard : ROUTES.login);
 }
