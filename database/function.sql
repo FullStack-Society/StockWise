@@ -303,35 +303,55 @@ $$;
 
 -- 7. DELETE INVENTORY
 -- Preserve products that have transaction history
-CREATE OR REPLACE FUNCTION delete_inventory(
+
+CREATE OR REPLACE FUNCTION public.delete_inventory(
     p_product_id INTEGER
 )
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM products AS p
-        WHERE p.product_id = p_product_id
-    ) THEN
-        RETURN FALSE;
-    END IF;
-
-    IF EXISTS (
-        SELECT 1
-        FROM inventory_transactions AS t
-        WHERE t.product_id = p_product_id
-    ) THEN
-        RETURN FALSE;
-    END IF;
-
-    DELETE FROM products AS p
-    WHERE p.product_id = p_product_id;
+    UPDATE public.products
+    SET
+        is_deleted = TRUE,
+        deleted_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE product_id = p_product_id
+      AND is_deleted = FALSE;
 
     RETURN FOUND;
-EXCEPTION
-    WHEN foreign_key_violation THEN
-        RETURN FALSE;
 END;
+$$;
+;
+
+
+CREATE OR REPLACE FUNCTION public.restore_inventory(
+    p_product_id INTEGER
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE public.products
+    SET
+        is_deleted = FALSE,
+        deleted_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE product_id = p_product_id
+      AND is_deleted = TRUE;
+
+    RETURN FOUND;
+END;
+$$;
+
+
+CREATE OR REPLACE FUNCTION public.get_deleted_inventory()
+RETURNS SETOF public.products
+LANGUAGE SQL
+STABLE
+AS $$
+    SELECT *
+    FROM public.products
+    WHERE is_deleted = TRUE
+    ORDER BY deleted_at DESC, product_id DESC;
 $$;
