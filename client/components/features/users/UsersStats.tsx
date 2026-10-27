@@ -1,9 +1,10 @@
 import { Users, Crown, ShieldCheck, Boxes } from "lucide-react";
-import type { TeamUser } from "@/lib/mock-data/users";
+import type { TeamUser } from "@/lib/types/users";
 import styles from "@/styles/users/UsersStats.module.css";
 
 export default function UsersStats({ users }: { users: TeamUser[] }) {
-  const count = (r: string) => users.filter((u) => u.role === r).length;
+  const count = (r: string) =>
+    users.filter((u) => u.role.toLowerCase() === r.toLowerCase()).length;
   const pending = users.filter((u) => u.status === "Invited").length;
 
   const cards = [
@@ -17,21 +18,21 @@ export default function UsersStats({ users }: { users: TeamUser[] }) {
     {
       id: "owner",
       label: "Owner",
-      value: count("Owner"),
+      value: count("owner"),
       hint: "Account creator",
       icon: Crown,
     },
     {
       id: "admin",
       label: "Admins",
-      value: count("Admin"),
+      value: count("admin"),
       hint: "Can configure the account",
       icon: ShieldCheck,
     },
     {
       id: "staff",
       label: "Staff",
-      value: count("Staff"),
+      value: count("staff"),
       hint: "Stock management only",
       icon: Boxes,
     },

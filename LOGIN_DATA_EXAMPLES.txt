@@ -1,0 +1,19 @@
+StockWise login examples (local development)
+============================================
+
+OWNER
+-----
+Email: owner@example.com
+Password: MyOwnStrongPassword123!
+
+ADMIN
+-----
+Name: James 
+Email: james@example.com
+Password: mynameisjames
+
+STAFF
+-----
+Name: Daniel 
+Email: daniel@example.com
+Password: mynameisdaniel

@@ -1,66 +1,59 @@
 "use client";
 
-import { useState } from "react";
 import {
   User,
   ShieldCheck,
-  Settings,
+  SlidersHorizontal,
   DollarSign,
   ChevronRight,
+  Building2,
 } from "lucide-react";
-import { profileDefaults } from "@/lib/mock-data/settings";
 import styles from "@/styles/settings/ProfileCard.module.css";
+import type { SettingsSection } from "@/lib/types/settings";
 
 const ITEMS = [
-  { id: "profile", label: "Personal Profile", icon: User, target: "profile" },
-  {
-    id: "security",
-    label: "Security & Privacy",
-    icon: ShieldCheck,
-    target: "preferences-security",
-  },
-  {
-    id: "preferences",
-    label: "Preferences",
-    icon: Settings,
-    target: "preferences-security",
-  },
-  {
-    id: "billing",
-    label: "Billing & Subscription",
-    icon: DollarSign,
-    target: null,
-  },
+  { id: "profile", label: "Personal Profile", icon: User },
+  { id: "organization", label: "Organization", icon: Building2 },
+  { id: "security", label: "Security", icon: ShieldCheck },
+  { id: "preferences", label: "Preferences", icon: SlidersHorizontal },
+  { id: "billing", label: "Billing & Subscription", icon: DollarSign },
 ] as const;
 
-export default function ProfileCard({ name }: { name: string }) {
-  const [active, setActive] = useState<string>("profile");
-
-  function go(id: string, target: string | null) {
-    if (!target) return; // Billing is not built yet
-    setActive(id);
-    document
-      .getElementById(target)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+export default function ProfileCard({
+  name,
+  email,
+  active,
+  isOwner,
+  canEditOrganization,
+  onSelect,
+}: {
+  name: string;
+  email: string;
+  active: SettingsSection;
+  isOwner: boolean;
+  canEditOrganization: boolean;
+  onSelect: (section: SettingsSection) => void;
+}) {
+  const visibleItems = ITEMS.filter((item) => {
+    if (item.id === "billing") return isOwner;
+    if (item.id === "organization") return canEditOrganization;
+    return true;
+  });
 
   return (
     <section className={styles.profileCard}>
       <div className={styles.avatar} aria-hidden />
       <div className={styles.profileName}>{name}</div>
-      <div className={styles.profileJoined}>
-        Joined {profileDefaults.joined}
-      </div>
+      <div className={styles.profileEmail}>{email}</div>
 
       <nav className={styles.settingsNav} aria-label="Settings sections">
-        {ITEMS.map(({ id, label, icon: Icon, target }) => (
+        {visibleItems.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
-            disabled={!target}
             className={`${styles.navItem} ${active === id ? styles.navItemActive : ""}`}
             aria-current={active === id ? "true" : undefined}
-            onClick={() => go(id, target)}
+            onClick={() => onSelect(id)}
           >
             <Icon size={14} aria-hidden />
             <span className={styles.navLabel}>{label}</span>

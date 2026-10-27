@@ -17,10 +17,11 @@
   font-weight: 700;
   color: var(--color-text);
 }
-.profileJoined {
+.profileEmail {
   margin-top: 4px;
   font-size: 11px;
   color: var(--color-text-muted);
+  overflow-wrap: anywhere;
 }
 .settingsNav {
   display: flex;

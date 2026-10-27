@@ -1,7 +1,12 @@
-import type { Stat } from "@/lib/mock-data/dashboard";
+import type { DashboardStat } from "@/lib/types/dashboard";
 import styles from "@/styles/dashboard/StatCard.module.css";
 
-export default function StatCard({ label, value, note, icon: Icon }: Stat) {
+export default function StatCard({
+  label,
+  value,
+  note,
+  icon: Icon,
+}: DashboardStat) {
   return (
     <article className={styles.statCard}>
       <div className={styles.statHead}>

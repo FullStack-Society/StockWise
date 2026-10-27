@@ -1,27 +1,16 @@
 import { ChevronDown, Search } from "lucide-react";
-import {
-  CATEGORIES,
-  STATUS_OPTIONS,
-  SUPPLIERS,
-} from "@/lib/mock-data/inventory";
+import { STATUS_OPTIONS } from "@/lib/inventory/constants";
+import type { Category } from "@/lib/inventory/types";
 import styles from "@/styles/inventory/FilterBar.module.css";
 
-export type Filters = {
+type Props = {
   query: string;
   category: string;
   status: string;
-  supplier: string;
-};
-export const EMPTY_FILTERS: Filters = {
-  query: "",
-  category: "",
-  status: "",
-  supplier: "",
-};
-
-type Props = {
-  filters: Filters;
-  onChange: (patch: Partial<Filters>) => void;
+  categories: Category[];
+  onQueryChange: (value: string) => void;
+  onCategoryChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
   onClear: () => void;
 };
 
@@ -56,39 +45,43 @@ function Select({
   );
 }
 
-const asOptions = (list: string[]) => list.map((v) => ({ value: v, label: v }));
-
-export default function FilterBar({ filters, onChange, onClear }: Props) {
+export default function FilterBar({
+  query,
+  category,
+  status,
+  categories,
+  onQueryChange,
+  onCategoryChange,
+  onStatusChange,
+  onClear,
+}: Props) {
   return (
     <div className={styles.filters}>
       <label className={styles.search}>
         <Search size={14} />
         <input
           type="search"
-          value={filters.query}
-          onChange={(e) => onChange({ query: e.target.value })}
-          placeholder="Search by product or barcode"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Search by product name or SKU"
           className={styles.searchInput}
         />
       </label>
 
       <Select
         label="Category"
-        value={filters.category}
-        options={asOptions(CATEGORIES)}
-        onChange={(category) => onChange({ category })}
+        value={category}
+        options={categories.map((c) => ({
+          value: String(c.id),
+          label: c.name,
+        }))}
+        onChange={onCategoryChange}
       />
       <Select
         label="Status"
-        value={filters.status}
+        value={status}
         options={STATUS_OPTIONS}
-        onChange={(status) => onChange({ status })}
-      />
-      <Select
-        label="Supplier"
-        value={filters.supplier}
-        options={asOptions(SUPPLIERS)}
-        onChange={(supplier) => onChange({ supplier })}
+        onChange={onStatusChange}
       />
 
       <button type="button" onClick={onClear} className={styles.clear}>

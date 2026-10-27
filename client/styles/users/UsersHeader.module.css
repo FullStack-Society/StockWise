@@ -5,6 +5,28 @@
   gap: 16px;
   flex-wrap: wrap;
 }
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.leaveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.leaveBtn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
 .title {
   margin: 0;
   font-size: 28px;

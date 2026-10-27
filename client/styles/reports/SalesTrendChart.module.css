@@ -2,6 +2,29 @@
   background: var(--color-panel);
   border: 1px solid var(--color-border);
 }
+.chartPanel {
+  min-width: 0;
+  padding: 20px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+}
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.panelTitle {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+}
+.panelSub {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
 .statGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -92,17 +115,24 @@
   font-size: 10px;
   fill: var(--color-text-muted);
 }
-.revenuePath,
-.profitPath {
+.receivedPath,
+.issuedPath {
   fill: none;
-  stroke: var(--color-text);
+  stroke: var(--color-accent);
   stroke-width: 2;
   stroke-linejoin: round;
 }
-.profitPath {
-  stroke-width: 2;
+.issuedPath {
+  stroke: #3fb97a;
   stroke-dasharray: 2 4;
   stroke-linecap: round;
+}
+.emptyChart {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  color: var(--color-text-muted);
+  font-size: 12px;
 }
 @media (max-width: 1100px) {
 .statGrid {

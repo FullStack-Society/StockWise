@@ -1,85 +1,34 @@
-# StockWise: Retail Inventory Management System
+# StockWise
 
-## Project Description
+StockWise is a multi-organization inventory management application. Organization members can manage products and stock levels, review stock movement and reports, and manage organization access according to their role.
 
-StockWise is a web-based retail inventory management system designed to help retail business owners and managers manage products and monitor stock levels efficiently. It aims to simplify inventory management by providing a centralized system for maintaining product records, tracking stock quantities, and identifying products that need restocking.
+## Stack
 
-The system is intended for retail businesses that need a more organized way to manage their inventory and monitor product availability.
+- **Frontend:** Next.js 16, React, TypeScript, CSS Modules
+- **Backend:** FastAPI, SQLAlchemy, PostgreSQL
 
-## Objectives
+## Local setup
 
-- Develop a web-based inventory management system for retail businesses.
-- Manage product information and inventory records.
-- Monitor current product stock quantities.
-- Track stock additions and deductions through inventory management functions.
-- Identify products that reach or fall below their minimum stock levels.
-- Provide secure user authentication and role-based access.
-- Store and manage inventory data using a centralized PostgreSQL database.
+1. Start PostgreSQL and configure `DATABASE_URL`, `OWNER_EMAIL`, and `OWNER_PASSWORD` in `server/.env`.
+2. From `server`, install backend dependencies and start the API:
 
-## Scope and Limitations
+   ```powershell
+   pip install -r requirements.txt
+   python -m uvicorn app.main:app --reload --port 8000
+   ```
 
-### Scope
+3. Copy `client/.env.local.example` to `client/.env.local`. Set `API_URL` (normally `http://127.0.0.1:8000`) and a unique `SESSION_SECRET` of at least 32 characters.
+4. From `client`, install and start the frontend:
 
-StockWise will focus on the following functions:
+   ```powershell
+   npm ci
+   npm run dev
+   ```
 
-- Product information management
-- Inventory stock monitoring
-- Recording stock additions and deductions
-- Minimum stock level monitoring
-- Low-stock alerts
-- Email and password authentication
-- Role-based access control
-- Centralized inventory data management
+The frontend runs at `http://localhost:3000`; the FastAPI docs run at `http://localhost:8000/docs`.
 
-### Limitations
+## Notes
 
-The system will not include the following features:
-
-- Full Point-of-Sale (POS) checkout and receipt generation
-- Online payment processing
-- Accounting and payroll management
-- Supplier marketplace
-- Advanced AI-based demand forecasting
-- Multi-branch inventory management
-- Automatic supplier ordering
-- Offline inventory updates and synchronization
-
-StockWise is designed for a single retail store and requires an internet connection to access the centralized inventory system.
-
-## Technologies and Tools
-
-### Frontend
-- HTML
-- CSS
-- JavaScript
-
-### Database
-- PostgreSQL
-- pgAdmin
-
-### Development Tools
-- Visual Studio Code
-- Postman
-- Git
-- GitHub
-
-### Backend
-- Framework and programming language: To be determined
-- API architecture: RESTful API
-
-## Hardware Requirements
-
-- Existing laptop or desktop computer
-- At least 8 GB RAM
-- Internet connection
-- Smartphone for testing, when needed
-
-## Project Status
-
-**Status:** Planning and Development
-
-The project is currently being prepared for implementation. The backend framework and programming language will be finalized during the development process.
-
-## Project Purpose
-
-StockWise aims to help retail business owners and managers organize inventory records, monitor product availability, and identify products that require restocking through a centralized web-based system.
+- `server/requirements.txt` is the backend dependency list.
+- Database SQL files under `migrations/` are intentionally excluded from Git in this repository. Manage and share database setup separately.
+- The application does not currently provide POS checkout, payments, accounting, or offline synchronization.

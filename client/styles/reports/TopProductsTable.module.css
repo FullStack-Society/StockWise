@@ -87,3 +87,8 @@
 .trendDown {
   color: var(--color-danger);
 }
+.emptyRow {
+  padding: 28px 16px !important;
+  color: var(--color-text-muted);
+  text-align: center;
+}

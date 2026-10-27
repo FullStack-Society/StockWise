@@ -1,17 +1,18 @@
 import Link from "next/link";
-import { Search, Pencil } from "lucide-react";
-import { topProducts } from "@/lib/mock-data/reports";
+import type { InventoryReportData } from "@/lib/api/reports";
 import { formatCurrency } from "@/lib/utils/format";
 import { ROUTES } from "@/app/routes";
 import styles from "@/styles/reports/TopProductsTable.module.css";
 
-export default function TopProductsTable() {
+export default function TopProductsTable({ report }: { report: InventoryReportData }) {
+  const topProducts = report.products.filter((product) => product.units_issued > 0).slice(0, 10);
+
   return (
     <section className={styles.panelBox}>
       <div className={styles.panelHead}>
-        <h2 className={styles.panelTitle}>Top Performing Products</h2>
+        <h2 className={styles.panelTitle}>Most Issued Products</h2>
         <Link href={ROUTES.inventory} className={styles.link}>
-          View Detailed Report
+          View Inventory
         </Link>
       </div>
 
@@ -20,14 +21,16 @@ export default function TopProductsTable() {
           <thead>
             <tr>
               <th>Product Name</th>
-              <th>Units Sold</th>
+              <th>Units Issued</th>
+              <th>Current Stock</th>
               <th>Stock Health</th>
-              <th>Total Sales</th>
-              <th className={styles.alignRight}>Trend</th>
+              <th className={styles.alignRight}>Stock Value</th>
             </tr>
           </thead>
           <tbody>
-            {topProducts.map((p) => (
+            {topProducts.map((p) => {
+              const health = p.quantity === 0 ? "Out of stock" : p.quantity <= p.minimum_stock ? "Low stock" : "Healthy";
+              return (
               <tr key={p.id}>
                 <td>
                   <div className={styles.productCell}>
@@ -35,36 +38,17 @@ export default function TopProductsTable() {
                     {p.name}
                   </div>
                 </td>
-                <td>{p.unitsSold.toLocaleString()}</td>
+                <td>{p.units_issued.toLocaleString()}</td>
+                <td>{p.quantity.toLocaleString()}</td>
                 <td>
-                  <span
-                    className={
-                      p.health === "Optimal"
-                        ? styles.healthOk
-                        : styles.healthWarn
-                    }
-                  >
-                    {p.health}
+                  <span className={health === "Healthy" ? styles.healthOk : styles.healthWarn}>
+                    {health}
                   </span>
                 </td>
-                <td>{formatCurrency(p.totalSales)}</td>
-                <td className={styles.alignRight}>
-                  {p.trend === "up" ? (
-                    <Search
-                      size={13}
-                      className={styles.trendUp}
-                      aria-label="Trending up"
-                    />
-                  ) : (
-                    <Pencil
-                      size={13}
-                      className={styles.trendDown}
-                      aria-label="Needs attention"
-                    />
-                  )}
-                </td>
+                <td className={styles.alignRight}>{formatCurrency(Number(p.price) * p.quantity)}</td>
               </tr>
-            ))}
+            );})}
+            {topProducts.length === 0 && <tr><td colSpan={5} className={styles.emptyRow}>No product issues were recorded in this period.</td></tr>}
           </tbody>
         </table>
       </div>

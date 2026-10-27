@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "jose": "^6.2.13",
-    "lucide-react": "^1.60.0",
-    "server-only": "^0.0.1"
-  }
-}

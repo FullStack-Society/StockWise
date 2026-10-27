@@ -6,7 +6,7 @@ import {
   canManageUser,
   type Role,
 } from "@/lib/auth/roles";
-import type { TeamUser } from "@/lib/mock-data/users";
+import type { TeamUser } from "@/lib/types/users";
 import styles from "@/styles/users/UsersTable.module.css";
 
 type Props = {
@@ -43,7 +43,7 @@ export default function UsersTable({
               <th>User</th>
               <th>Role</th>
               <th>Status</th>
-              <th>Last Active</th>
+              <th>Joined</th>
               <th className={styles.alignRight}>Actions</th>
             </tr>
           </thead>
@@ -107,7 +107,7 @@ export default function UsersTable({
                       {u.status}
                     </span>
                   </td>
-                  <td className={styles.muted}>{u.lastActive}</td>
+                  <td className={styles.muted}>{u.joinedAt}</td>
                   <td className={styles.alignRight}>
                     {manageable ? (
                       <button

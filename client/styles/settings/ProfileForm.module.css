@@ -77,6 +77,15 @@
 .input:focus {
   border-color: var(--color-accent);
 }
+.input:read-only {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+.formMessage {
+  margin: 16px 0 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
 select.input option {
   color: #000;
 }

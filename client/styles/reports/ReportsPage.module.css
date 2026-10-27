@@ -9,6 +9,41 @@
   grid-template-columns: 2fr 1fr;
   gap: 20px;
 }
+.accessNotice {
+  padding: 22px 24px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+}
+.accessNotice h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 15px;
+}
+.accessNotice p {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.reportError {
+  padding: 22px 24px;
+  background: var(--color-panel);
+  border: 1px solid #a83c36;
+  border-left: 4px solid #e3544c;
+}
+.reportError h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 15px;
+}
+.reportError p {
+  margin: 8px 0 14px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.reportError a {
+  color: var(--color-primary, #f07832);
+  font-size: 12px;
+}
 @media (max-width: 1100px) {
 .chartsRow {
     grid-template-columns: 1fr;

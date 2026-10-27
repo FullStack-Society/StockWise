@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StockWise client
 
-## Getting Started
+The Next.js frontend uses server-side API modules to communicate with the FastAPI backend. Keep API credentials and the session secret on the server; do not expose them with a `NEXT_PUBLIC_` prefix.
 
-First, run the development server:
+## Run locally
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Start PostgreSQL and configure `DATABASE_URL`, `OWNER_EMAIL`, and a unique `OWNER_PASSWORD` of at least 12 characters in `server/.env`.
+2. From `server`, install backend dependencies and start FastAPI:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   ```powershell
+   pip install -r requirements.txt
+   python -m uvicorn app.main:app --reload --port 8000
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Copy `client/.env.local.example` to `client/.env.local` and set:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```env
+   API_URL=http://127.0.0.1:8000
+   SESSION_SECRET=your-unique-random-secret-at-least-32-characters
+   ```
 
-## Learn More
+4. From `client`, install the locked frontend dependencies and start Next.js:
 
-To learn more about Next.js, take a look at the following resources:
+   ```powershell
+   npm ci
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The frontend runs at `http://localhost:3000`; API documentation is at `http://localhost:8000/docs`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The app includes authentication and organization membership, inventory management and CSV import, dashboard summaries, reports, user/role management, and account/organization settings. Available actions depend on the signed-in user's role and organization permissions.

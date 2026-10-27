@@ -1,48 +1,40 @@
 import type { Metadata } from "next";
-import { requireSession, getSession } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 import SettingsHeader from "@/components/features/settings/SettingsHeader";
-import ProfileCard from "@/components/features/settings/ProfileCard";
-import AccountHealth from "@/components/features/settings/AccountHealth";
-import ProfileForm from "@/components/features/settings/ProfileForm";
-import PreferencesPanel from "@/components/features/settings/PreferencesPanel";
-import DangerZone from "@/components/features/settings/DangerZone";
-import SettingsFooterStats from "@/components/features/settings/SettingsFooterStats";
+import { getAccountSettings } from "@/lib/api/settings";
+import { listOrganizations } from "@/lib/api/organizations";
+import SettingsBrowser from "@/components/features/settings/SettingsBrowser";
 import styles from "@/styles/settings/SettingsPage.module.css";
-import { findDemoUserById } from "@/lib/auth/users";
 
 export const instant = false;
 
 export const metadata: Metadata = { title: "StockWise | Settings" };
 
 export default async function SettingsPage() {
-  await requireSession();
-  const session = await getSession();
-
-  const fullName = session?.name ?? "Admin User";
-  const [firstName, ...rest] = fullName.split(" ");
-  const lastName = rest.join(" ");
-  // Demo only: the session has no email yet. Replace with a database lookup.
-  const email = findDemoUserById(session?.id)?.email ?? "";
+  const session = await requireSession();
+  const [accountSettings, organizations] = await Promise.all([
+    getAccountSettings(session.email),
+    listOrganizations(session.email),
+  ]);
+  const activeOrganization =
+    organizations.find(
+      (organization) => organization.organization_id === session.organizationId,
+    ) ?? organizations[0];
+  const currentRole = activeOrganization?.role ?? "owner";
+  const roleLabel = currentRole.charAt(0).toUpperCase() + currentRole.slice(1);
+  const isOwner = currentRole === "owner";
 
   return (
     <div className={styles.page}>
       <SettingsHeader />
-      <div className={styles.layout}>
-        <aside className={styles.sidebarCol}>
-          <ProfileCard name={fullName} />
-          <AccountHealth />
-        </aside>
-        <div className={styles.mainCol}>
-          <ProfileForm
-            firstName={firstName}
-            lastName={lastName}
-            email={email}
-          />
-          <PreferencesPanel />
-          <DangerZone />
-        </div>
-      </div>
-      <SettingsFooterStats />
+      <SettingsBrowser
+        settings={accountSettings}
+        isOwner={isOwner}
+        roleLabel={roleLabel}
+        organizationId={activeOrganization?.organization_id ?? null}
+        organizationName={activeOrganization?.organization_name ?? null}
+        canEditOrganization={isOwner}
+      />
     </div>
   );
 }

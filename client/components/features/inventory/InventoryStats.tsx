@@ -1,10 +1,10 @@
-import { INVENTORY_STATS } from "@/lib/mock-data/inventory";
+import type { InventoryStat } from "@/lib/inventory/types";
 import styles from "@/styles/inventory/InventoryStats.module.css";
 
-export default function InventoryStats() {
+export default function InventoryStats({ items }: { items: InventoryStat[] }) {
   return (
     <section className={styles.stats}>
-      {INVENTORY_STATS.map(({ label, value, icon: Icon }) => (
+      {items.map(({ label, value, icon: Icon }) => (
         <article key={label} className={styles.statCard}>
           <Icon size={18} className={styles.statIcon} />
           <div>

@@ -1,49 +1,96 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { PRODUCTS, getStatus, type Product } from "@/lib/mock-data/inventory";
-import FilterBar, { EMPTY_FILTERS, type Filters } from "./FilterBar";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { X } from "lucide-react";
+import { deleteProductAction } from "@/lib/inventory/actions";
+import type { InventoryFilters } from "@/lib/inventory/query";
+import type { Category, Product } from "@/lib/inventory/types";
+import FilterBar from "./FilterBar";
+import InventoryHeader from "./InventoryHeader";
 import InventoryTable from "./InventoryTable";
 import Pagination from "./Pagination";
+import ProductModal from "@/components/modals/inventory/ProductModal";
+import ImportModal from "@/components/modals/inventory/ImportModal";
 import styles from "@/styles/inventory/InventoryBrowser.module.css";
+import extra from "@/styles/inventory/InventoryActions.module.css";
 
-const PAGE_SIZE = 5;
+type Props = {
+  rows: Product[];
+  total: number;
+  page: number;
+  pageCount: number;
+  start: number;
+  categories: Category[];
+  filters: InventoryFilters;
+};
 
-/** Client container: owns the filters, selection and pagination state. */
-export default function InventoryBrowser() {
-  // TODO: replace PRODUCTS with data fetched from your API / database
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+type ModalState =
+  | { mode: "create" }
+  | { mode: "edit"; product: Product }
+  | null;
+type Patch = Partial<{
+  search: string;
+  category: string;
+  status: string;
+  page: number;
+}>;
 
-  const filtered = useMemo(() => {
-    const q = filters.query.trim().toLowerCase();
-    return products.filter(
-      (p) =>
-        (!q || p.name.toLowerCase().includes(q) || p.barcode.includes(q)) &&
-        (!filters.category || p.category === filters.category) &&
-        (!filters.supplier || p.supplier === filters.supplier) &&
-        (!filters.status || getStatus(p.quantity) === filters.status),
-    );
-  }, [products, filters]);
+export default function InventoryBrowser({
+  rows,
+  total,
+  page,
+  pageCount,
+  start,
+  categories,
+  filters,
+}: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const rows = filtered.slice(start, start + PAGE_SIZE);
+  const [query, setQuery] = useState(filters.query);
+  const [previousUrlQuery, setPreviousUrlQuery] = useState(filters.query);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [modal, setModal] = useState<ModalState>(null);
+  const [showImport, setShowImport] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  function updateFilters(patch: Partial<Filters>) {
-    setFilters((f) => ({ ...f, ...patch }));
-    setPage(1);
+  const { query: urlQuery, category, status } = filters;
+
+  if (urlQuery !== previousUrlQuery) {
+    setPreviousUrlQuery(urlQuery);
+    setQuery(urlQuery);
   }
+
+  const navigate = useCallback(
+    (patch: Patch) => {
+      const next = { search: urlQuery, category, status, page: 1, ...patch }; // page resets to 1 unless given
+      const qs = new URLSearchParams();
+      if (next.search) qs.set("search", next.search);
+      if (next.category) qs.set("category", next.category);
+      if (next.status) qs.set("status", next.status);
+      if (next.page > 1) qs.set("page", String(next.page));
+      const url = qs.toString() ? `${pathname}?${qs}` : pathname;
+      startTransition(() => router.replace(url, { scroll: false }));
+    },
+    [urlQuery, category, status, pathname, router],
+  );
+
+  // Wait until the user stops typing, then put the search in the URL.
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed === urlQuery) return;
+    const timer = setTimeout(() => navigate({ search: trimmed }), 350);
+    return () => clearTimeout(timer);
+  }, [query, urlQuery, navigate]);
 
   function clearFilters() {
-    setFilters(EMPTY_FILTERS);
-    setPage(1);
+    setQuery("");
+    navigate({ search: "", category: "", status: "" });
   }
 
-  function toggleOne(id: string) {
+  function toggleOne(id: number) {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -61,53 +108,110 @@ export default function InventoryBrowser() {
     });
   }
 
-  function handleEdit(product: Product) {
-    // TODO: open an edit form / navigate to /inventory/[id]
-    console.log("edit", product.id);
-  }
-
   function handleDelete(product: Product) {
-    // TODO: call your API, then update state
-    if (!window.confirm(`Delete "${product.name}"?`)) return;
-    setProducts((list) => list.filter((p) => p.id !== product.id));
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.delete(product.id);
-      return next;
+    if (
+      !window.confirm(
+        `Mark "${product.name}" as deleted? It will be hidden from active inventory.`,
+      )
+    )
+      return;
+    setActionError(null);
+    startTransition(async () => {
+      const result = await deleteProductAction(product.id);
+      if (!result.ok) {
+        setActionError(result.error);
+        return;
+      }
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(product.id);
+        return next;
+      });
     });
   }
 
+  const hasFilters = Boolean(urlQuery || category || status);
+  const emptyMessage = hasFilters
+    ? "No products match your filters."
+    : "No products yet. Click Add Product to create the first one.";
+
   return (
     <>
+      <InventoryHeader
+        onAdd={() => setModal({ mode: "create" })}
+        onImport={() => setShowImport(true)}
+      />
+
+      {actionError && (
+        <div role="alert" className={extra.banner}>
+          <span>{actionError}</span>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setActionError(null)}
+            className={extra.bannerClose}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <FilterBar
-        filters={filters}
-        onChange={updateFilters}
+        query={query}
+        category={category}
+        status={status}
+        categories={categories}
+        onQueryChange={setQuery}
+        onCategoryChange={(value) => navigate({ category: value })}
+        onStatusChange={(value) => navigate({ status: value })}
         onClear={clearFilters}
       />
 
-      <section className={styles.tablePanel}>
+      <section
+        className={styles.tablePanel}
+        style={{ opacity: isPending ? 0.6 : 1, transition: "opacity 0.15s" }}
+      >
         <InventoryTable
           rows={rows}
           selected={selected}
+          emptyMessage={emptyMessage}
           onToggle={toggleOne}
           onToggleAll={toggleAll}
-          onEdit={handleEdit}
+          onEdit={(product) => setModal({ mode: "edit", product })}
           onDelete={handleDelete}
         />
 
         <div className={styles.footer}>
           <span>
-            {filtered.length === 0
+            {total === 0
               ? "No items"
-              : `Showing ${start + 1}-${start + rows.length} of ${filtered.length} items`}
+              : `Showing ${start + 1}-${start + rows.length} of ${total} items`}
           </span>
-          <Pagination
-            page={currentPage}
-            pageCount={pageCount}
-            onChange={setPage}
-          />
+          {pageCount > 1 && (
+            <Pagination
+              page={page}
+              pageCount={pageCount}
+              onChange={(n) => navigate({ page: n })}
+            />
+          )}
         </div>
       </section>
+
+      {modal && (
+        <ProductModal
+          key={modal.mode === "edit" ? modal.product.id : "new"}
+          product={modal.mode === "edit" ? modal.product : null}
+          categories={categories}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {showImport && (
+        <ImportModal
+          categories={categories}
+          onClose={() => setShowImport(false)}
+          onImported={() => router.refresh()}
+        />
+      )}
     </>
   );
 }

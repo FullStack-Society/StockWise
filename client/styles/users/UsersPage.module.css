@@ -4,6 +4,54 @@
   gap: 24px;
   padding: 32px;
 }
+.createOrgPanel {
+  max-width: 520px;
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+}
+.createOrgPanel h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.createOrgPanel p {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.createOrgPanel label {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+  font-size: 12px;
+}
+.createOrgPanel input {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+}
+.createOrgPanel button {
+  margin-top: 14px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--color-line);
+  background: var(--color-line);
+  color: white;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.createOrgPanel button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.createOrgError {
+  color: #e5484d !important;
+}
 .title {
   margin: 0;
   font-size: 28px;

@@ -1,57 +1,45 @@
 import "server-only";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { ENDPOINTS } from "@/lib/api/endpoints";
+import { apiRequest } from "@/lib/api/client";
 import type { Role } from "./roles";
 
-// DEMO ONLY. Three test accounts, one per role, so you can try every permission level.
-
-export type DemoUser = {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-  passwordEnv: string;
+type LoginResponse = {
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: Role;
+  };
 };
 
-export const DEMO_USERS: DemoUser[] = [
-  {
-    id: "u1",
-    name: "Admin User",
-    email: "admin@stockwise.com",
-    role: "Owner",
-    passwordEnv: "DEMO_PASSWORD",
-  },
-  {
-    id: "u2",
-    name: "Maria Santos",
-    email: "maria.santos@stockwise.com",
-    role: "Admin",
-    passwordEnv: "DEMO_ADMIN_PASSWORD",
-  },
-  {
-    id: "u3",
-    name: "Daniel Reyes",
-    email: "daniel.reyes@stockwise.com",
-    role: "Staff",
-    passwordEnv: "DEMO_STAFF_PASSWORD",
-  },
-];
-
-function safeEqual(a: string, b: string): boolean {
-  const ha = createHash("sha256").update(a).digest();
-  const hb = createHash("sha256").update(b).digest();
-  return timingSafeEqual(ha, hb);
-}
-
-export function findDemoUserById(id: unknown): DemoUser | undefined {
-  return DEMO_USERS.find((u) => u.id === String(id));
-}
-
 export async function verifyCredentials(email: string, password: string) {
-  const user = DEMO_USERS.find((u) => u.email === email.trim().toLowerCase());
-  const expected = user ? process.env[user.passwordEnv] : undefined;
+  const response = await apiRequest<LoginResponse>(ENDPOINTS.login, {
+    method: "POST",
+    body: { email, password },
+  });
 
-  const ok = safeEqual(password, expected ?? "\u0000no-such-password");
-  if (!user || !expected || !ok) return null;
+  return {
+    id: String(response.user.id),
+    name: response.user.name,
+    email: response.user.email,
+    role: response.user.role,
+  };
+}
 
-  return { id: user.id, name: user.name, role: user.role };
+export async function registerAccount(
+  name: string,
+  email: string,
+  password: string,
+) {
+  const response = await apiRequest<LoginResponse>(ENDPOINTS.register, {
+    method: "POST",
+    body: { name, email, password },
+  });
+
+  return {
+    id: String(response.user.id),
+    name: response.user.name,
+    email: response.user.email,
+    role: response.user.role,
+  };
 }

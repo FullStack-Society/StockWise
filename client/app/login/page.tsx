@@ -8,11 +8,13 @@ import { ROUTES } from "../routes";
 export const instant = false;
 
 export default async function LoginPage() {
-  if (await getSession()) redirect(ROUTES.dashboard);
+  const session = await getSession();
+  if (session)
+    redirect(session.organizationId ? ROUTES.dashboard : ROUTES.users);
 
   return (
     <main className={styles.page}>
-      <BrandPanel />
+      <BrandPanel variant="login" />
       <section className={styles.formPanel}>
         <LoginForm />
       </section>

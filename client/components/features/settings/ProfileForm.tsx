@@ -1,32 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { Save, Mail } from "lucide-react";
-import { profileDefaults, TIMEZONES } from "@/lib/mock-data/settings";
+import { useState, useTransition } from "react";
+import { Save } from "lucide-react";
+import type { AccountSettings } from "@/lib/api/settings";
+import { saveProfileSettings } from "@/lib/settings/actions";
 import styles from "@/styles/settings/ProfileForm.module.css";
 
-type Props = { firstName: string; lastName: string; email: string };
+const TIMEZONES = [
+  ["Asia/Manila", "Philippines (Asia/Manila)"],
+  ["Asia/Singapore", "Singapore (Asia/Singapore)"],
+  ["America/Los_Angeles", "Pacific Time (US)"],
+  ["America/Chicago", "Central Time (US)"],
+  ["America/New_York", "Eastern Time (US)"],
+  ["Europe/London", "United Kingdom (Europe/London)"],
+  ["Europe/Berlin", "Central Europe (Europe/Berlin)"],
+  ["UTC", "UTC"],
+];
 
-export default function ProfileForm({ firstName, lastName, email }: Props) {
-  const [form, setForm] = useState({
-    firstName,
-    lastName,
-    email,
-    position: profileDefaults.position,
-    timezone: profileDefaults.timezone,
-  });
-  const [saved, setSaved] = useState(false);
+export default function ProfileForm({ settings, roleLabel }: { settings: AccountSettings; roleLabel: string }) {
+  const [timezone, setTimezone] = useState(settings.timezone);
+  const [message, setMessage] = useState("");
+  const [isPending, startTransition] = useTransition();
 
-  function update(key: keyof typeof form, value: string) {
-    setForm((f) => ({ ...f, [key]: value }));
-    setSaved(false);
-  }
-
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    // Placeholder: replace with a Server Action that updates the user record.
-    console.log("save profile", form);
-    setSaved(true);
+  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    startTransition(async () => {
+      const result = await saveProfileSettings({ timezone });
+      setMessage(result.ok ? "Profile settings saved." : result.error);
+    });
   }
 
   return (
@@ -34,69 +36,34 @@ export default function ProfileForm({ firstName, lastName, email }: Props) {
       <div className={styles.cardHead}>
         <div>
           <h2 className={styles.cardTitle}>Personal Profile</h2>
-          <p className={styles.cardSub}>
-            Update your personal details and how others see you.
-          </p>
+          <p className={styles.cardSub}>Your account identity and organization role are read-only.</p>
         </div>
-        <button type="submit" className={styles.saveBtn}>
-          <Save size={12} aria-hidden /> {saved ? "Saved" : "Save Changes"}
+        <button type="submit" className={styles.saveBtn} disabled={isPending}>
+          <Save size={12} aria-hidden /> {isPending ? "Saving…" : "Save Changes"}
         </button>
       </div>
 
       <div className={styles.fieldGrid}>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>First Name</span>
-          <input
-            className={styles.input}
-            value={form.firstName}
-            onChange={(e) => update("firstName", e.target.value)}
-          />
+          <span className={styles.fieldLabel}>Name</span>
+          <input className={`${styles.input} ${styles.readOnly}`} value={settings.name} readOnly aria-readonly="true" />
         </label>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>Last Name</span>
-          <input
-            className={styles.input}
-            value={form.lastName}
-            onChange={(e) => update("lastName", e.target.value)}
-          />
-        </label>
-
-        <label className={`${styles.field} ${styles.fullRow}`}>
           <span className={styles.fieldLabel}>Email Address</span>
-          <span className={styles.inputWrap}>
-            <input
-              className={styles.input}
-              type="email"
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-            />
-            <Mail size={14} className={styles.inputIcon} aria-hidden />
-          </span>
+          <input className={`${styles.input} ${styles.readOnly}`} type="email" value={settings.email} readOnly aria-readonly="true" />
         </label>
-
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Position</span>
-          <input
-            className={styles.input}
-            value={form.position}
-            onChange={(e) => update("position", e.target.value)}
-          />
+          <input className={`${styles.input} ${styles.readOnly}`} value={roleLabel} readOnly aria-readonly="true" />
         </label>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Timezone</span>
-          <select
-            className={styles.input}
-            value={form.timezone}
-            onChange={(e) => update("timezone", e.target.value)}
-          >
-            {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz}
-              </option>
-            ))}
+          <select className={styles.input} value={timezone} onChange={(event) => setTimezone(event.target.value)}>
+            {TIMEZONES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>
         </label>
       </div>
+      {message && <p className={styles.formMessage} role="status">{message}</p>}
     </form>
   );
 }

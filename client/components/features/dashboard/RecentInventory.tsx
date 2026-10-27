@@ -1,23 +1,30 @@
 import Link from "next/link";
-import {
-  RECENT_INVENTORY,
-  STATUS_LABEL,
-  type StockStatus,
-} from "@/lib/mock-data/dashboard";
+import { ROUTES } from "@/app/routes";
+import type { Product, StockStatus } from "@/lib/inventory/types";
 import styles from "@/styles/dashboard/RecentInventory.module.css";
 
 const BADGE: Record<StockStatus, string> = {
   "in-stock": styles.badge,
   "low-stock": `${styles.badge} ${styles.badgeLow}`,
-  critical: `${styles.badge} ${styles.badgeCritical}`,
+  "out-of-stock": `${styles.badge} ${styles.badgeCritical}`,
 };
 
-export default function RecentInventory() {
+const STATUS_LABEL: Record<StockStatus, string> = {
+  "in-stock": "In stock",
+  "low-stock": "Low stock",
+  "out-of-stock": "Out of stock",
+};
+
+export default function RecentInventory({ products }: { products: Product[] }) {
+  const recent = [...products]
+    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+    .slice(0, 5);
+
   return (
     <section className={styles.tablePanel}>
       <div className={styles.panelHead}>
         <h2 className={styles.panelTitle}>Recent Inventory</h2>
-        <Link href="/inventory" className={styles.viewAll}>
+        <Link href={ROUTES.inventory} className={styles.viewAll}>
           View all
         </Link>
       </div>
@@ -34,23 +41,28 @@ export default function RecentInventory() {
             </tr>
           </thead>
           <tbody>
-            {RECENT_INVENTORY.map((row) => (
-              <tr key={row.sku}>
-                <td className={styles.itemName}>{row.name}</td>
-                <td>{row.sku}</td>
-                <td>{row.category}</td>
+            {recent.map((product) => (
+              <tr key={product.id}>
+                <td className={styles.itemName}>{product.name}</td>
+                <td>{product.sku}</td>
+                <td>{product.categoryName ?? "Uncategorized"}</td>
                 <td
-                  className={`${styles.level} ${row.status !== "in-stock" ? styles.levelWarn : ""}`}
+                  className={`${styles.level} ${product.status !== "in-stock" ? styles.levelWarn : ""}`}
                 >
-                  {row.level}
+                  {product.quantity}
                 </td>
                 <td className={styles.alignRight}>
-                  <span className={BADGE[row.status]}>
-                    {STATUS_LABEL[row.status]}
+                  <span className={BADGE[product.status]}>
+                    {STATUS_LABEL[product.status]}
                   </span>
                 </td>
               </tr>
             ))}
+            {recent.length === 0 && (
+              <tr>
+                <td colSpan={5}>No inventory products have been added yet.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

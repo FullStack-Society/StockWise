@@ -1,0 +1,120 @@
+.panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+}
+.header h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+.header p {
+  margin: 7px 0 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+.scoreCard {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.025);
+}
+.scoreHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.scoreHead h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 12px;
+}
+.scoreHead p,
+.scoreHint {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+.scoreValue {
+  color: var(--color-accent);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+.scoreTrack {
+  height: 7px;
+  margin-top: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+.scoreTrack span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+}
+.scoreHint {
+  margin-top: 10px;
+}
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.icon {
+  display: grid;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.content {
+  flex: 1;
+}
+.content h3 {
+  margin: 1px 0 0;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+.content p,
+.note {
+  margin: 5px 0 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.enabled,
+.unavailable {
+  flex: none;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+.enabled {
+  color: #59c37a;
+  background: rgb(55 160 88 / 14%);
+}
+.unavailable {
+  color: var(--color-text-muted);
+  background: rgb(255 255 255 / 7%);
+}
+.note {
+  margin-top: 16px;
+}
+@media (max-width: 560px) {
+  .item {
+    flex-wrap: wrap;
+  }
+  .content {
+    flex-basis: calc(100% - 50px);
+  }
+  .enabled,
+  .unavailable {
+    margin-left: 48px;
+  }
+}

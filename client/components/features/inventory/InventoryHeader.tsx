@@ -1,7 +1,15 @@
+"use client";
+
 import { FileUp, Plus } from "lucide-react";
 import styles from "@/styles/inventory/InventoryHeader.module.css";
 
-export default function InventoryHeader() {
+export default function InventoryHeader({
+  onAdd,
+  onImport,
+}: {
+  onAdd: () => void;
+  onImport: () => void;
+}) {
   return (
     <div className={styles.header}>
       <div>
@@ -12,13 +20,13 @@ export default function InventoryHeader() {
       </div>
 
       <div className={styles.actions}>
-        {/* TODO: hook these up (file upload dialog / add product form) */}
-        <button type="button" className={styles.button}>
+        <button type="button" onClick={onImport} className={styles.button}>
           <FileUp size={14} />
           Import Data
         </button>
         <button
           type="button"
+          onClick={onAdd}
           className={`${styles.button} ${styles.buttonPrimary}`}
         >
           <Plus size={14} />

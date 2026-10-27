@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import Logo from "@/components/ui/Logo";
 import { login, type LoginState } from "@/lib/auth/actions";
 import styles from "@/styles/login/LoginForm.module.css";
 
@@ -21,6 +22,9 @@ export default function LoginForm() {
 
   return (
     <div className={styles.card}>
+      <div className={styles.mobileBrand}>
+        <Logo />
+      </div>
       <h2 className={styles.cardTitle}>Sign in</h2>
       <p className={styles.cardSubtitle}>Enter your credentials to continue</p>
 
@@ -75,9 +79,6 @@ export default function LoginForm() {
             />
             Remember me
           </label>
-          <a href="/forgot-password" className={styles.link}>
-            Forgot password?
-          </a>
         </div>
 
         {state.error && (
@@ -90,7 +91,12 @@ export default function LoginForm() {
       </form>
 
       <hr className={styles.divider} />
-      <p className={styles.help}>Need access? Contact your administrator</p>
+      <p className={styles.help}>
+        New to StockWise?{" "}
+        <a className={styles.link} href="/register">
+          Create an account
+        </a>
+      </p>
     </div>
   );
 }
