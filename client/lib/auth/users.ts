@@ -13,7 +13,7 @@ type LoginResponse = {
 };
 
 export async function verifyCredentials(email: string, password: string) {
-  const response = await apiRequest<LoginResponse>(ENDPOINTS.login, {
+  const response = await apiRequest<LoginResponse>(ENDPOINTS.auth.login, {
     method: "POST",
     body: { email, password },
   });
@@ -31,7 +31,7 @@ export async function registerAccount(
   email: string,
   password: string,
 ) {
-  const response = await apiRequest<LoginResponse>(ENDPOINTS.register, {
+  const response = await apiRequest<LoginResponse>(ENDPOINTS.auth.register, {
     method: "POST",
     body: { name, email, password },
   });

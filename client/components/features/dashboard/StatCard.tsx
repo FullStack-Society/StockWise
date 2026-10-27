@@ -1,4 +1,4 @@
-import type { DashboardStat } from "@/lib/types/dashboard";
+import type { DashboardStat } from "@/lib/dashboard/types";
 import styles from "@/styles/dashboard/StatCard.module.css";
 
 export default function StatCard({

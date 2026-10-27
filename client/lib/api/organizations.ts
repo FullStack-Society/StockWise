@@ -1,6 +1,7 @@
 import "server-only";
 
 import { apiRequest } from "./client";
+import { ENDPOINTS } from "./endpoints";
 
 export type OrganizationSummary = {
   organization_id: number;
@@ -25,16 +26,14 @@ export type OrganizationMember = {
   joined_at: string | null;
 };
 
-const ROOT = "/api/organizations";
-
 export function listOrganizations(email: string) {
-  return apiRequest<OrganizationSummary[]>(`${ROOT}/mine`, {
+  return apiRequest<OrganizationSummary[]>(ENDPOINTS.organizations.mine, {
     query: { email },
   });
 }
 
 export function createOrganization(email: string, organizationName: string) {
-  return apiRequest<OrganizationSummary>(`${ROOT}/`, {
+  return apiRequest<OrganizationSummary>(ENDPOINTS.organizations.create, {
     method: "POST",
     body: { email, organization_name: organizationName },
   });
@@ -45,21 +44,27 @@ export function renameOrganization(
   actorEmail: string,
   organizationName: string,
 ) {
-  return apiRequest<OrganizationSummary>(`${ROOT}/${organizationId}`, {
-    method: "PUT",
-    body: { actor_email: actorEmail, organization_name: organizationName },
-  });
+  return apiRequest<OrganizationSummary>(
+    ENDPOINTS.organizations.item(organizationId),
+    {
+      method: "PUT",
+      body: { actor_email: actorEmail, organization_name: organizationName },
+    },
+  );
 }
 
 export function listPendingInvitations(email: string) {
-  return apiRequest<InvitationNotice[]>(`${ROOT}/invitations`, {
+  return apiRequest<InvitationNotice[]>(ENDPOINTS.organizations.invitations, {
     query: { email },
   });
 }
 
-export function listOrganizationMembers(organizationId: number, actorEmail: string) {
+export function listOrganizationMembers(
+  organizationId: number,
+  actorEmail: string,
+) {
   return apiRequest<OrganizationMember[]>(
-    `${ROOT}/${organizationId}/members`,
+    ENDPOINTS.organizations.members(organizationId),
     { query: { actor_email: actorEmail } },
   );
 }
@@ -69,7 +74,7 @@ export function inviteOrganizationMember(
   input: { actor_email: string; email: string; role: "admin" | "staff" },
 ) {
   return apiRequest<{ invitation_id: number }>(
-    `${ROOT}/${organizationId}/invitations`,
+    ENDPOINTS.organizations.organizationInvitations(organizationId),
     { method: "POST", body: input },
   );
 }
@@ -83,7 +88,7 @@ export function respondToInvitation(
     organization_id: number | null;
     organization_name: string | null;
     role: "owner" | "admin" | "staff" | null;
-  }>(`${ROOT}/invitations/${invitationId}/respond`, {
+  }>(ENDPOINTS.organizations.invitationResponse(invitationId), {
     method: "POST",
     body: { email, accept },
   });
@@ -95,7 +100,7 @@ export function removeOrganizationMember(
   actorEmail: string,
 ) {
   return apiRequest<void>(
-    `${ROOT}/${organizationId}/members/${encodeURIComponent(email)}`,
+    ENDPOINTS.organizations.member(organizationId, email),
     { method: "DELETE", query: { actor_email: actorEmail } },
   );
 }
@@ -107,13 +112,13 @@ export function changeOrganizationMemberRole(
   role: "admin" | "staff",
 ) {
   return apiRequest<void>(
-    `${ROOT}/${organizationId}/members/${encodeURIComponent(email)}/role`,
+    ENDPOINTS.organizations.memberRole(organizationId, email),
     { method: "PUT", body: { actor_email: actorEmail, role } },
   );
 }
 
 export function leaveOrganization(organizationId: number, email: string) {
-  return apiRequest<void>(`${ROOT}/${organizationId}/leave`, {
+  return apiRequest<void>(ENDPOINTS.organizations.leave(organizationId), {
     method: "POST",
     query: { email },
   });

@@ -8,7 +8,6 @@ export type InventoryStat = {
   icon: LucideIcon;
 };
 
-/** Product as the UI uses it (camelCase). The API sends snake_case; see lib/api/normalize.ts. */
 export type Product = {
   id: number;
   name: string;
@@ -27,7 +26,6 @@ export type Product = {
 
 export type Category = { id: number; name: string };
 
-/** What the Add / Edit form sends to the API. */
 export type ProductInput = {
   name: string;
   sku: string;
@@ -37,3 +35,5 @@ export type ProductInput = {
   quantity: number;
   minimumStock: number;
 };
+
+export type InventoryImportRow = { row: number; product: ProductInput };

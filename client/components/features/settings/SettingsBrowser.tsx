@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { AccountSettings } from "@/lib/api/settings";
 import ProfileCard from "./ProfileCard";
-import type { SettingsSection } from "@/lib/types/settings";
+import type { SettingsSection } from "@/lib/settings/types";
 import ProfileForm from "./ProfileForm";
 import PreferencesPanel from "./PreferencesPanel";
 import SecurityPanel from "./SecurityPanel";

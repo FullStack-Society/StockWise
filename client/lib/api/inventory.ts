@@ -1,13 +1,13 @@
 import "server-only";
 import type { Category, Product, ProductInput } from "@/lib/inventory/types";
-import { ApiError, apiRequest } from "./client";
-import { ENDPOINTS } from "./endpoints";
 import {
   toCategoryList,
   toPageCount,
   toProduct,
   toProductList,
-} from "./normalize";
+} from "@/lib/inventory/normalize";
+import { ApiError, apiRequest } from "./client";
+import { ENDPOINTS } from "./endpoints";
 
 /** UI fields -> the column names the PostgreSQL routines use. */
 const toBody = (input: ProductInput) => ({
@@ -26,14 +26,14 @@ const toBody = (input: ProductInput) => ({
  * ({ items, pages }), the remaining pages are fetched here (up to 50 pages of 100).
  */
 export async function listProducts(): Promise<Product[]> {
-  const firstPage = await apiRequest<unknown>(ENDPOINTS.inventory, {
+  const firstPage = await apiRequest<unknown>(ENDPOINTS.inventory.root, {
     query: { page_size: 100 },
   });
   const products = toProductList(firstPage);
 
   const pages = Math.min(toPageCount(firstPage), 50);
   for (let page = 2; page <= pages; page++) {
-    const next = await apiRequest<unknown>(ENDPOINTS.inventory, {
+    const next = await apiRequest<unknown>(ENDPOINTS.inventory.root, {
       query: { page_size: 100, page },
     });
     products.push(...toProductList(next));
@@ -43,7 +43,7 @@ export async function listProducts(): Promise<Product[]> {
 
 /** GET categories -> get_categories(). Tries each known URL; an empty list never breaks the page. */
 export async function listCategories(): Promise<Category[]> {
-  for (const path of ENDPOINTS.categories) {
+  for (const path of ENDPOINTS.inventory.categories) {
     try {
       return toCategoryList(await apiRequest<unknown>(path));
     } catch (error) {
@@ -53,7 +53,7 @@ export async function listCategories(): Promise<Category[]> {
     }
   }
   console.warn(
-    "[StockWise] No categories endpoint found. Check ENDPOINTS.categories in lib/api/endpoints.ts",
+    "[StockWise] No categories endpoint found. Check ENDPOINTS.inventory.categories in lib/api/endpoints.ts",
   );
   return [];
 }
@@ -61,7 +61,7 @@ export async function listCategories(): Promise<Category[]> {
 /** POST /api/inventory/ -> create_inventory() */
 export async function createProduct(input: ProductInput): Promise<Product> {
   return toProduct(
-    await apiRequest<unknown>(ENDPOINTS.inventory, {
+    await apiRequest<unknown>(ENDPOINTS.inventory.root, {
       method: "POST",
       body: toBody(input),
     }),
@@ -74,7 +74,7 @@ export async function updateProduct(
   input: ProductInput,
 ): Promise<Product> {
   return toProduct(
-    await apiRequest<unknown>(ENDPOINTS.inventoryItem(id), {
+    await apiRequest<unknown>(ENDPOINTS.inventory.item(id), {
       method: "PUT",
       body: toBody(input),
     }),
@@ -83,5 +83,5 @@ export async function updateProduct(
 
 /** DELETE /api/inventory/{id} -> delete_inventory() */
 export async function deleteProduct(id: number): Promise<void> {
-  await apiRequest<void>(ENDPOINTS.inventoryItem(id), { method: "DELETE" });
+  await apiRequest<void>(ENDPOINTS.inventory.item(id), { method: "DELETE" });
 }

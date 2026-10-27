@@ -66,6 +66,7 @@ def get_inventory_by_id(
 
 def get_categories(db: Session, organization_id: int) -> list[dict]:
     try:
+        repository.ensure_default_categories(db, organization_id)
         return repository.get_categories(db, organization_id)
     except SQLAlchemyError as exc:
         raise InventoryOperationError(

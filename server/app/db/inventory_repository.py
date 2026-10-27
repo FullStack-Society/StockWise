@@ -3,6 +3,36 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 
+DEFAULT_CATEGORIES = (
+    ("Electronics", "Electronic devices"),
+    ("Accessories", "Computer accessories"),
+    ("Office Supplies", "Office equipment"),
+    ("Networking", "Routers and networking equipment"),
+    ("Storage", "Storage devices"),
+)
+
+
+def ensure_default_categories(db: Session, organization_id: int) -> None:
+    db.execute(
+        text("""
+            INSERT INTO public.categories
+                (category_name, description, organization_id)
+            VALUES
+                (:category_name, :description, :organization_id)
+            ON CONFLICT (organization_id, category_name) DO NOTHING
+        """),
+        [
+            {
+                "category_name": name,
+                "description": description,
+                "organization_id": organization_id,
+            }
+            for name, description in DEFAULT_CATEGORIES
+        ],
+    )
+    db.commit()
+
+
 def get_inventory_list(
     db: Session,
     organization_id: int,

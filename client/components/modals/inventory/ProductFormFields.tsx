@@ -77,7 +77,10 @@ export default function ProductFormFields({
           <select
             {...inputProps("categoryId")}
             defaultValue={product?.categoryId ?? ""}
-            className={cls(styles.select, "categoryId")}
+            className={cls(
+              `${styles.select} ${styles.categorySelect}`,
+              "categoryId",
+            )}
           >
             <option value="">No category</option>
             {categories.map((category) => (

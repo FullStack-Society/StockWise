@@ -1,4 +1,4 @@
-import type { Category, Product, StockStatus } from "@/lib/inventory/types";
+import type { Category, Product, StockStatus } from "./types";
 
 type Raw = Record<string, unknown>;
 

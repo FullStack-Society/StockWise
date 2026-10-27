@@ -9,7 +9,7 @@ import {
   updateProduct,
 } from "@/lib/api/inventory";
 import { requireOrganizationSession } from "@/lib/auth/session";
-import type { ProductInput } from "./types";
+import type { InventoryImportRow, ProductInput } from "./types";
 import { ROUTES } from "@/app/routes";
 import { parseProductForm } from "./validation";
 
@@ -17,7 +17,6 @@ export type ActionResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
-export type InventoryImportRow = { row: number; product: ProductInput };
 export type InventoryImportResult = {
   imported: number;
   failures: Array<{ row: number; error: string }>;

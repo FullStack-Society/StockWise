@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Role } from "@/lib/auth/roles";
 import { canManageUser } from "@/lib/auth/roles";
-import type { TeamUser } from "@/lib/types/users";
+import type { TeamUser } from "@/lib/users/types";
 import type { OrganizationMember } from "@/lib/api/organizations";
 import {
   changeOrganizationRoleAction,

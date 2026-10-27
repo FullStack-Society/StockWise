@@ -2,8 +2,6 @@ import "server-only";
 import { createHmac } from "node:crypto";
 import { getSession } from "@/lib/auth/session";
 
-// Server-side only: the browser never talks to FastAPI directly (no CORS, nothing exposed).
-// Keep these environment variables private; this module is server-only.
 const BASE_URL = (
   process.env.API_URL ??
   process.env.BACKEND_API_URL ??
@@ -28,7 +26,6 @@ type Options = {
   signActor?: boolean;
 };
 
-/** FastAPI errors look like {"detail": "text"} or {"detail": [{loc, msg}, ...]}. */
 async function readErrorMessage(res: Response): Promise<string> {
   try {
     const data: unknown = await res.json();
@@ -42,9 +39,7 @@ async function readErrorMessage(res: Response): Promise<string> {
         })
         .join("; ");
     }
-  } catch {
-    // body was not JSON
-  }
+  } catch {}
   if (res.status === 404) return "Not found.";
   if (res.status === 409) return "This conflicts with existing data.";
   if (res.status === 422) return "Please check the values and try again.";
@@ -66,9 +61,14 @@ export async function apiRequest<T>(
   try {
     const session = await getSession();
     if (signActor && (!session?.email || !INTERNAL_API_KEY)) {
-      throw new ApiError(401, "A signed-in account is required for this action.");
+      throw new ApiError(
+        401,
+        "A signed-in account is required for this action.",
+      );
     }
-    const actorTimestamp = signActor ? String(Math.floor(Date.now() / 1000)) : "";
+    const actorTimestamp = signActor
+      ? String(Math.floor(Date.now() / 1000))
+      : "";
     const actorSignature = signActor
       ? createHmac("sha256", INTERNAL_API_KEY!)
           .update(`${method}\n${path}\n${session!.email}\n${actorTimestamp}`)
@@ -78,9 +78,7 @@ export async function apiRequest<T>(
       method,
       headers: {
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-        ...(INTERNAL_API_KEY
-          ? { "X-Internal-API-Key": INTERNAL_API_KEY }
-          : {}),
+        ...(INTERNAL_API_KEY ? { "X-Internal-API-Key": INTERNAL_API_KEY } : {}),
         ...(session?.email ? { "X-User-Email": session.email } : {}),
         ...(signActor
           ? {

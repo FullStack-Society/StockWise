@@ -9,7 +9,7 @@ import {
   Building2,
 } from "lucide-react";
 import styles from "@/styles/settings/ProfileCard.module.css";
-import type { SettingsSection } from "@/lib/types/settings";
+import type { SettingsSection } from "@/lib/settings/types";
 
 const ITEMS = [
   { id: "profile", label: "Personal Profile", icon: User },

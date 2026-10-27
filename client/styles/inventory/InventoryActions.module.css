@@ -125,6 +125,15 @@
   outline: 0;
   border-color: var(--color-accent);
 }
+.categorySelect {
+  border-color: none;
+  background-color: none;
+}
+.categorySelect option {
+  background: #0a0f16;
+  color: var(--color-text);
+}
+
 .invalid {
   border-color: var(--color-danger);
 }

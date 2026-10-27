@@ -1,5 +1,5 @@
 import { Users, Crown, ShieldCheck, Boxes } from "lucide-react";
-import type { TeamUser } from "@/lib/types/users";
+import type { TeamUser } from "@/lib/users/types";
 import styles from "@/styles/users/UsersStats.module.css";
 
 export default function UsersStats({ users }: { users: TeamUser[] }) {

@@ -6,7 +6,7 @@ import {
   canManageUser,
   type Role,
 } from "@/lib/auth/roles";
-import type { TeamUser } from "@/lib/types/users";
+import type { TeamUser } from "@/lib/users/types";
 import styles from "@/styles/users/UsersTable.module.css";
 
 type Props = {

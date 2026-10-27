@@ -1,5 +1,6 @@
 import "server-only";
 import { apiRequest } from "./client";
+import { ENDPOINTS } from "./endpoints";
 
 export type ReportPeriod = 30 | 90 | 365;
 
@@ -40,7 +41,7 @@ export type InventoryReportData = {
 };
 
 export function getInventoryReport(days: ReportPeriod) {
-  return apiRequest<InventoryReportData>("/api/reports/inventory", {
+  return apiRequest<InventoryReportData>(ENDPOINTS.reports.inventory, {
     query: { days },
   });
 }

@@ -1,5 +1,6 @@
 import "server-only";
 import { apiRequest } from "./client";
+import { ENDPOINTS } from "./endpoints";
 
 export type AccountSettings = {
   email: string;
@@ -9,17 +10,17 @@ export type AccountSettings = {
   invitation_notifications: boolean;
 };
 
-const ROOT = "/api/settings";
-
 export function getAccountSettings(email: string) {
-  return apiRequest<AccountSettings>(ROOT, { query: { email } });
+  return apiRequest<AccountSettings>(ENDPOINTS.settings.root, {
+    query: { email },
+  });
 }
 
 export function updateAccountProfile(
   email: string,
   input: { timezone: string },
 ) {
-  return apiRequest<AccountSettings>(`${ROOT}/profile`, {
+  return apiRequest<AccountSettings>(ENDPOINTS.settings.profile, {
     method: "PUT",
     query: { email },
     body: input,
@@ -32,7 +33,7 @@ export function updateAccountPreferences(
     invitation_notifications: boolean;
   },
 ) {
-  return apiRequest<AccountSettings>(`${ROOT}/preferences`, {
+  return apiRequest<AccountSettings>(ENDPOINTS.settings.preferences, {
     method: "PUT",
     query: { email },
     body: input,
@@ -40,7 +41,7 @@ export function updateAccountPreferences(
 }
 
 export function softDeleteCurrentAccount() {
-  return apiRequest<void>(`${ROOT}/account`, {
+  return apiRequest<void>(ENDPOINTS.settings.account, {
     method: "DELETE",
     signActor: true,
   });

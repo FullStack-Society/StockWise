@@ -5,7 +5,7 @@ import {
   DollarSign,
   Package,
 } from "lucide-react";
-import type { DashboardStat } from "@/lib/types/dashboard";
+import type { DashboardStat } from "@/lib/dashboard/types";
 import type { InventoryStat, Product } from "./types";
 
 const compactUsd = new Intl.NumberFormat("en-US", {

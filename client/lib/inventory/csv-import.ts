@@ -1,5 +1,4 @@
-import type { Category, ProductInput } from "./types";
-import type { InventoryImportRow } from "./actions";
+import type { Category, InventoryImportRow, ProductInput } from "./types";
 
 export type ParseResult = {
   rows: InventoryImportRow[];
@@ -148,4 +147,3 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
     throw new Error("Import up to 500 products at a time.");
   return { rows, issues };
 }
-

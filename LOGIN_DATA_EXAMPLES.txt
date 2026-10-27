@@ -3,8 +3,8 @@ StockWise login examples (local development)
 
 OWNER
 -----
-Email: owner@example.com
-Password: MyOwnStrongPassword123!
+Email: zjzeppy08@gmail.com
+Password: zeppy1234567
 
 ADMIN
 -----
