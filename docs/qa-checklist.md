@@ -1,6 +1,6 @@
 # StockWise: Initial QA Testing Checklist
 
-**Status key:** ✅ Pass, ❌ Fail, ⏳ Not tested
+Status key: ✅ Pass, ❌ Fail, ⏳ Not tested
 
 ## 1. Authentication
 - [ ] User can log in with a valid email and password
@@ -21,6 +21,7 @@
 - [ ] Edit a product and see the update
 - [ ] Delete a product (with confirmation)
 - [ ] View the product list
+- [ ] Search for a product works
 - [ ] Duplicate products are handled
 
 ## 4. Stock Monitoring
@@ -41,12 +42,24 @@
 - [ ] No alert when stock is above the minimum
 - [ ] Alert clears after restocking
 
-## 7. Database and API
+## 7. Inventory History
+- [ ] History page shows all stock in and stock out
+- [ ] Each record shows the product, quantity, date, and user
+- [ ] History stays correct after refreshing the page
+
+## 8. Dashboard
+- [ ] Dashboard opens after login
+- [ ] Total products is correct
+- [ ] Low-stock items are shown
+- [ ] Numbers match the database
+- [ ] Page is clear and easy to use
+
+## 9. Database and API
 - [ ] Data is saved in PostgreSQL
 - [ ] Data stays after refreshing the page
 - [ ] API returns the right status codes (tested in Postman)
 
-## 8. General
+## 10. General
 - [ ] Pages work on laptop and smartphone
 - [ ] Pages load in a reasonable time
 - [ ] Error messages are clear
