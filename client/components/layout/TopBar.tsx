@@ -1,4 +1,3 @@
-import { Search } from "lucide-react";
 import {
   listOrganizations,
   listPendingInvitations,
@@ -8,7 +7,9 @@ import {
 import { getAccountSettings } from "@/lib/api/settings";
 import { getSession } from "@/lib/auth/session";
 import styles from "@/styles/layout/TopBar.module.css";
+import MobileNavigation from "./MobileNavigation";
 import TopBarControls from "./TopBarControls";
+import TopBarSearch from "./TopBarSearch";
 
 export default async function Topbar() {
   const user = await getSession();
@@ -41,14 +42,15 @@ export default async function Topbar() {
 
   return (
     <header className={styles.topbar}>
-      <label className={styles.search}>
-        <Search size={14} />
-        <input
-          type="search"
-          placeholder="Search products, SKU..."
-          className={styles.searchInput}
-        />
-      </label>
+      <MobileNavigation />
+      <TopBarSearch
+        role={
+          organizations.find(
+            (organization) =>
+              organization.organization_id === user?.organizationId,
+          )?.role ?? user?.role ?? null
+        }
+      />
 
       <TopBarControls
         user={user}

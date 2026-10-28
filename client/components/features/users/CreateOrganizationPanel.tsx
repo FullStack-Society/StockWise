@@ -27,7 +27,10 @@ export default function CreateOrganizationPanel() {
   return (
     <form className={styles.createOrgPanel} onSubmit={submit}>
       <h2>Create an organization</h2>
-      <p>Create your business space, then invite registered StockWise accounts to join it.</p>
+      <p>
+        Create your business space, then invite registered StockWise accounts to
+        join it.
+      </p>
       <label>
         Organization name
         <input
@@ -38,7 +41,11 @@ export default function CreateOrganizationPanel() {
           autoComplete="organization"
         />
       </label>
-      {error && <p role="alert" className={styles.createOrgError}>{error}</p>}
+      {error && (
+        <p role="alert" className={styles.createOrgError}>
+          {error}
+        </p>
+      )}
       <button type="submit" disabled={pending}>
         {pending ? "Creating…" : "Create organization"}
       </button>

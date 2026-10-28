@@ -1,14 +1,18 @@
 "use client";
 
-import { FileUp, Plus } from "lucide-react";
+import { Download, FileUp, Plus } from "lucide-react";
 import styles from "@/styles/inventory/InventoryHeader.module.css";
 
 export default function InventoryHeader({
   onAdd,
   onImport,
+  onExport,
+  canExport,
 }: {
   onAdd: () => void;
   onImport: () => void;
+  onExport: () => void;
+  canExport: boolean;
 }) {
   return (
     <div className={styles.header}>
@@ -20,6 +24,15 @@ export default function InventoryHeader({
       </div>
 
       <div className={styles.actions}>
+        <button
+          type="button"
+          onClick={onExport}
+          className={styles.button}
+          disabled={!canExport}
+        >
+          <Download size={14} />
+          Export CSV
+        </button>
         <button type="button" onClick={onImport} className={styles.button}>
           <FileUp size={14} />
           Import Data

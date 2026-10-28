@@ -1,4 +1,9 @@
-import { DollarSign, Package, ArrowUpFromLine, TriangleAlert } from "lucide-react";
+import {
+  DollarSign,
+  Package,
+  ArrowUpFromLine,
+  TriangleAlert,
+} from "lucide-react";
 import type { InventoryReportData } from "@/lib/api/reports";
 import { formatCurrency } from "@/lib/utils/format";
 import styles from "@/styles/reports/ReportStats.module.css";
@@ -11,18 +16,61 @@ const ICONS = {
 };
 
 function comparison(current: number, previous: number) {
-  if (previous === 0) return current === 0 ? "No movement in either period" : "New movement in this period";
+  if (previous === 0)
+    return current === 0
+      ? "No movement in either period"
+      : "New movement in this period";
   const percent = ((current - previous) / previous) * 100;
   const rounded = Math.abs(percent).toFixed(1);
   return `${percent >= 0 ? "+" : "−"}${rounded}% vs previous period`;
 }
 
-export default function ReportStats({ report }: { report: InventoryReportData }) {
+export default function ReportStats({
+  report,
+}: {
+  report: InventoryReportData;
+}) {
   const stats = [
-    { id: "value", label: "Current Inventory Value", value: formatCurrency(Number(report.inventory_value)), change: "Based on current product prices", icon: "value" as const, trend: "up" as const },
-    { id: "products", label: "Active Products", value: report.product_count.toLocaleString(), change: `${report.stock_units.toLocaleString()} units in stock`, icon: "products" as const, trend: "up" as const },
-    { id: "issued", label: "Units Issued", value: report.units_issued.toLocaleString(), change: comparison(report.units_issued, report.previous_units_issued), icon: "issued" as const, trend: report.units_issued >= report.previous_units_issued ? "up" as const : "down" as const },
-    { id: "alerts", label: "Low / Out of Stock", value: (report.low_stock_count + report.out_of_stock_count).toLocaleString(), change: `${report.low_stock_count} low · ${report.out_of_stock_count} out`, icon: "alerts" as const, trend: report.low_stock_count + report.out_of_stock_count ? "down" as const : "up" as const },
+    {
+      id: "value",
+      label: "Current Inventory Value",
+      value: formatCurrency(Number(report.inventory_value)),
+      change: "Based on current product prices",
+      icon: "value" as const,
+      trend: "up" as const,
+    },
+    {
+      id: "products",
+      label: "Active Products",
+      value: report.product_count.toLocaleString(),
+      change: `${report.stock_units.toLocaleString()} units in stock`,
+      icon: "products" as const,
+      trend: "up" as const,
+    },
+    {
+      id: "issued",
+      label: "Units Issued",
+      value: report.units_issued.toLocaleString(),
+      change: comparison(report.units_issued, report.previous_units_issued),
+      icon: "issued" as const,
+      trend:
+        report.units_issued >= report.previous_units_issued
+          ? ("up" as const)
+          : ("down" as const),
+    },
+    {
+      id: "alerts",
+      label: "Low / Out of Stock",
+      value: (
+        report.low_stock_count + report.out_of_stock_count
+      ).toLocaleString(),
+      change: `${report.low_stock_count} low · ${report.out_of_stock_count} out`,
+      icon: "alerts" as const,
+      trend:
+        report.low_stock_count + report.out_of_stock_count
+          ? ("down" as const)
+          : ("up" as const),
+    },
   ];
 
   return (

@@ -9,7 +9,12 @@ export default function DangerZone({ isOwner }: { isOwner: boolean }) {
   const [pending, startTransition] = useTransition();
 
   function onDelete() {
-    if (!window.confirm("Deactivate your StockWise account? Your account and inventory history will be retained, but you will be signed out and lose organization access.")) return;
+    if (
+      !window.confirm(
+        "Deactivate your StockWise account? Your account and inventory history will be retained, but you will be signed out and lose organization access.",
+      )
+    )
+      return;
     setError("");
     startTransition(async () => {
       const result = await deleteMyAccount();
@@ -22,14 +27,25 @@ export default function DangerZone({ isOwner }: { isOwner: boolean }) {
       <div>
         <h2 className={styles.dangerTitle}>Delete Account</h2>
         <p className={styles.dangerText}>
-          Your account will be deactivated and access removed. Historical records are retained.
-          {isOwner && " Transfer ownership and leave every organization before deleting your owner account."}
+          Your account will be deactivated and access removed. Historical
+          records are retained.
+          {isOwner &&
+            " Transfer ownership and leave every organization before deleting your owner account."}
         </p>
       </div>
-      <button type="button" className={styles.dangerBtn} onClick={onDelete} disabled={pending}>
+      <button
+        type="button"
+        className={styles.dangerBtn}
+        onClick={onDelete}
+        disabled={pending}
+      >
         {pending ? "Deleting…" : "Delete Account"}
       </button>
-      {error && <p role="alert" className={styles.dangerError}>{error}</p>}
+      {error && (
+        <p role="alert" className={styles.dangerError}>
+          {error}
+        </p>
+      )}
     </section>
   );
 }

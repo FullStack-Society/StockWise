@@ -5,8 +5,14 @@ import type { AccountSettings } from "@/lib/api/settings";
 import { savePreferences } from "@/lib/settings/actions";
 import styles from "@/styles/settings/PreferencesPanel.module.css";
 
-export default function PreferencesPanel({ settings }: { settings: AccountSettings }) {
-  const [invitationNotifications, setInvitationNotifications] = useState(settings.invitation_notifications);
+export default function PreferencesPanel({
+  settings,
+}: {
+  settings: AccountSettings;
+}) {
+  const [invitationNotifications, setInvitationNotifications] = useState(
+    settings.invitation_notifications,
+  );
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -24,7 +30,12 @@ export default function PreferencesPanel({ settings }: { settings: AccountSettin
   }
 
   const items = [
-    { id: "invitation_notifications" as const, title: "Invitation notifications", description: "Show organization invitations in your notification area.", enabled: invitationNotifications },
+    {
+      id: "invitation_notifications" as const,
+      title: "Invitation notifications",
+      description: "Show organization invitations in your notification area.",
+      enabled: invitationNotifications,
+    },
   ];
 
   return (
@@ -53,7 +64,11 @@ export default function PreferencesPanel({ settings }: { settings: AccountSettin
           </li>
         ))}
       </ul>
-      {message && <p className={styles.message} role="status">{message}</p>}
+      {message && (
+        <p className={styles.message} role="status">
+          {message}
+        </p>
+      )}
     </section>
   );
 }

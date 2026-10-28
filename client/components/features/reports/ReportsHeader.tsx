@@ -14,7 +14,8 @@ export default function ReportsHeader({
       <div>
         <h1 className={styles.title}>Reports &amp; Analytics</h1>
         <p className={styles.subtitle}>
-          Current inventory value and recorded stock movement for your organization.
+          Current inventory value and recorded stock movement for your
+          organization.
         </p>
       </div>
       <ReportActions days={days} report={report} />

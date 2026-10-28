@@ -48,7 +48,9 @@ export default function UsersBrowser({
   initialMembers,
 }: Props) {
   const router = useRouter();
-  const [users, setUsers] = useState<TeamUser[]>(initialMembers.map(toTeamUser));
+  const [users, setUsers] = useState<TeamUser[]>(
+    initialMembers.map(toTeamUser),
+  );
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -114,7 +116,12 @@ export default function UsersBrowser({
   }
 
   function leaveOrganization() {
-    if (!window.confirm(`Leave ${organizationName}? You will lose access to its inventory.`)) return;
+    if (
+      !window.confirm(
+        `Leave ${organizationName}? You will lose access to its inventory.`,
+      )
+    )
+      return;
     startTransition(async () => {
       const result = await leaveOrganizationAction();
       if (!result.ok) {
@@ -134,7 +141,11 @@ export default function UsersBrowser({
         onLeave={leaveOrganization}
         pending={pending}
       />
-      {error && <p className={styles.errorBanner} role="alert">{error}</p>}
+      {error && (
+        <p className={styles.errorBanner} role="alert">
+          {error}
+        </p>
+      )}
       <UsersStats users={users} />
       <section className={styles.listPanel}>
         <UsersFilterBar

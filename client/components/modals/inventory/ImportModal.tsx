@@ -76,12 +76,28 @@ export default function ImportModal({
   function startImport() {
     setError("");
     startTransition(async () => {
-      const response = await importProductsAction(parsed.rows);
-      setImportedCount(response.imported);
-      setResult(
-        [...parsed.issues, ...response.failures].sort((a, b) => a.row - b.row),
-      );
-      if (response.imported > 0) onImported();
+      let totalImported = 0;
+      const failures: ParseResult["issues"] = [];
+      try {
+        for (let offset = 0; offset < parsed.rows.length; offset += 500) {
+          const batch = parsed.rows.slice(offset, offset + 500);
+          const response = await importProductsAction(batch);
+          totalImported += response.imported;
+          failures.push(...response.failures);
+          setImportedCount(totalImported);
+          setResult([...failures].sort((a, b) => a.row - b.row));
+        }
+        if (totalImported > 0) onImported();
+      } catch (cause) {
+        setImportedCount(totalImported);
+        setResult([...failures].sort((a, b) => a.row - b.row));
+        if (totalImported > 0) onImported();
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "The import failed. Please try again.",
+        );
+      }
     });
   }
 
@@ -126,14 +142,15 @@ export default function ImportModal({
             className={extra.templateButton}
             onClick={downloadTemplate}
           >
-            <Download size={13} aria-hidden /> Download template
+            <Download size={13} aria-hidden /> Download blank template
           </button>
         </div>
 
         <p className={extra.help}>
-          Required columns: Product Name and SKU. Optional columns: Category,
-          Description, Price, Quantity, and Minimum Stock. Category names must
-          match this organization’s categories.
+          This template contains headers only. Add at least one product row
+          before importing. Required columns: Product Name and SKU. Optional
+          columns: Category, Description, Price, Quantity, and Minimum Stock.
+          Category names must match this organization’s categories.
         </p>
 
         {error && (
@@ -149,6 +166,21 @@ export default function ImportModal({
                 {parsed.issues.length} row(s) need attention and will be
                 skipped.
               </span>
+            )}
+          </div>
+        )}
+        {parsed.issues.length > 0 && (
+          <div className={extra.issues} role="alert">
+            <strong>Rows that need attention</strong>
+            <ul>
+              {parsed.issues.slice(0, 8).map((issue) => (
+                <li key={`${issue.row}-${issue.error}`}>
+                  Row {issue.row}: {issue.error}
+                </li>
+              ))}
+            </ul>
+            {parsed.issues.length > 8 && (
+              <p>{parsed.issues.length - 8} more row issue(s).</p>
             )}
           </div>
         )}

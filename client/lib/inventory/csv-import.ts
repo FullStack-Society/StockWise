@@ -51,7 +51,9 @@ function normalizedHeader(value: string) {
 export function parseProducts(csv: string, categories: Category[]): ParseResult {
   const records = parseCsv(csv);
   if (records.length < 2)
-    throw new Error("Add a header row and at least one product row.");
+    throw new Error(
+      "This CSV has no product rows. Add at least one product beneath the header row before importing.",
+    );
 
   const headers = records[0].map(normalizedHeader);
   const find = (...names: string[]) =>
@@ -143,7 +145,5 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
     rows.push({ row: rowNumber, product });
   }
 
-  if (rows.length > 500)
-    throw new Error("Import up to 500 products at a time.");
   return { rows, issues };
 }

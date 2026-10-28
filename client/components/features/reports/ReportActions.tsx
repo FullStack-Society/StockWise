@@ -27,7 +27,15 @@ export default function ReportActions({
       ["Units issued", report.units_issued],
       ["Transactions", report.transaction_count],
       [],
-      ["Product", "SKU", "Category", "Units issued", "Current stock", "Minimum stock", "Current stock value"],
+      [
+        "Product",
+        "SKU",
+        "Category",
+        "Units issued",
+        "Current stock",
+        "Minimum stock",
+        "Current stock value",
+      ],
       ...report.products.map((p) => [
         p.name,
         p.sku,
@@ -60,7 +68,10 @@ export default function ReportActions({
     <div className={styles.actions}>
       <label className={styles.rangeLabel}>
         <span>Period</span>
-        <select value={days} onChange={(event) => changeRange(event.target.value)}>
+        <select
+          value={days}
+          onChange={(event) => changeRange(event.target.value)}
+        >
           <option value={30}>30 days</option>
           <option value={90}>90 days</option>
           <option value={365}>12 months</option>
@@ -73,7 +84,12 @@ export default function ReportActions({
       >
         <Printer size={14} aria-hidden /> Print Report
       </button>
-      <button type="button" className={styles.actionBtn} onClick={exportCsv} disabled={!report}>
+      <button
+        type="button"
+        className={styles.actionBtn}
+        onClick={exportCsv}
+        disabled={!report}
+      >
         <Download size={14} aria-hidden /> Export CSV
       </button>
     </div>

@@ -33,7 +33,9 @@ export default function OrganizationPanel({
       <div className={styles.cardHead}>
         <div>
           <h2 className={styles.cardTitle}>Organization</h2>
-          <p className={styles.cardSub}>Update the name members see throughout StockWise.</p>
+          <p className={styles.cardSub}>
+            Update the name members see throughout StockWise.
+          </p>
         </div>
         <button type="submit" className={styles.saveBtn} disabled={isPending}>
           <Save size={12} aria-hidden /> {isPending ? "Saving…" : "Save Name"}
@@ -54,7 +56,11 @@ export default function OrganizationPanel({
           />
         </label>
       </div>
-      {message && <p className={styles.formMessage} role="status">{message}</p>}
+      {message && (
+        <p className={styles.formMessage} role="status">
+          {message}
+        </p>
+      )}
     </form>
   );
 }

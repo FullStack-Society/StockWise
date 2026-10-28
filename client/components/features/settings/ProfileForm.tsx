@@ -17,7 +17,13 @@ const TIMEZONES = [
   ["UTC", "UTC"],
 ];
 
-export default function ProfileForm({ settings, roleLabel }: { settings: AccountSettings; roleLabel: string }) {
+export default function ProfileForm({
+  settings,
+  roleLabel,
+}: {
+  settings: AccountSettings;
+  roleLabel: string;
+}) {
   const [timezone, setTimezone] = useState(settings.timezone);
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -36,34 +42,65 @@ export default function ProfileForm({ settings, roleLabel }: { settings: Account
       <div className={styles.cardHead}>
         <div>
           <h2 className={styles.cardTitle}>Personal Profile</h2>
-          <p className={styles.cardSub}>Your account identity and organization role are read-only.</p>
+          <p className={styles.cardSub}>
+            Your account identity and organization role are read-only.
+          </p>
         </div>
         <button type="submit" className={styles.saveBtn} disabled={isPending}>
-          <Save size={12} aria-hidden /> {isPending ? "Saving…" : "Save Changes"}
+          <Save size={12} aria-hidden />{" "}
+          {isPending ? "Saving…" : "Save Changes"}
         </button>
       </div>
 
       <div className={styles.fieldGrid}>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Name</span>
-          <input className={`${styles.input} ${styles.readOnly}`} value={settings.name} readOnly aria-readonly="true" />
+          <input
+            className={`${styles.input} ${styles.readOnly}`}
+            value={settings.name}
+            readOnly
+            aria-readonly="true"
+          />
         </label>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Email Address</span>
-          <input className={`${styles.input} ${styles.readOnly}`} type="email" value={settings.email} readOnly aria-readonly="true" />
+          <input
+            className={`${styles.input} ${styles.readOnly}`}
+            type="email"
+            value={settings.email}
+            readOnly
+            aria-readonly="true"
+          />
         </label>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Position</span>
-          <input className={`${styles.input} ${styles.readOnly}`} value={roleLabel} readOnly aria-readonly="true" />
+          <input
+            className={`${styles.input} ${styles.readOnly}`}
+            value={roleLabel}
+            readOnly
+            aria-readonly="true"
+          />
         </label>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Timezone</span>
-          <select className={styles.input} value={timezone} onChange={(event) => setTimezone(event.target.value)}>
-            {TIMEZONES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          <select
+            className={styles.input}
+            value={timezone}
+            onChange={(event) => setTimezone(event.target.value)}
+          >
+            {TIMEZONES.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </label>
       </div>
-      {message && <p className={styles.formMessage} role="status">{message}</p>}
+      {message && (
+        <p className={styles.formMessage} role="status">
+          {message}
+        </p>
+      )}
     </form>
   );
 }

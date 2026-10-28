@@ -16,7 +16,12 @@ export default function StaffOrganizationActions({
   const [error, setError] = useState("");
 
   function leave() {
-    if (!window.confirm(`Leave ${organizationName}? You will lose access to its inventory.`)) return;
+    if (
+      !window.confirm(
+        `Leave ${organizationName}? You will lose access to its inventory.`,
+      )
+    )
+      return;
     startTransition(async () => {
       const result = await leaveOrganizationAction();
       if (!result.ok) setError(result.error);
@@ -27,7 +32,11 @@ export default function StaffOrganizationActions({
   return (
     <div>
       <LeaveOrganizationButton onLeave={leave} disabled={pending} />
-      {error && <p className={styles.errorBanner} role="alert">{error}</p>}
+      {error && (
+        <p className={styles.errorBanner} role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

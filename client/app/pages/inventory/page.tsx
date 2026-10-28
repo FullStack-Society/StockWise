@@ -37,6 +37,7 @@ export default async function InventoryPage({ searchParams }: PageProps) {
     <div className={styles.page}>
       <InventoryBrowser
         {...inventory}
+        exportProducts={products}
         categories={categories}
         filters={view.filters}
       />

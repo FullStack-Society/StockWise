@@ -12,14 +12,18 @@ export default function SecurityPanel() {
     <section className={styles.panel} aria-labelledby="security-title">
       <header className={styles.header}>
         <h2 id="security-title">Security</h2>
-        <p>Review the sign-in protections available for your StockWise account.</p>
+        <p>
+          Review the sign-in protections available for your StockWise account.
+        </p>
       </header>
 
       <div className={styles.scoreCard}>
         <div className={styles.scoreHead}>
           <div>
             <h3>Account security score</h3>
-            <p>Based on the sign-in protections currently available in StockWise.</p>
+            <p>
+              Based on the sign-in protections currently available in StockWise.
+            </p>
           </div>
           <strong className={styles.scoreValue}>{securityScore}%</strong>
         </div>
@@ -34,30 +38,43 @@ export default function SecurityPanel() {
           <span style={{ width: `${securityScore}%` }} />
         </div>
         <p className={styles.scoreHint}>
-          Password sign-in is enabled. Two-factor authentication is not set up, so this score is a setup checklist—not a guarantee that the account is secure.
+          Password sign-in is enabled. Two-factor authentication is not set up,
+          so this score is a setup checklist—not a guarantee that the account is
+          secure.
         </p>
       </div>
 
       <div className={styles.item}>
-        <div className={styles.icon} aria-hidden><KeyRound size={17} /></div>
+        <div className={styles.icon} aria-hidden>
+          <KeyRound size={17} />
+        </div>
         <div className={styles.content}>
           <h3>Password sign-in</h3>
-          <p>Your account uses your email address and password to sign in. Use a unique password and keep it private.</p>
+          <p>
+            Your account uses your email address and password to sign in. Use a
+            unique password and keep it private.
+          </p>
         </div>
         <span className={styles.enabled}>Enabled</span>
       </div>
 
       <div className={styles.item}>
-        <div className={styles.icon} aria-hidden><ShieldCheck size={17} /></div>
+        <div className={styles.icon} aria-hidden>
+          <ShieldCheck size={17} />
+        </div>
         <div className={styles.content}>
           <h3>Two-factor authentication</h3>
-          <p>An additional verification step is not configured for this account yet.</p>
+          <p>
+            An additional verification step is not configured for this account
+            yet.
+          </p>
         </div>
         <span className={styles.unavailable}>Not set up</span>
       </div>
 
       <p className={styles.note}>
-        Two-factor setup and password changes aren’t available in StockWise yet. Your sign-in details remain managed by your account credentials.
+        Two-factor setup and password changes aren’t available in StockWise yet.
+        Your sign-in details remain managed by your account credentials.
       </p>
     </section>
   );

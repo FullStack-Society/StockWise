@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { deleteProductAction } from "@/lib/inventory/actions";
+import { exportProductsCsv } from "@/lib/inventory/csv-export";
 import type { InventoryFilters } from "@/lib/inventory/query";
 import type { Category, Product } from "@/lib/inventory/types";
 import FilterBar from "./FilterBar";
@@ -21,6 +22,7 @@ type Props = {
   page: number;
   pageCount: number;
   start: number;
+  exportProducts: Product[];
   categories: Category[];
   filters: InventoryFilters;
 };
@@ -42,6 +44,7 @@ export default function InventoryBrowser({
   page,
   pageCount,
   start,
+  exportProducts,
   categories,
   filters,
 }: Props) {
@@ -55,6 +58,18 @@ export default function InventoryBrowser({
   const [modal, setModal] = useState<ModalState>(null);
   const [showImport, setShowImport] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  function downloadInventory() {
+    const blob = new Blob(["\uFEFF", exportProductsCsv(exportProducts)], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "stockwise-inventory.csv";
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   const { query: urlQuery, category, status } = filters;
 
@@ -140,6 +155,8 @@ export default function InventoryBrowser({
       <InventoryHeader
         onAdd={() => setModal({ mode: "create" })}
         onImport={() => setShowImport(true)}
+        onExport={downloadInventory}
+        canExport={exportProducts.length > 0}
       />
 
       {actionError && (
