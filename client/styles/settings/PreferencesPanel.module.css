@@ -1,0 +1,343 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.headActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.cardTitle {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.cardSub {
+  margin: 5px 0 0;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.subsection {
+  margin-top: 16px;
+}
+.sectionLabel {
+  display: block;
+  margin: 0 0 7px;
+  color: var(--color-text-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.themeCard {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-glass);
+  color: var(--color-text-muted);
+  text-align: left;
+}
+.themeCard:disabled {
+  opacity: 0.82;
+  cursor: not-allowed;
+}
+.themeSelected {
+  border-color: var(--color-accent);
+  background: rgba(224, 122, 46, 0.08);
+}
+.themeHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text);
+  font-size: 9px;
+}
+.themeHead svg:last-child {
+  margin-left: auto;
+  color: var(--color-accent);
+}
+.themeSample {
+  display: block;
+  height: 34px;
+  margin-top: 8px;
+  border: 1px solid var(--color-border);
+}
+.sampleDark {
+  background: linear-gradient(90deg, #090b10 20%, #263b42 20%, #101216 100%);
+}
+.sampleLight {
+  background: linear-gradient(90deg, #e5e5e5 20%, #faf4e9 20%, #fffdf8 100%);
+}
+.sampleSystem {
+  background: linear-gradient(90deg, #101216 0 50%, #faf4e9 50%);
+}
+.preferenceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+  margin-top: 15px;
+}
+.field {
+  display: block;
+  min-width: 0;
+}
+.fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.input,
+.readonlySetting {
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 9px;
+}
+.input:disabled {
+  color: var(--color-text-muted);
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+.input option {
+  background: var(--color-header);
+  color: var(--color-text);
+}
+.selectWrap {
+  position: relative;
+  display: block;
+}
+.selectWrap .input {
+  appearance: none;
+  padding-right: 28px;
+}
+.selectWrap svg {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+.segmented {
+  display: flex;
+  min-height: 34px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+}
+.segmented button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 9px;
+}
+.segmented .segmentActive {
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+.notificationWrap {
+  margin-top: 14px;
+  overflow-x: auto;
+}
+.notificationTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9px;
+}
+.notificationTable th,
+.notificationTable td {
+  padding: 8px 7px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: center;
+}
+.notificationTable thead th {
+  color: var(--color-text-muted);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.notificationTable thead th:first-child,
+.notificationTable tbody th {
+  width: 55%;
+  text-align: left;
+}
+.notificationTable tbody th {
+  color: var(--color-text);
+  font-size: 9px;
+  font-weight: 600;
+}
+.notificationTable tbody th small {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: 8px;
+  font-weight: 400;
+}
+.switch {
+  position: relative;
+  width: 31px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: rgba(255, 255, 255, 0.17);
+  vertical-align: middle;
+}
+.switch:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+.switch:not(:disabled) {
+  cursor: pointer;
+}
+.switchOn {
+  background: var(--color-accent);
+}
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-text);
+  transition: transform 0.15s;
+}
+.switchOn .knob {
+  transform: translateX(15px);
+}
+.prefList {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.prefRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
+}
+.prefTitle {
+  color: var(--color-text);
+  font-size: 9px;
+  font-weight: 600;
+}
+.prefDesc {
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+.readonlySetting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.readonlySetting span {
+  color: var(--color-text-muted);
+  font-size: 7px;
+  text-align: right;
+}
+.regionalGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+.panelFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+.message {
+  flex: 1;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 9px;
+}
+.card > .message {
+  margin-top: 12px;
+}
+.saveButton {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+.saveButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.resetButton {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+.resetButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+.resetButton:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+@media (max-width: 560px) {
+  .preferenceGrid,
+  .regionalGrid {
+    grid-template-columns: 1fr;
+  }
+  .panelHead {
+    flex-wrap: wrap;
+  }
+  .notificationTable thead th:first-child,
+  .notificationTable tbody th {
+    width: auto;
+  }
+}

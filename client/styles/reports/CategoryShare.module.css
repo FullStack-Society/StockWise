@@ -1,0 +1,83 @@
+.categoryPanel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  background: none;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  border: 1px solid var(--color-border);
+}
+.panelHead {
+  margin-bottom: 14px;
+}
+.panelTitle {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+}
+.panelSub {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+.donut {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  margin: 8px auto 20px;
+}
+.donutTrack {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 16;
+}
+.donutTotal {
+  fill: var(--color-text);
+  font-size: 22px;
+  font-weight: 700;
+}
+.donutLabel {
+  fill: var(--color-text-muted);
+  font-size: 9px;
+}
+.categoryList {
+  list-style: none;
+  margin: auto 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.categoryRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+}
+.categoryName {
+  flex: 1;
+  color: var(--color-text-muted);
+}
+.categoryPct {
+  font-weight: 700;
+  color: var(--color-text);
+}
+.categoryValue {
+  min-width: 82px;
+  text-align: right;
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+.emptyCategory {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}

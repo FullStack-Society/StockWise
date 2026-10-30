@@ -10,7 +10,7 @@ Status key: ✅ Pass, ❌ Fail, ⏳ Not tested
 - [ ] User can log out
 
 ## 2. Role-Based Access
-- [ ] Admin can access all pages
+- [ ] Manager can access all pages
 - [ ] Manager can manage products and stock
 - [ ] Staff cannot open pages they are not allowed to
 - [ ] Logged-out users are sent to the login page
@@ -35,12 +35,11 @@ Status key: ✅ Pass, ❌ Fail, ⏳ Not tested
 - [ ] Negative or non-number values are rejected
 - [ ] Each change is recorded
 
-## 6. Minimum Stock and Low-Stock Alerts
-- [ ] Minimum stock level can be set
-- [ ] Alert shows when stock equals the minimum
-- [ ] Alert shows when stock is below the minimum
-- [ ] No alert when stock is above the minimum
-- [ ] Alert clears after restocking
+## 6. Fixed Stock Alerts
+- [ ] Quantities from 0 through 25 show Critical
+- [ ] Quantities from 26 through 50 show Low stock
+- [ ] Quantities above 50 show In stock
+- [ ] Status changes after stock is adjusted
 
 ## 7. Inventory History
 - [ ] History page shows all stock in and stock out

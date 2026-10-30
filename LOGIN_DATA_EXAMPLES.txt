@@ -1,0 +1,24 @@
+StockWise login examples (local development)
+============================================
+
+OWNER
+-----
+if database is connected:
+Email: zjzeppy08@gmail.com
+Password: zeppy1234567
+
+if not
+OWNER_EMAIL=owner@example.com
+OWNER_PASSWORD=mynameisowner
+
+ADMIN
+-----
+Name: James 
+Email: james@example.com
+Password: mynameisjames
+
+STAFF
+-----
+Name: Daniel 
+Email: daniel@example.com
+Password: mynameisdaniel

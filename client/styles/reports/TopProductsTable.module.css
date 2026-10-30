@@ -1,0 +1,85 @@
+.panelBox {
+  background: none;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  padding: 16px;
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.panelTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.link {
+  font-size: 11px;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+.link:hover {
+  text-decoration: underline;
+}
+.tableWrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: var(--color-text);
+}
+.table th {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+.table td {
+  padding: 9px 12px;
+  border-top: 1px solid var(--color-border);
+}
+.alignRight {
+  text-align: right !important;
+}
+.productCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.thumb {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
+}
+.healthOk,
+.healthWarn {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+.healthWarn {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger);
+}
+.emptyRow {
+  padding: 28px 16px !important;
+  color: var(--color-text-muted);
+  text-align: center;
+}
