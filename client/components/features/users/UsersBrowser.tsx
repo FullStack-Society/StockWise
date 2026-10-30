@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Role } from "@/lib/auth/roles";
 import { canManageUser } from "@/lib/auth/roles";
@@ -16,8 +16,10 @@ import UsersHeader from "./UsersHeader";
 import UsersStats from "./UsersStats";
 import UsersFilterBar from "./UsersFilterBar";
 import UsersTable from "./UsersTable";
-import AddUserModal from "@/components/modals/users/AddUserModal";
+import AddUserModal from "@/components/features/users/modals/AddUserModal";
 import styles from "@/styles/users/UsersBrowser.module.css";
+import { formatDate } from "@/lib/utils/format";
+import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 
 type Props = {
   currentRole: Role;
@@ -26,7 +28,10 @@ type Props = {
   initialMembers: OrganizationMember[];
 };
 
-function toTeamUser(member: OrganizationMember): TeamUser {
+function toTeamUser(
+  member: OrganizationMember,
+  dateFormat: "mdy" | "dmy" | "ymd",
+): TeamUser {
   return {
     id: member.email.toLowerCase(),
     name: member.full_name,
@@ -34,7 +39,7 @@ function toTeamUser(member: OrganizationMember): TeamUser {
     role: member.role,
     status: member.status,
     joinedAt: member.joined_at
-      ? new Date(member.joined_at).toLocaleDateString()
+      ? formatDate(member.joined_at, dateFormat)
       : member.status === "Invited"
         ? "Never"
         : "—",
@@ -48,14 +53,19 @@ export default function UsersBrowser({
   initialMembers,
 }: Props) {
   const router = useRouter();
+  const { date_format: dateFormat } = useUserPreferences();
   const [users, setUsers] = useState<TeamUser[]>(
-    initialMembers.map(toTeamUser),
+    initialMembers.map((member) => toTeamUser(member, dateFormat)),
   );
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setUsers(initialMembers.map((member) => toTeamUser(member, dateFormat)));
+  }, [initialMembers, dateFormat]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -101,7 +111,7 @@ export default function UsersBrowser({
 
   function changeRole(id: string, role: Role) {
     const target = users.find((u) => u.id === id);
-    if (!target || (role !== "admin" && role !== "staff")) return;
+    if (!target || (role !== "manager" && role !== "staff")) return;
     startTransition(async () => {
       const result = await changeOrganizationRoleAction(target.email, role);
       if (!result.ok) {

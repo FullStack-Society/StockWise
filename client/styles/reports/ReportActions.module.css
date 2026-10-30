@@ -40,7 +40,7 @@
   cursor: not-allowed;
 }
 @media print {
-.actions {
+  .actions {
     display: none;
   }
 }

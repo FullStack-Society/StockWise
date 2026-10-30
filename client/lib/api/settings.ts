@@ -8,35 +8,56 @@ export type AccountSettings = {
   position: string;
   timezone: string;
   invitation_notifications: boolean;
+  theme: "dark" | "light" | "system";
+  date_format: "mdy" | "dmy" | "ymd";
+  currency: "USD" | "PHP" | "EUR";
+  density: "comfortable" | "compact";
+  auto_sync_reports: boolean;
+  prioritize_low_stock: boolean;
 };
 
-export function getAccountSettings(email: string) {
+export function getAccountSettings() {
   return apiRequest<AccountSettings>(ENDPOINTS.settings.root, {
-    query: { email },
+    signActor: true,
   });
 }
 
 export function updateAccountProfile(
-  email: string,
-  input: { timezone: string },
+  input: { name: string; timezone: string },
 ) {
   return apiRequest<AccountSettings>(ENDPOINTS.settings.profile, {
     method: "PUT",
-    query: { email },
     body: input,
+    signActor: true,
   });
 }
 
 export function updateAccountPreferences(
-  email: string,
   input: {
     invitation_notifications: boolean;
+    theme: "dark" | "light" | "system";
+    date_format: "mdy" | "dmy" | "ymd";
+    currency: "USD" | "PHP" | "EUR";
+    density: "comfortable" | "compact";
+    auto_sync_reports: boolean;
+    prioritize_low_stock: boolean;
   },
 ) {
   return apiRequest<AccountSettings>(ENDPOINTS.settings.preferences, {
     method: "PUT",
-    query: { email },
     body: input,
+    signActor: true,
+  });
+}
+
+export function updateAccountPassword(input: {
+  current_password: string;
+  new_password: string;
+}) {
+  return apiRequest<void>(ENDPOINTS.settings.password, {
+    method: "PUT",
+    body: input,
+    signActor: true,
   });
 }
 

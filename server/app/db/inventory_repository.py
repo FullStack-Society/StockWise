@@ -3,32 +3,10 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 
-DEFAULT_CATEGORIES = (
-    ("Electronics", "Electronic devices"),
-    ("Accessories", "Computer accessories"),
-    ("Office Supplies", "Office equipment"),
-    ("Networking", "Routers and networking equipment"),
-    ("Storage", "Storage devices"),
-)
-
-
 def ensure_default_categories(db: Session, organization_id: int) -> None:
     db.execute(
-        text("""
-            INSERT INTO public.categories
-                (category_name, description, organization_id)
-            VALUES
-                (:category_name, :description, :organization_id)
-            ON CONFLICT (organization_id, category_name) DO NOTHING
-        """),
-        [
-            {
-                "category_name": name,
-                "description": description,
-                "organization_id": organization_id,
-            }
-            for name, description in DEFAULT_CATEGORIES
-        ],
+        text("SELECT public.stockwise_ensure_default_categories(:organization_id)"),
+        {"organization_id": organization_id},
     )
     db.commit()
 
@@ -101,7 +79,6 @@ def create_inventory(
     description: str | None,
     price,
     quantity: int,
-    minimum_stock: int,
 ) -> dict:
     result = db.execute(
         text("""
@@ -113,8 +90,7 @@ def create_inventory(
                 :p_category_id,
                 :p_description,
                 :p_price,
-                :p_quantity,
-                :p_minimum_stock
+                :p_quantity
             )
         """),
         {
@@ -125,7 +101,6 @@ def create_inventory(
             "p_description": description,
             "p_price": price,
             "p_quantity": quantity,
-            "p_minimum_stock": minimum_stock,
         },
     )
 
@@ -143,7 +118,6 @@ def update_inventory(
     description: str | None,
     price,
     quantity: int,
-    minimum_stock: int,
 ) -> dict | None:
     result = db.execute(
         text("""
@@ -156,8 +130,7 @@ def update_inventory(
                 :p_category_id,
                 :p_description,
                 :p_price,
-                :p_quantity,
-                :p_minimum_stock
+                :p_quantity
             )
         """),
         {
@@ -169,7 +142,6 @@ def update_inventory(
             "p_description": description,
             "p_price": price,
             "p_quantity": quantity,
-            "p_minimum_stock": minimum_stock,
         },
     )
 

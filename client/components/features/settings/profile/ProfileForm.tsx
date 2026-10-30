@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Save } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Save, Search } from "lucide-react";
 import type { AccountSettings } from "@/lib/api/settings";
 import { saveProfileSettings } from "@/lib/settings/actions";
 import styles from "@/styles/settings/ProfileForm.module.css";
@@ -24,17 +25,25 @@ export default function ProfileForm({
   settings: AccountSettings;
   roleLabel: string;
 }) {
+  const router = useRouter();
   const [timezone, setTimezone] = useState(settings.timezone);
+  const [name, setName] = useState(settings.name);
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
-
+  const [firstName = "", ...lastNameParts] = name.trim().split(/\s+/);
+  const lastName = lastNameParts.join(" ");
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
     startTransition(async () => {
-      const result = await saveProfileSettings({ timezone });
+      const result = await saveProfileSettings({ name, timezone });
       setMessage(result.ok ? "Profile settings saved." : result.error);
+      if (result.ok) router.refresh();
     });
+  }
+
+  function setNameParts(nextFirst: string, nextLast: string) {
+    setName([nextFirst.trim(), nextLast.trim()].filter(Boolean).join(" "));
   }
 
   return (
@@ -43,7 +52,7 @@ export default function ProfileForm({
         <div>
           <h2 className={styles.cardTitle}>Personal Profile</h2>
           <p className={styles.cardSub}>
-            Your account identity and organization role are read-only.
+            Review and update your profile details.
           </p>
         </div>
         <button type="submit" className={styles.saveBtn} disabled={isPending}>
@@ -54,28 +63,43 @@ export default function ProfileForm({
 
       <div className={styles.fieldGrid}>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>Name</span>
+          <span className={styles.fieldLabel}>First Name</span>
           <input
-            className={`${styles.input} ${styles.readOnly}`}
-            value={settings.name}
-            readOnly
-            aria-readonly="true"
+            className={styles.input}
+            value={firstName}
+            onChange={(event) => setNameParts(event.target.value, lastName)}
+            maxLength={160}
+            autoComplete="given-name"
+            required
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>Email Address</span>
+          <span className={styles.fieldLabel}>Last Name</span>
           <input
-            className={`${styles.input} ${styles.readOnly}`}
-            type="email"
-            value={settings.email}
-            readOnly
-            aria-readonly="true"
+            className={styles.input}
+            value={lastName}
+            onChange={(event) => setNameParts(firstName, event.target.value)}
+            maxLength={160}
+            autoComplete="family-name"
           />
+        </label>
+        <label className={`${styles.field} ${styles.fullRow}`}>
+          <span className={styles.fieldLabel}>Email Address</span>
+          <span className={styles.inputWrap}>
+            <input
+              className={`${styles.input} ${styles.withIcon}`}
+              type="email"
+              value={settings.email}
+              readOnly
+              aria-readonly="true"
+            />
+            <Search size={13} className={styles.inputIcon} aria-hidden />
+          </span>
         </label>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Position</span>
           <input
-            className={`${styles.input} ${styles.readOnly}`}
+            className={styles.input}
             value={roleLabel}
             readOnly
             aria-readonly="true"

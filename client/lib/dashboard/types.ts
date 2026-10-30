@@ -5,4 +5,5 @@ export type DashboardStat = {
   value: string;
   note: string;
   icon: LucideIcon;
+  href: string;
 };

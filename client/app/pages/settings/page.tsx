@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "StockWise | Settings" };
 export default async function SettingsPage() {
   const session = await requireSession();
   const [accountSettings, organizations] = await Promise.all([
-    getAccountSettings(session.email),
+    getAccountSettings(),
     listOrganizations(session.email),
   ]);
   const activeOrganization =
@@ -33,7 +33,6 @@ export default async function SettingsPage() {
         roleLabel={roleLabel}
         organizationId={activeOrganization?.organization_id ?? null}
         organizationName={activeOrganization?.organization_name ?? null}
-        canEditOrganization={isOwner}
       />
     </div>
   );

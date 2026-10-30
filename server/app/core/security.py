@@ -67,11 +67,7 @@ def require_organization_membership(
     db: Session = Depends(get_db),
 ) -> OrganizationContext:
     role = db.execute(
-        text("""
-            SELECT public.org_get_member_role(
-                :p_organization_id, :p_email
-            )
-        """),
+        text("SELECT public.org_get_member_role(:p_organization_id, :p_email)"),
         {"p_organization_id": organization_id, "p_email": email.strip().lower()},
     ).scalar_one_or_none()
 

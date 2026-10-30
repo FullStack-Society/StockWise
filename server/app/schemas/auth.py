@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class LoginRequest(BaseModel):
@@ -18,7 +18,12 @@ class AuthenticatedUser(BaseModel):
     id: int
     name: str
     email: EmailStr
-    role: Literal["owner", "admin", "staff"]
+    role: Literal["owner", "manager", "staff"]
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def normalize_legacy_role(cls, value):
+        return "manager" if value == "admin" else value
 
 
 class LoginResponse(BaseModel):

@@ -17,7 +17,6 @@ const toBody = (input: ProductInput) => ({
   description: input.description,
   price: input.price,
   quantity: input.quantity,
-  minimum_stock: input.minimumStock,
 });
 
 /**

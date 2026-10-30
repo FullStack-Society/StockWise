@@ -6,14 +6,14 @@ import { ENDPOINTS } from "./endpoints";
 export type OrganizationSummary = {
   organization_id: number;
   organization_name: string;
-  role: "owner" | "admin" | "staff";
+  role: "owner" | "manager" | "staff";
 };
 
 export type InvitationNotice = {
   invitation_id: number;
   organization_id: number;
   organization_name: string;
-  role: "admin" | "staff";
+  role: "manager" | "staff";
   invited_by_email: string;
   created_at: string;
 };
@@ -21,7 +21,7 @@ export type InvitationNotice = {
 export type OrganizationMember = {
   email: string;
   full_name: string;
-  role: "owner" | "admin" | "staff";
+  role: "owner" | "manager" | "staff";
   status: "Active" | "Invited";
   joined_at: string | null;
 };
@@ -71,7 +71,7 @@ export function listOrganizationMembers(
 
 export function inviteOrganizationMember(
   organizationId: number,
-  input: { actor_email: string; email: string; role: "admin" | "staff" },
+  input: { actor_email: string; email: string; role: "manager" | "staff" },
 ) {
   return apiRequest<{ invitation_id: number }>(
     ENDPOINTS.organizations.organizationInvitations(organizationId),
@@ -87,7 +87,7 @@ export function respondToInvitation(
   return apiRequest<{
     organization_id: number | null;
     organization_name: string | null;
-    role: "owner" | "admin" | "staff" | null;
+    role: "owner" | "manager" | "staff" | null;
   }>(ENDPOINTS.organizations.invitationResponse(invitationId), {
     method: "POST",
     body: { email, accept },
@@ -109,7 +109,7 @@ export function changeOrganizationMemberRole(
   organizationId: number,
   email: string,
   actorEmail: string,
-  role: "admin" | "staff",
+  role: "manager" | "staff",
 ) {
   return apiRequest<void>(
     ENDPOINTS.organizations.memberRole(organizationId, email),

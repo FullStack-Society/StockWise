@@ -1,17 +1,22 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
-OrganizationRole = Literal["owner", "admin", "staff"]
-InviteRole = Literal["admin", "staff"]
+OrganizationRole = Literal["owner", "manager", "staff"]
+InviteRole = Literal["manager", "staff"]
 
 
 class OrganizationSummary(BaseModel):
     organization_id: int
     organization_name: str
     role: OrganizationRole
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def normalize_legacy_role(cls, value):
+        return "manager" if value == "admin" else value
 
 
 class OrganizationCreate(BaseModel):
@@ -32,6 +37,11 @@ class InvitationNotice(BaseModel):
     invited_by_email: str
     created_at: datetime
 
+    @field_validator("role", mode="before")
+    @classmethod
+    def normalize_legacy_role(cls, value):
+        return "manager" if value == "admin" else value
+
 
 class InvitationReply(BaseModel):
     email: EmailStr
@@ -42,6 +52,11 @@ class InvitationReplyResult(BaseModel):
     organization_id: int | None = None
     organization_name: str | None = None
     role: OrganizationRole | None = None
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def normalize_legacy_role(cls, value):
+        return "manager" if value == "admin" else value
 
 
 class InviteCreate(BaseModel):
@@ -56,6 +71,11 @@ class OrganizationMember(BaseModel):
     role: OrganizationRole
     status: Literal["Active", "Invited"]
     joined_at: datetime | None
+
+    @field_validator("role", mode="before")
+    @classmethod
+    def normalize_legacy_role(cls, value):
+        return "manager" if value == "admin" else value
 
 
 class MemberAction(BaseModel):

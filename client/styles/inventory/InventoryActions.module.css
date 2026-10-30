@@ -1,5 +1,4 @@
-/* Styles for Add/Edit modal, action error banner and disabled buttons */
-
+/* Styles for Add/Edit modal and action error banner */
 .banner {
   display: flex;
   align-items: center;
@@ -19,24 +18,21 @@
   cursor: pointer;
 }
 
-.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* ===== modal (native <dialog>) ===== */
 .modal {
   width: min(560px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
   padding: 0;
   border: 1px solid var(--color-border);
-  background: #0a0f16;
+  background: var(--color-modal);
   color: var(--color-text);
-  color-scheme: dark;
+  color-scheme: inherit;
+  box-shadow: 0 24px 70px var(--color-shadow);
   overflow-y: auto;
 }
 .modal::backdrop {
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--color-overlay);
+  backdrop-filter: blur(3px);
 }
 
 .modalBody {
@@ -68,7 +64,7 @@
   cursor: pointer;
 }
 .closeButton:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-hover);
 }
 
 .form {
@@ -79,11 +75,6 @@
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.row3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 .field {
@@ -104,7 +95,7 @@
   width: 100%;
   border: 1px solid var(--color-border);
   border-radius: 0;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--color-input);
   color: var(--color-text);
   font: inherit;
   font-size: 13px;
@@ -126,12 +117,7 @@
   border-color: var(--color-accent);
 }
 .categorySelect {
-  border-color: none;
-  background-color: none;
-}
-.categorySelect option {
-  background: #0a0f16;
-  color: var(--color-text);
+  color-scheme: inherit;
 }
 
 .invalid {
@@ -141,7 +127,7 @@
 .fieldError {
   margin: 0;
   font-size: 11px;
-  color: #ff8f93;
+  color: var(--color-danger);
 }
 .formError {
   margin: 0;
@@ -175,8 +161,7 @@
 }
 
 @media (max-width: 560px) {
-  .row2,
-  .row3 {
+  .row2 {
     grid-template-columns: 1fr;
   }
 }

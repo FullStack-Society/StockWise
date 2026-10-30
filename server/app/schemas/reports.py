@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel
@@ -10,7 +10,6 @@ class ReportProduct(BaseModel):
     sku: str
     category: str
     quantity: int
-    minimum_stock: int
     price: Decimal
     units_issued: int
     previous_units_issued: int
@@ -22,6 +21,27 @@ class MonthlyMovement(BaseModel):
     units_issued: int
 
 
+class DailyStockFlow(BaseModel):
+    day: date
+    units_received: int
+
+
+class DashboardStockReceipt(BaseModel):
+    product_id: int
+    product_name: str
+    sku: str
+    quantity: int
+    received_at: datetime
+
+
+class DashboardRecentProduct(BaseModel):
+    product_id: int
+    product_name: str
+    sku: str
+    quantity: int
+    received_at: datetime
+
+
 class InventoryReport(BaseModel):
     days: int
     period_start: date
@@ -29,7 +49,7 @@ class InventoryReport(BaseModel):
     stock_units: int
     inventory_value: Decimal
     low_stock_count: int
-    out_of_stock_count: int
+    critical_count: int
     units_received: int
     units_issued: int
     transaction_count: int
@@ -38,3 +58,9 @@ class InventoryReport(BaseModel):
     previous_transaction_count: int
     products: list[ReportProduct]
     monthly_movement: list[MonthlyMovement]
+
+
+class DashboardStockFlow(BaseModel):
+    days: list[DailyStockFlow]
+    recent_receipts: list[DashboardStockReceipt]
+    recent_products: list[DashboardRecentProduct]

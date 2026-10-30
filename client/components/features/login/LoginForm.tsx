@@ -38,7 +38,7 @@ export default function LoginForm() {
             id="email"
             name="email"
             type="email"
-            placeholder="name@company.com"
+            placeholder="email@gmail.com"
             autoComplete="email"
             defaultValue={state.email}
             required

@@ -29,11 +29,13 @@ export const ENDPOINTS = {
   },
   reports: {
     inventory: "/api/reports/inventory",
+    dashboardStockFlow: "/api/reports/dashboard-stock-flow",
   },
   settings: {
-    root: "/api/settings",
+    root: "/api/settings/",
     profile: "/api/settings/profile",
     preferences: "/api/settings/preferences",
+    password: "/api/settings/password",
     account: "/api/settings/account",
   },
 };

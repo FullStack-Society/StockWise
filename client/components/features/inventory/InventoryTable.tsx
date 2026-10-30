@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatPreferredCurrency } from "@/lib/utils/format";
+import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 import type { Product, StockStatus } from "@/lib/inventory/types";
 import styles from "@/styles/inventory/InventoryTable.module.css";
 
@@ -13,6 +14,7 @@ const QTY_CLASS: Record<StockStatus, string> = {
 type Props = {
   rows: Product[];
   selected: Set<number>;
+  allProductIds: number[];
   emptyMessage: string;
   onToggle: (id: number) => void;
   onToggleAll: () => void;
@@ -23,23 +25,27 @@ type Props = {
 export default function InventoryTable({
   rows,
   selected,
+  allProductIds,
   emptyMessage,
   onToggle,
   onToggleAll,
   onEdit,
   onDelete,
 }: Props) {
-  const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+  const { currency, currencyRates } = useUserPreferences();
+  const allSelected =
+    allProductIds.length > 0 &&
+    allProductIds.every((id) => selected.has(id));
 
   return (
     <div className={styles.tableWrap}>
-      <table className={styles.table} style={{ minWidth: 980 }}>
+      <table className={styles.table} style={{ minWidth: 900 }}>
         <thead>
           <tr>
             <th className={styles.checkCell}>
               <input
                 type="checkbox"
-                aria-label="Select all on this page"
+                aria-label="Select all products"
                 checked={allSelected}
                 onChange={onToggleAll}
                 className={styles.checkbox}
@@ -49,8 +55,7 @@ export default function InventoryTable({
             <th>SKU</th>
             <th>Category</th>
             <th>Quantity</th>
-            <th>Min. stock</th>
-            <th>Unit price</th>
+            <th>Unit price ({currency})</th>
             <th>Status</th>
             <th className={styles.alignRight}>Actions</th>
           </tr>
@@ -59,7 +64,7 @@ export default function InventoryTable({
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={9} className={styles.empty}>
+              <td colSpan={8} className={styles.empty}>
                 {emptyMessage}
               </td>
             </tr>
@@ -92,8 +97,9 @@ export default function InventoryTable({
                 <td className={`${styles.qty} ${QTY_CLASS[p.status]}`}>
                   {p.quantity}
                 </td>
-                <td>{p.minimumStock}</td>
-                <td>{formatCurrency(p.price)}</td>
+                <td>
+                  {formatPreferredCurrency(p.price, currency, currencyRates)}
+                </td>
                 <td>
                   <StatusBadge status={p.status} />
                 </td>

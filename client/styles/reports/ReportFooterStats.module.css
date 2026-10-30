@@ -1,14 +1,11 @@
-.panel {
-  background: var(--color-panel);
-  border: 1px solid var(--color-border);
-}
 .footerGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 12px;
 }
 .footerCard {
-  composes: panel;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -31,7 +28,6 @@
   color: var(--color-text);
 }
 @media (max-width: 700px) {
-.statGrid,
   .footerGrid {
     grid-template-columns: 1fr;
   }

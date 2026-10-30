@@ -1,7 +1,6 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -86,34 +85,14 @@ def update_organization_name(
         raise HTTPException(status_code=422, detail="Enter an organization name.")
 
     try:
-        actor_role = db.execute(
-            text("""
-                SELECT role
-                FROM public.organization_memberships
-                WHERE organization_id = :organization_id
-                  AND lower(email) = :actor_email
-                  AND status = 'active'
-            """),
-            {"organization_id": organization_id, "actor_email": actor_email},
-        ).scalar_one_or_none()
-        if actor_role != "owner":
-            db.rollback()
-            raise HTTPException(status_code=403, detail="Only the organization owner can rename it.")
-
-        row = db.execute(
-            text("""
-                UPDATE public.organizations
-                SET organization_name = :organization_name
-                WHERE organization_id = :organization_id
-                RETURNING organization_id, organization_name
-            """),
-            {"organization_id": organization_id, "organization_name": name},
-        ).mappings().first()
+        row = repository.rename_organization(
+            db, organization_id, actor_email, name
+        )
         if row is None:
             db.rollback()
             raise HTTPException(status_code=404, detail="Organization not found.")
         db.commit()
-        return {**dict(row), "role": actor_role}
+        return row
     except HTTPException:
         raise
     except SQLAlchemyError as exc:

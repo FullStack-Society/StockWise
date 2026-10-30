@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { DashboardStat } from "@/lib/dashboard/types";
 import styles from "@/styles/dashboard/StatCard.module.css";
 
@@ -6,9 +7,10 @@ export default function StatCard({
   value,
   note,
   icon: Icon,
+  href,
 }: DashboardStat) {
   return (
-    <article className={styles.statCard}>
+    <Link href={href} className={styles.statCard}>
       <div className={styles.statHead}>
         <p className={styles.statLabel}>{label}</p>
         <div className={styles.statIcon}>
@@ -17,6 +19,6 @@ export default function StatCard({
       </div>
       <p className={styles.statValue}>{value}</p>
       <p className={styles.statNote}>{note}</p>
-    </article>
+    </Link>
   );
 }

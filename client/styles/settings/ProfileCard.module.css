@@ -1,15 +1,60 @@
+.sidebarStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .profileCard {
-  background: var(--color-panel);
+  background: none;
+  box-shadow: 0 8px 24px var(--color-shadow);
   border: 1px solid var(--color-border);
-  padding: 32px 20px 20px;
+  padding: 22px 14px 14px;
   text-align: center;
+  backdrop-filter: blur(12px);
+}
+.healthCard {
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  background: none;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  backdrop-filter: blur(12px);
+}
+.healthTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.healthTitle svg {
+  color: var(--color-accent);
+}
+.healthTrack {
+  height: 5px;
+  margin-top: 12px;
+  overflow: hidden;
+  background: var(--color-hover);
+}
+.healthTrack span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+}
+.healthNote {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+  font-size: 9px;
+  line-height: 1.5;
 }
 .avatar {
-  width: 88px;
-  height: 88px;
-  margin: 0 auto 16px;
-  border: 2px solid var(--color-accent);
-  background: var(--color-accent-soft);
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 12px;
+  border: 1px solid var(--color-accent);
+  background: rgba(224, 122, 46, 0.08);
   border-radius: 50%; /* the only round element: the Figma avatar is a circle */
 }
 .profileName {
@@ -17,26 +62,27 @@
   font-weight: 700;
   color: var(--color-text);
 }
-.profileEmail {
+.profileRole {
   margin-top: 4px;
   font-size: 11px;
   color: var(--color-text-muted);
-  overflow-wrap: anywhere;
 }
 .settingsNav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 28px;
+  gap: 3px;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
   text-align: left;
 }
 .navItem {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 9px;
+  padding: 10px 9px;
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-text-muted);
   background: transparent;
   border: 0;
@@ -56,7 +102,11 @@
 }
 .navItemActive {
   color: var(--color-text);
-  background: var(--color-accent-soft);
+  background: linear-gradient(
+    90deg,
+    rgba(224, 122, 46, 0.2),
+    rgba(224, 122, 46, 0.04)
+  );
   border-left-color: var(--color-accent);
 }
 .navItemActive svg {

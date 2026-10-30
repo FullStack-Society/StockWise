@@ -132,7 +132,7 @@ export async function respondToInvitationAction(
 
 export async function inviteOrganizationMemberAction(
   email: string,
-  role: "admin" | "staff",
+  role: "manager" | "staff",
 ): Promise<OrganizationActionResult> {
   const session = await requireSession();
   if (!session.organizationId)
@@ -173,7 +173,7 @@ export async function removeOrganizationMemberAction(
 
 export async function changeOrganizationRoleAction(
   email: string,
-  role: "admin" | "staff",
+  role: "manager" | "staff",
 ): Promise<OrganizationActionResult> {
   const session = await requireSession();
   if (!session.organizationId)

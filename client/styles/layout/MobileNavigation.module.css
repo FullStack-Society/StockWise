@@ -31,7 +31,7 @@
   width: 100%;
   height: 100%;
   border: 0;
-  background: rgba(0, 0, 0, 0.62);
+  background: var(--color-overlay);
 }
 
 .drawer {
@@ -43,7 +43,7 @@
   padding: 24px 20px;
   border-right: 1px solid var(--color-border);
   background: var(--color-sidebar);
-  box-shadow: 12px 0 32px rgba(0, 0, 0, 0.25);
+  box-shadow: 12px 0 32px var(--color-shadow);
 }
 
 .nav {
@@ -71,12 +71,12 @@
 .link:hover,
 .logout:hover {
   color: var(--color-text);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-hover);
 }
 
 .active {
   border-color: var(--color-border);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-hover);
   color: var(--color-text);
 }
 

@@ -4,22 +4,26 @@ The Next.js frontend uses server-side API modules to communicate with the FastAP
 
 ## Run locally
 
-1. Start PostgreSQL and configure `DATABASE_URL`, `OWNER_EMAIL`, and a unique `OWNER_PASSWORD` of at least 12 characters in `server/.env`.
-2. From `server`, install backend dependencies and start FastAPI:
+1. Start PostgreSQL and configure `DATABASE_URL` and `INTERNAL_API_KEY` in `server/.env`. Set `OWNER_EMAIL` and a unique `OWNER_PASSWORD` of at least 12 characters only if the database does not already have an owner.
+2. Apply the numbered SQL files in `migrations/` to the database in order. Skip migrations already applied; for a database through migration `008`, apply `009_api_database_functions.sql` before starting the updated API.
+3. From `server`, install backend dependencies and start FastAPI:
 
    ```powershell
    pip install -r requirements.txt
    python -m uvicorn app.main:app --reload --port 8000
    ```
 
-3. Copy `client/.env.local.example` to `client/.env.local` and set:
+4. Copy `client/.env.local.example` to `client/.env.local` and set:
 
    ```env
-   API_URL=http://127.0.0.1:8000
+   BACKEND_API_URL=http://127.0.0.1:8000
+   BACKEND_API_KEY=the-same-value-as-server-INTERNAL_API_KEY
    SESSION_SECRET=your-unique-random-secret-at-least-32-characters
    ```
 
-4. From `client`, install the locked frontend dependencies and start Next.js:
+   Set `BACKEND_API_KEY` to the same unique value as `INTERNAL_API_KEY` in `server/.env`.
+
+5. From `client`, install the locked frontend dependencies and start Next.js:
 
    ```powershell
    npm ci

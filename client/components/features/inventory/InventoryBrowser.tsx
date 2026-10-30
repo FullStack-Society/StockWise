@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { X } from "lucide-react";
-import { deleteProductAction } from "@/lib/inventory/actions";
+import { Trash2, X } from "lucide-react";
+import {
+  deleteProductAction,
+  deleteProductsAction,
+} from "@/lib/inventory/actions";
 import { exportProductsCsv } from "@/lib/inventory/csv-export";
 import type { InventoryFilters } from "@/lib/inventory/query";
 import type { Category, Product } from "@/lib/inventory/types";
@@ -11,8 +14,8 @@ import FilterBar from "./FilterBar";
 import InventoryHeader from "./InventoryHeader";
 import InventoryTable from "./InventoryTable";
 import Pagination from "./Pagination";
-import ProductModal from "@/components/modals/inventory/ProductModal";
-import ImportModal from "@/components/modals/inventory/ImportModal";
+import ProductModal from "@/components/features/inventory/modals/ProductModal";
+import ImportModal from "@/components/features/inventory/modals/ImportModal";
 import styles from "@/styles/inventory/InventoryBrowser.module.css";
 import extra from "@/styles/inventory/InventoryActions.module.css";
 
@@ -117,9 +120,46 @@ export default function InventoryBrowser({
   function toggleAll() {
     setSelected((prev) => {
       const next = new Set(prev);
-      const allOn = rows.every((r) => next.has(r.id));
-      rows.forEach((r) => (allOn ? next.delete(r.id) : next.add(r.id)));
+      const allOn =
+        exportProducts.length > 0 &&
+        exportProducts.every((product) => next.has(product.id));
+      exportProducts.forEach((product) =>
+        allOn ? next.delete(product.id) : next.add(product.id),
+      );
       return next;
+    });
+  }
+
+  function handleDeleteSelected() {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    if (
+      !window.confirm(
+        `Mark ${ids.length} selected ${ids.length === 1 ? "product" : "products"} as deleted? They will be hidden from active inventory.`,
+      )
+    )
+      return;
+
+    setActionError(null);
+    startTransition(async () => {
+      const result = await deleteProductsAction(ids);
+      setSelected((current) => {
+        const next = new Set(current);
+        result.deletedIds.forEach((id) => next.delete(id));
+        return next;
+      });
+
+      if (result.failures.length > 0) {
+        const failedCount = result.failures.length;
+        const deletedCount = result.deletedIds.length;
+        setActionError(
+          deletedCount > 0
+            ? `${deletedCount} deleted; ${failedCount} could not be deleted. The failed products remain selected.`
+            : `Unable to delete the selected products: ${result.failures.map((failure) => failure.error).join("; ")}`,
+        );
+      }
+
+      if (result.deletedIds.length > 0) router.refresh();
     });
   }
 
@@ -159,6 +199,24 @@ export default function InventoryBrowser({
         canExport={exportProducts.length > 0}
       />
 
+      {selected.size > 0 && (
+        <div className={styles.selectionActions}>
+          <span>
+            {selected.size} {selected.size === 1 ? "product" : "products"}{" "}
+            selected
+          </span>
+          <button
+            type="button"
+            className={styles.deleteSelected}
+            onClick={handleDeleteSelected}
+            disabled={isPending}
+          >
+            <Trash2 size={14} />
+            Delete selected
+          </button>
+        </div>
+      )}
+
       {actionError && (
         <div role="alert" className={extra.banner}>
           <span>{actionError}</span>
@@ -191,6 +249,7 @@ export default function InventoryBrowser({
         <InventoryTable
           rows={rows}
           selected={selected}
+          allProductIds={exportProducts.map((product) => product.id)}
           emptyMessage={emptyMessage}
           onToggle={toggleOne}
           onToggleAll={toggleAll}

@@ -3,13 +3,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
-  padding: 20px 24px;
-  background-color: color-mix(red, var(--color-panel) 60%);
+  flex-wrap: wrap;  
+  padding: 17px 20px;
+  background: none;
+  box-shadow: 0 8px 24px var(--color-shadow);
   border: 1px solid var(--color-danger);
-  border-radius: 4px;
   border-left-width: 4px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 .dangerTitle {
   margin: 0;

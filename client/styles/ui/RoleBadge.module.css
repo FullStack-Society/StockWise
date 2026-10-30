@@ -13,7 +13,7 @@
   background: var(--color-accent-soft);
   border-color: var(--color-accent);
 }
-.admin {
+.manager {
   color: var(--color-text);
   border-color: var(--color-line);
 }

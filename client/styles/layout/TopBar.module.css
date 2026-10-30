@@ -35,7 +35,7 @@
   cursor: pointer;
 }
 .organizationSelect option {
-  background: var(--color-header);
+  background: var(--color-option);
   color: var(--color-text);
 }
 .organizationSelectWrap > svg {
@@ -194,8 +194,8 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.85);
-  color: #111;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 .userName {
   margin: 0;

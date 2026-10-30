@@ -86,6 +86,12 @@ export async function updateOrganizationSession(
   );
 }
 
+export async function updateProfileSession(name: string) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  await createSession({ ...session, name }, session.remember);
+}
+
 /** Use in protected pages / data functions: redirects to /login if not signed in. */
 export async function requireSession() {
   const session = await getSession();

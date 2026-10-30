@@ -4,6 +4,7 @@ import InventoryBrowser from "@/components/features/inventory/InventoryBrowser";
 import InventoryStats from "@/components/features/inventory/InventoryStats";
 import styles from "@/styles/inventory/InventoryPage.module.css";
 import { requireOrganizationSession } from "@/lib/auth/session";
+import { getAccountSettings } from "@/lib/api/settings";
 import { listCategories, listProducts } from "@/lib/api/inventory";
 import { listOrganizations } from "@/lib/api/organizations";
 import { buildInventoryStats } from "@/lib/inventory/stats";
@@ -25,13 +26,18 @@ export default async function InventoryPage({ searchParams }: PageProps) {
   ) {
     redirect("/pages/users");
   }
-  const [products, categories, params] = await Promise.all([
+  const [products, categories, params, settings] = await Promise.all([
     listProducts(),
     listCategories(),
     searchParams,
+    getAccountSettings(),
   ]);
   const view = parseSearchParams(params);
-  const inventory = applyView(products, view);
+  const inventory = applyView(
+    products,
+    view,
+    settings.prioritize_low_stock,
+  );
 
   return (
     <div className={styles.page}>

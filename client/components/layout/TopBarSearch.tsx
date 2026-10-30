@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   BarChart3,
   Boxes,
-  Building2,
   CreditCard,
   LayoutDashboard,
   Search,
@@ -58,7 +57,7 @@ const SEARCH_ITEMS: SearchItem[] = [
     label: "Users & permissions",
     detail: "Manage team members, roles, and invitations",
     keywords:
-      "team members staff admin owner invite invitations access roles permissions",
+      "team members staff manager owner invite invitations access roles permissions",
     href: ROUTES.users,
     icon: Users,
   },
@@ -80,11 +79,11 @@ const SEARCH_ITEMS: SearchItem[] = [
   },
   {
     id: "organization-settings",
-    label: "Organization settings",
-    detail: "Rename and manage your organization",
+    label: "Organization name",
+    detail: "Change the organization name in Security & Privacy",
     keywords: "settings company workspace organization name",
-    href: `${ROUTES.settings}?section=organization`,
-    icon: Building2,
+    href: `${ROUTES.settings}?section=security`,
+    icon: ShieldCheck,
   },
   {
     id: "security",

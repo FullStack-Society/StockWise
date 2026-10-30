@@ -53,7 +53,7 @@ def get_inventory(
     stock_status: Literal[
         "In stock",
         "Low stock",
-        "Out of stock",
+        "Critical",
     ] | None = Query(default=None),
     context: OrganizationContext = Depends(require_organization_membership),
     db: Session = Depends(get_db),
@@ -199,4 +199,3 @@ def delete_inventory_item(
         raise handle_service_error(exc) from exc
 
     return None
-

@@ -6,7 +6,7 @@ import { importProductsAction } from "@/lib/inventory/actions";
 import { parseProducts, type ParseResult } from "@/lib/inventory/csv-import";
 import type { Category } from "@/lib/inventory/types";
 import styles from "@/styles/inventory/InventoryActions.module.css";
-import extra from "@/styles/modals/inventory/ImportModal.module.css";
+import extra from "@/styles/inventory/ImportModal.module.css";
 import buttons from "@/styles/inventory/InventoryHeader.module.css";
 
 type Props = {
@@ -17,7 +17,7 @@ type Props = {
 
 function downloadTemplate() {
   const blob = new Blob(
-    ["Product Name,SKU,Category,Description,Price,Quantity,Minimum Stock\r\n"],
+    ["Product Name,SKU,Category,Description,Price,Quantity\r\n"],
     { type: "text/csv;charset=utf-8" },
   );
   const url = URL.createObjectURL(blob);
@@ -149,7 +149,7 @@ export default function ImportModal({
         <p className={extra.help}>
           This template contains headers only. Add at least one product row
           before importing. Required columns: Product Name and SKU. Optional
-          columns: Category, Description, Price, Quantity, and Minimum Stock.
+          columns: Category, Description, Price, and Quantity.
           Category names must match this organization’s categories.
         </p>
 

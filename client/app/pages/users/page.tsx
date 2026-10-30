@@ -44,7 +44,7 @@ export default async function UsersPage() {
         <header>
           <h1 className={styles.title}>Roles &amp; Permissions</h1>
           <p className={styles.subtitle}>
-            See what each role can do in StockWise. Contact an Admin or the
+            See what each role can do in StockWise. Contact an Manager or the
             Owner to request changes.
           </p>
         </header>

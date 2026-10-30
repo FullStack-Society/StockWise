@@ -23,9 +23,9 @@ export default function UsersStats({ users }: { users: TeamUser[] }) {
       icon: Crown,
     },
     {
-      id: "admin",
-      label: "Admins",
-      value: count("admin"),
+      id: "manager",
+      label: "Managers",
+      value: count("manager"),
       hint: "Can configure the account",
       icon: ShieldCheck,
     },

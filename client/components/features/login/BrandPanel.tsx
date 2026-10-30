@@ -3,7 +3,7 @@ import Logo from "@/components/ui/Logo";
 import styles from "@/styles/login/BrandPanel.module.css";
 
 const LOGIN_FEATURES = [
-  "See in-stock, low-stock, and out-of-stock products",
+  "See in-stock, low-stock, and critical products",
   "Import a product catalog from CSV",
   "Review inventory value and recorded stock movement",
   "Manage team access with clear roles",
@@ -13,7 +13,7 @@ const REGISTER_FEATURES = [
   "Set up products and categories in one catalog",
   "Bring in existing products with CSV import",
   "Spot low-stock items sooner",
-  "Invite teammates as admins or staff",
+  "Invite teammates as managers or staff",
 ];
 
 export default function BrandPanel({

@@ -16,31 +16,20 @@ const toText = (value: unknown): string | null =>
 const STATUS_LABEL: Record<StockStatus, string> = {
   "in-stock": "In stock",
   "low-stock": "Low stock",
-  "out-of-stock": "Out of stock",
+  "out-of-stock": "Critical",
 };
 
-/** Accepts "In stock" or "in-stock". Falls back to the same rule the database uses. */
-function toStatus(
-  raw: unknown,
-  quantity: number,
-  minimum: number,
-): StockStatus {
-  const key =
-    typeof raw === "string"
-      ? raw.trim().toLowerCase().replace(/\s+/g, "-")
-      : "";
-  if (key === "in-stock" || key === "low-stock" || key === "out-of-stock")
-    return key;
-  if (quantity <= 0) return "out-of-stock";
-  return quantity <= minimum ? "low-stock" : "in-stock";
+/** Uses the fixed stock alert thresholds. */
+function toStatus(quantity: number): StockStatus {
+  if (quantity <= 25) return "out-of-stock";
+  return quantity <= 50 ? "low-stock" : "in-stock";
 }
 
 export function toProduct(raw: unknown): Product {
   if (!isRecord(raw))
     throw new Error("Unexpected product format from the API.");
   const quantity = toNumber(raw.quantity);
-  const minimumStock = toNumber(raw.minimum_stock);
-  const status = toStatus(raw.status, quantity, minimumStock);
+  const status = toStatus(quantity);
 
   return {
     id: toNumber(raw.product_id),
@@ -51,7 +40,6 @@ export function toProduct(raw: unknown): Product {
     description: toText(raw.description),
     price: toNumber(raw.price), // the API may send "100.00" (string) or 100 (number)
     quantity,
-    minimumStock,
     status,
     statusLabel: STATUS_LABEL[status],
     createdAt: toText(raw.created_at) ?? "",

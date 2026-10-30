@@ -22,6 +22,25 @@ def create_organization(db: Session, email: str, organization_name: str) -> dict
     return dict(result.mappings().one())
 
 
+def rename_organization(
+    db: Session, organization_id: int, actor_email: str, organization_name: str
+) -> dict | None:
+    result = db.execute(
+        text("""
+            SELECT * FROM public.org_rename_organization(
+                :p_organization_id, :p_actor_email, :p_organization_name
+            )
+        """),
+        {
+            "p_organization_id": organization_id,
+            "p_actor_email": actor_email,
+            "p_organization_name": organization_name,
+        },
+    )
+    row = result.mappings().first()
+    return dict(row) if row is not None else None
+
+
 def get_pending_invitations(db: Session, email: str) -> list[dict]:
     result = db.execute(
         text("SELECT * FROM public.org_get_pending_invitations(:p_email)"),

@@ -13,7 +13,6 @@ class InventoryCreate(BaseModel):
     description: str | None = None
     price: Decimal = Field(default=Decimal("0"), ge=0)
     quantity: int = Field(default=0, ge=0)
-    minimum_stock: int = Field(default=5, ge=0)
 
 
 class InventoryUpdate(BaseModel):
@@ -24,7 +23,6 @@ class InventoryUpdate(BaseModel):
     description: str | None
     price: Decimal = Field(ge=0)
     quantity: int = Field(ge=0)
-    minimum_stock: int = Field(ge=0)
 
 
 class InventoryResponse(BaseModel):
@@ -37,7 +35,6 @@ class InventoryResponse(BaseModel):
     description: str | None
     price: Decimal
     quantity: int
-    minimum_stock: int
     created_at: datetime
     updated_at: datetime
     category_name: str | None

@@ -1,14 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import type { InventoryReportData } from "@/lib/api/reports";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatPreferredCurrency } from "@/lib/utils/format";
 import { ROUTES } from "@/app/routes";
 import styles from "@/styles/reports/TopProductsTable.module.css";
+import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 
 export default function TopProductsTable({
   report,
 }: {
   report: InventoryReportData;
 }) {
+  const { currency, currencyRates } = useUserPreferences();
   const topProducts = report.products
     .filter((product) => product.units_issued > 0)
     .slice(0, 10);
@@ -36,11 +40,11 @@ export default function TopProductsTable({
           <tbody>
             {topProducts.map((p) => {
               const health =
-                p.quantity === 0
-                  ? "Out of stock"
-                  : p.quantity <= p.minimum_stock
+                p.quantity <= 25
+                  ? "Critical"
+                  : p.quantity <= 50
                     ? "Low stock"
-                    : "Healthy";
+                    : "In stock";
               return (
                 <tr key={p.id}>
                   <td>
@@ -54,7 +58,7 @@ export default function TopProductsTable({
                   <td>
                     <span
                       className={
-                        health === "Healthy"
+                        health === "In stock"
                           ? styles.healthOk
                           : styles.healthWarn
                       }
@@ -63,7 +67,11 @@ export default function TopProductsTable({
                     </span>
                   </td>
                   <td className={styles.alignRight}>
-                    {formatCurrency(Number(p.price) * p.quantity)}
+                    {formatPreferredCurrency(
+                      Number(p.price) * p.quantity,
+                      currency,
+                      currencyRates,
+                    )}
                   </td>
                 </tr>
               );

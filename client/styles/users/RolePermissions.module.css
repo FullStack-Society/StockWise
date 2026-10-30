@@ -4,9 +4,10 @@
   color: var(--color-text-muted);
 }
 .listPanel {
-  background: var(--color-panel);
+  background: none;
+  box-shadow: 0 8px 24px var(--color-shadow);
   border: 1px solid var(--color-border);
-  padding: 20px;
+  padding: 16px;
 }
 .panelTitle {
   margin: 0;
@@ -103,7 +104,7 @@
   opacity: 0.7;
 }
 @media (max-width: 1100px) {
-.roleCards {
+  .roleCards {
     grid-template-columns: 1fr;
   }
 }

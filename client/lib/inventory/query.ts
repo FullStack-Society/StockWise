@@ -36,7 +36,11 @@ export function parseSearchParams(sp: SearchParams): InventoryView {
  * The API returns every product, so this runs in Next.js. If the catalog grows very large,
  * move this to the API (get_inventory already supports search / category / status).
  */
-export function applyView(products: Product[], view: InventoryView) {
+export function applyView(
+  products: Product[],
+  view: InventoryView,
+  prioritizeLowStock = false,
+) {
   const q = view.filters.query.toLowerCase();
   const { category, status } = view.filters;
 
@@ -48,6 +52,11 @@ export function applyView(products: Product[], view: InventoryView) {
       (!category || String(p.categoryId) === category) &&
       (!status || p.status === status),
   );
+
+  if (prioritizeLowStock) {
+    const stockPriority = { "out-of-stock": 0, "low-stock": 1, "in-stock": 2 };
+    filtered.sort((a, b) => stockPriority[a.status] - stockPriority[b.status]);
+  }
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(view.page, pageCount);

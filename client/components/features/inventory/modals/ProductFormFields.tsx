@@ -99,8 +99,8 @@ export default function ProductFormFields({
           className={cls(styles.textarea, "description")}
         />
       </Field>
-      <div className={styles.row3}>
-        <Field label="Unit price ($)" name="price" error={errors.price}>
+      <div className={styles.row2}>
+        <Field label="Unit price (USD)" name="price" error={errors.price}>
           <input
             {...inputProps("price")}
             defaultValue={product ? product.price.toFixed(2) : "0"}
@@ -128,18 +128,6 @@ export default function ProductFormFields({
             />
           </Field>
         )}
-        <Field
-          label="Min. stock"
-          name="minimumStock"
-          error={errors.minimumStock}
-        >
-          <input
-            {...inputProps("minimumStock")}
-            defaultValue={product?.minimumStock ?? 5}
-            inputMode="numeric"
-            className={cls(styles.input, "minimumStock")}
-          />
-        </Field>
       </div>
       {isEdit && (
         <p className={styles.hint}>

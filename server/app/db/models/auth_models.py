@@ -10,7 +10,7 @@ class AuthUser(Base):
     __tablename__ = "auth_users"
     __table_args__ = (
         CheckConstraint(
-            "role IN ('owner', 'admin', 'staff')",
+            "role IN ('owner', 'manager', 'staff')",
             name="ck_auth_users_role",
         ),
     )

@@ -17,7 +17,6 @@ export type Product = {
   description: string | null;
   price: number;
   quantity: number;
-  minimumStock: number;
   status: StockStatus;
   statusLabel: string;
   createdAt: string;
@@ -33,7 +32,6 @@ export type ProductInput = {
   description: string | null;
   price: number;
   quantity: number;
-  minimumStock: number;
 };
 
 export type InventoryImportRow = { row: number; product: ProductInput };

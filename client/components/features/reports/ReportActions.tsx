@@ -4,6 +4,7 @@ import { Printer, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type InventoryReportData, type ReportPeriod } from "@/lib/api/reports";
 import { ROUTES } from "@/app/routes";
+import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 import styles from "@/styles/reports/ReportActions.module.css";
 
 export default function ReportActions({
@@ -14,15 +15,22 @@ export default function ReportActions({
   report?: InventoryReportData;
 }) {
   const router = useRouter();
+  const { currency, currencyRates } = useUserPreferences();
+  const conversionRate =
+    currency === "USD" ? 1 : (currencyRates?.[currency] ?? null);
 
   function exportCsv() {
-    if (!report) return;
+    if (!report || conversionRate === null) return;
     const rows = [
       ["Inventory Report", `Last ${days} days`],
+      ["Currency", currency],
       ["Period start", report.period_start],
       ["Products", report.product_count],
       ["Stock units", report.stock_units],
-      ["Current inventory value", report.inventory_value],
+      [
+        `Current inventory value (${currency})`,
+        Number(report.inventory_value) * conversionRate,
+      ],
       ["Units received", report.units_received],
       ["Units issued", report.units_issued],
       ["Transactions", report.transaction_count],
@@ -33,8 +41,7 @@ export default function ReportActions({
         "Category",
         "Units issued",
         "Current stock",
-        "Minimum stock",
-        "Current stock value",
+        `Current stock value (${currency})`,
       ],
       ...report.products.map((p) => [
         p.name,
@@ -42,8 +49,7 @@ export default function ReportActions({
         p.category,
         p.units_issued,
         p.quantity,
-        p.minimum_stock,
-        Number(p.price) * p.quantity,
+        Number(p.price) * p.quantity * conversionRate,
       ]),
     ];
     const csv = rows
@@ -88,7 +94,12 @@ export default function ReportActions({
         type="button"
         className={styles.actionBtn}
         onClick={exportCsv}
-        disabled={!report}
+        disabled={!report || conversionRate === null}
+        title={
+          conversionRate === null
+            ? "Waiting for exchange rates before exporting converted values."
+            : undefined
+        }
       >
         <Download size={14} aria-hidden /> Export CSV
       </button>

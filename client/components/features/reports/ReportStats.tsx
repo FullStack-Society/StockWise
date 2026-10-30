@@ -1,3 +1,5 @@
+"use client";
+
 import {
   DollarSign,
   Package,
@@ -5,8 +7,9 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import type { InventoryReportData } from "@/lib/api/reports";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatPreferredCurrency } from "@/lib/utils/format";
 import styles from "@/styles/reports/ReportStats.module.css";
+import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 
 const ICONS = {
   value: DollarSign,
@@ -30,11 +33,16 @@ export default function ReportStats({
 }: {
   report: InventoryReportData;
 }) {
+  const { currency, currencyRates } = useUserPreferences();
   const stats = [
     {
       id: "value",
       label: "Current Inventory Value",
-      value: formatCurrency(Number(report.inventory_value)),
+      value: formatPreferredCurrency(
+        Number(report.inventory_value),
+        currency,
+        currencyRates,
+      ),
       change: "Based on current product prices",
       icon: "value" as const,
       trend: "up" as const,
@@ -60,14 +68,14 @@ export default function ReportStats({
     },
     {
       id: "alerts",
-      label: "Low / Out of Stock",
+      label: "Low / Critical",
       value: (
-        report.low_stock_count + report.out_of_stock_count
+        report.low_stock_count + report.critical_count
       ).toLocaleString(),
-      change: `${report.low_stock_count} low · ${report.out_of_stock_count} out`,
+      change: `${report.low_stock_count} low · ${report.critical_count} critical`,
       icon: "alerts" as const,
       trend:
-        report.low_stock_count + report.out_of_stock_count
+        report.low_stock_count + report.critical_count
           ? ("down" as const)
           : ("up" as const),
     },

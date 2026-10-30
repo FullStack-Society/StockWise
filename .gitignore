@@ -1,6 +1,7 @@
 # Dependencies
 client/node_modules/
 server/.venv/
+node_modules/
 
 # Environment variables and secrets
 .env
@@ -9,6 +10,7 @@ server/.venv/
 client/.env
 client/.env.*
 !client/.env.example
+!client/.env.local.example
 server/.env
 server/.env.*
 !server/.env.example

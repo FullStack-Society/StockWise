@@ -11,12 +11,11 @@ from app.api.organizations import router as organizations_router
 from app.api.reports import router as reports_router
 from app.api.settings import router as settings_router
 from app.db.session import SessionLocal
-from app.services.auth_service import initialize_auth, seed_owner
+from app.services.auth_service import seed_owner
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    initialize_auth()
     with SessionLocal() as db:
         seed_owner(
             db,

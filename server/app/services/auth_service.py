@@ -6,11 +6,8 @@ import os
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.db.models.auth_models import AuthUser
 from app.db import auth_repository as repository
-from app.db.session import Base, engine
 from app.db import user_repository
-from app.db.models.user_models import User
 
 logger = logging.getLogger(__name__)
 HASH_NAME = "pbkdf2_sha256"
@@ -37,6 +34,7 @@ class AccountAlreadyExistsError(Exception):
 
 class AuthenticationSetupError(Exception):
     pass
+
 
 def hash_password(password: str) -> str:
     salt = os.urandom(SALT_BYTES)
@@ -73,11 +71,6 @@ def verify_password(password: str, encoded: str) -> bool:
         iterations,
     )
     return hmac.compare_digest(actual, expected)
-
-
-def initialize_auth() -> None:
-    """Create the auth table and seed the configured owner once."""
-    Base.metadata.create_all(bind=engine, tables=[AuthUser.__table__])
 
 
 def seed_owner(
@@ -124,7 +117,7 @@ def register_account(
     name: str,
     email: str,
     password: str,
-) -> AuthUser:
+) -> dict:
     normalized_email = email.strip().lower()
     try:
         if (
@@ -152,27 +145,25 @@ def register_account(
         raise AuthenticationSetupError(
             "Unable to create the account right now. Please try again."
         ) from exc
-
-
-
 def authenticate_user(
     db: Session,
     email: str,
     password: str,
-) -> AuthUser | User:
+) -> dict:
     normalized_email = email.strip().lower()
 
     try:
-        # Check the existing Owner/admin/staff authentication table first.
+        # Check the existing Owner/manager/staff authentication table first.
         auth_user = repository.get_user_by_email(db, normalized_email)
 
         if auth_user:
-            password_valid = verify_password(
-                password,
-                auth_user.password_hash,
-            )
+            password_valid = verify_password(password, auth_user["password_hash"])
 
-            if not auth_user.is_active or auth_user.is_deleted or not password_valid:
+            if (
+                not auth_user["is_active"]
+                or auth_user["is_deleted"]
+                or not password_valid
+            ):
                 raise InvalidCredentialsError
 
             return auth_user
@@ -186,11 +177,10 @@ def authenticate_user(
             "Unable to authenticate right now. Please try again."
         ) from exc
 
-    password_hash = user.password_hash if user else _DUMMY_HASH
+    password_hash = user["password_hash"] if user else _DUMMY_HASH
     password_valid = verify_password(password, password_hash)
 
-    if not user or user.is_deleted or not password_valid:
+    if not user or user["is_deleted"] or not password_valid:
         raise InvalidCredentialsError
 
     return user
-

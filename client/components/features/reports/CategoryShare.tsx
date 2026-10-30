@@ -1,6 +1,9 @@
+"use client";
+
 import type { InventoryReportData } from "@/lib/api/reports";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatPreferredCurrency } from "@/lib/utils/format";
 import styles from "@/styles/reports/CategoryShare.module.css";
+import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 
 const COLORS = [
   "#e99540",
@@ -16,6 +19,7 @@ export default function CategoryShare({
 }: {
   report: InventoryReportData;
 }) {
+  const { currency, currencyRates } = useUserPreferences();
   const grouped = new Map<string, number>();
   for (const product of report.products) {
     grouped.set(
@@ -120,7 +124,11 @@ export default function CategoryShare({
                 <span className={styles.categoryValue}>
                   {useUnits
                     ? `${item.value.toLocaleString()} units`
-                    : formatCurrency(item.value)}
+                    : formatPreferredCurrency(
+                        item.value,
+                        currency,
+                        currencyRates,
+                      )}
                 </span>
               </li>
             ))}

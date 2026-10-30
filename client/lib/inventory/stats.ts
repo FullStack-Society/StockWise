@@ -1,9 +1,9 @@
 import {
   AlertTriangle,
+  Ban,
   Boxes,
   Clock,
   DollarSign,
-  Package,
 } from "lucide-react";
 import type { DashboardStat } from "@/lib/dashboard/types";
 import type { InventoryStat, Product } from "./types";
@@ -13,12 +13,6 @@ const compactUsd = new Intl.NumberFormat("en-US", {
   currency: "USD",
   notation: "compact",
   maximumFractionDigits: 1,
-});
-
-const currency = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 2,
 });
 
 function relativeTime(timestamp: number | null): string {
@@ -58,29 +52,30 @@ export function buildInventoryStats(products: Product[]): InventoryStat[] {
 
 export function buildDashboardStats(products: Product[]): DashboardStat[] {
   const units = products.reduce((sum, product) => sum + product.quantity, 0);
-  const value = products.reduce(
-    (sum, product) => sum + product.quantity * product.price,
-    0,
-  );
+  const lowStock = products.filter((product) => product.status === "low-stock").length;
+  const critical = products.filter((product) => product.status === "out-of-stock").length;
 
   return [
     {
-      label: "Products tracked",
-      value: products.length.toLocaleString(),
-      note: "Live inventory records",
-      icon: Package,
-    },
-    {
-      label: "Units on hand",
+      label: "Total stock",
       value: units.toLocaleString(),
-      note: "Across all products",
+      note: "Units across all products",
       icon: Boxes,
+      href: "/pages/inventory",
     },
     {
-      label: "Inventory value",
-      value: currency.format(value),
-      note: "Quantity multiplied by unit price",
-      icon: DollarSign,
+      label: "Low stock items",
+      value: lowStock.toLocaleString(),
+      note: "Requires attention",
+      icon: AlertTriangle,
+      href: "/pages/inventory?status=low-stock",
+    },
+    {
+      label: "Critical",
+      value: critical.toLocaleString(),
+      note: "At or below 25 units",
+      icon: Ban,
+      href: "/pages/inventory?status=out-of-stock",
     },
   ];
 }

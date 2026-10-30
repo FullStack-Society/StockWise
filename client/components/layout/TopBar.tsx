@@ -4,18 +4,20 @@ import {
   type InvitationNotice,
   type OrganizationSummary,
 } from "@/lib/api/organizations";
-import { getAccountSettings } from "@/lib/api/settings";
 import { getSession } from "@/lib/auth/session";
 import styles from "@/styles/layout/TopBar.module.css";
 import MobileNavigation from "./MobileNavigation";
 import TopBarControls from "./TopBarControls";
 import TopBarSearch from "./TopBarSearch";
 
-export default async function Topbar() {
+export default async function Topbar({
+  invitationsEnabled,
+}: {
+  invitationsEnabled: boolean;
+}) {
   const user = await getSession();
   let organizations: OrganizationSummary[] = [];
   let invitations: InvitationNotice[] = [];
-  let invitationsEnabled = true;
 
   if (user?.email) {
     try {
@@ -26,15 +28,6 @@ export default async function Topbar() {
     } catch (error) {
       console.error(
         "[StockWise] Unable to load organization notifications:",
-        error,
-      );
-    }
-    try {
-      invitationsEnabled = (await getAccountSettings(user.email))
-        .invitation_notifications;
-    } catch (error) {
-      console.error(
-        "[StockWise] Unable to load notification preferences:",
         error,
       );
     }

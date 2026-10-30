@@ -1,15 +1,15 @@
 
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.db.models.auth_models import AuthUser
 
-
-def get_user_by_email(db: Session, email: str) -> AuthUser | None:
-    normalized_email = email.strip().lower()
-    return db.scalar(
-        select(AuthUser).where(AuthUser.email == normalized_email)
+def get_user_by_email(db: Session, email: str) -> dict | None:
+    result = db.execute(
+        text("SELECT * FROM public.stockwise_auth_get_auth_user(:email)"),
+        {"email": email.strip().lower()},
     )
+    row = result.mappings().first()
+    return dict(row) if row is not None else None
 
 
 def create_owner(
@@ -17,39 +17,41 @@ def create_owner(
     name: str,
     email: str,
     password_hash: str,
-) -> AuthUser:
-    user = AuthUser(
-        name=name,
-        email=email.strip().lower(),
-        password_hash=password_hash,
-        role="owner",
+) -> dict:
+    result = db.execute(
+        text("""
+            SELECT * FROM public.stockwise_auth_create_owner(
+                :name, :email, :password_hash
+            )
+        """),
+        {
+            "name": name,
+            "email": email.strip().lower(),
+            "password_hash": password_hash,
+        },
     )
-    db.add(user)
-    db.flush()
-    return user
+    return dict(result.mappings().one())
 
 
-def create_account(
-    db: Session,
-    name: str,
-    email: str,
-    password_hash: str,
-) -> AuthUser:
-    user = AuthUser(
-        name=name.strip(),
-        email=email.strip().lower(),
-        password_hash=password_hash,
-        role="staff",
+def create_account(db: Session, name: str, email: str, password_hash: str) -> dict:
+    result = db.execute(
+        text("""
+            SELECT * FROM public.stockwise_auth_create_account(
+                :name, :email, :password_hash
+            )
+        """),
+        {
+            "name": name.strip(),
+            "email": email.strip().lower(),
+            "password_hash": password_hash,
+        },
     )
-    db.add(user)
-    db.flush()
-    return user
+    return dict(result.mappings().one())
 
 
 def owner_exists(db: Session) -> bool:
-    owner_id = db.scalar(
-        select(AuthUser.id)
-        .where(AuthUser.role == "owner")
-        .limit(1)
+    return bool(
+        db.execute(
+            text("SELECT public.stockwise_auth_owner_exists()")
+        ).scalar_one()
     )
-    return owner_id is not None

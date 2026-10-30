@@ -17,6 +17,11 @@ export type ActionResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
+export type BulkDeleteResult = {
+  deletedIds: number[];
+  failures: Array<{ id: number; error: string }>;
+};
+
 export type InventoryImportResult = {
   imported: number;
   failures: Array<{ row: number; error: string }>;
@@ -79,6 +84,59 @@ export async function deleteProductAction(id: number): Promise<ActionResult> {
   return { ok: true };
 }
 
+export async function deleteProductsAction(
+  ids: number[],
+): Promise<BulkDeleteResult> {
+  await requireOrganizationSession();
+
+  if (
+    !Array.isArray(ids) ||
+    ids.length === 0 ||
+    ids.some((id) => !Number.isInteger(id) || id <= 0)
+  ) {
+    return {
+      deletedIds: [],
+      failures: [{ id: 0, error: "Select one or more valid products to delete." }],
+    };
+  }
+
+  const productIds = [...new Set(ids)];
+  const deletedIds: number[] = [];
+  const failures: BulkDeleteResult["failures"] = [];
+  let cursor = 0;
+
+  async function deleteNext() {
+    while (cursor < productIds.length) {
+      const id = productIds[cursor++];
+      try {
+        await deleteProduct(id);
+        deletedIds.push(id);
+      } catch (error) {
+        unstable_rethrow(error);
+        const result = failure(error);
+        failures.push({
+          id,
+          error: result.ok ? "Unable to delete this product." : result.error,
+        });
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(5, productIds.length) },
+      () => deleteNext(),
+    ),
+  );
+
+  if (deletedIds.length > 0) {
+    revalidatePath(ROUTES.inventory);
+    revalidatePath(ROUTES.dashboard);
+  }
+
+  return { deletedIds, failures };
+}
+
 /** Imports validated CSV rows through the same organization-scoped create API as Add Product. */
 export async function importProductsAction(
   rows: InventoryImportRow[],
@@ -105,7 +163,6 @@ export async function importProductsAction(
       (typeof value.description === "string" && value.description.length > 1000) ||
       typeof value.price !== "number" || !Number.isFinite(value.price) || value.price < 0 ||
       !Number.isInteger(value.quantity) || value.quantity < 0 || value.quantity > maxInt ||
-      !Number.isInteger(value.minimumStock) || value.minimumStock < 0 || value.minimumStock > maxInt ||
       (value.categoryId !== null && (!Number.isInteger(value.categoryId) || value.categoryId <= 0));
     if (invalid) {
       failures.push({ row, error: "This row contains invalid product values." });

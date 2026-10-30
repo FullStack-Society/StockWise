@@ -4,7 +4,7 @@ import styles from "@/styles/ui/StatusBadge.module.css";
 const LABEL: Record<StockStatus, string> = {
   "in-stock": "In stock",
   "low-stock": "Low stock",
-  "out-of-stock": "Out of stock",
+  "out-of-stock": "Critical",
 };
 
 const VARIANT: Record<StockStatus, string> = {

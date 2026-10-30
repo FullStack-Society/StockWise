@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.models.auth_models import AuthUser
 from app.db.session import get_db
 from app.schemas.auth import AuthenticatedUser, LoginRequest, LoginResponse, RegistrationRequest
 from app.services.auth_service import (
@@ -40,10 +39,10 @@ def register(
 
     return LoginResponse(
         user=AuthenticatedUser(
-            id=user.id,
-            name=user.name,
-            email=user.email,
-            role=user.role,
+            id=user["id"],
+            name=user["name"],
+            email=user["email"],
+            role=user["role"],
         )
     )
 
@@ -70,18 +69,11 @@ def login(
             detail=str(exc),
         ) from exc
 
-    if isinstance(user, AuthUser):
-        user_id = user.id
-        full_name = user.name
-    else:
-        user_id = user.user_id
-        full_name = user.full_name
-
     return LoginResponse(
         user=AuthenticatedUser(
-            id=user_id,
-            name=full_name,
-            email=user.email,
-            role=user.role,
+            id=user["id"],
+            name=user["name"],
+            email=user["email"],
+            role=user["role"],
         )
     )

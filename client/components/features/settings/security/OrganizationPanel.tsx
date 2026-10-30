@@ -38,7 +38,8 @@ export default function OrganizationPanel({
           </p>
         </div>
         <button type="submit" className={styles.saveBtn} disabled={isPending}>
-          <Save size={12} aria-hidden /> {isPending ? "Saving…" : "Save Name"}
+          <Save size={12} aria-hidden />{" "}
+          {isPending ? "Saving…" : "Save Name"}
         </button>
       </div>
       <div className={styles.fieldGrid}>

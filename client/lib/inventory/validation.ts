@@ -38,10 +38,6 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
     return n;
   };
   const quantity = parseInt0("quantity", "Enter a whole number, 0 or more.");
-  const minimumStock = parseInt0(
-    "minimumStock",
-    "Enter a whole number, 0 or more.",
-  );
 
   const categoryRaw = text("categoryId");
   let categoryId: number | null = null;
@@ -65,7 +61,6 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
       description: description || null,
       price,
       quantity,
-      minimumStock,
     },
   };
 }

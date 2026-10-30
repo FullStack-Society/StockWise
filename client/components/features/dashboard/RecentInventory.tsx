@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ROUTES } from "@/app/routes";
+import type { DashboardRecentProduct } from "@/lib/api/reports";
 import type { Product, StockStatus } from "@/lib/inventory/types";
 import styles from "@/styles/dashboard/RecentInventory.module.css";
 
@@ -12,13 +13,22 @@ const BADGE: Record<StockStatus, string> = {
 const STATUS_LABEL: Record<StockStatus, string> = {
   "in-stock": "In stock",
   "low-stock": "Low stock",
-  "out-of-stock": "Out of stock",
+  "out-of-stock": "Critical",
 };
 
-export default function RecentInventory({ products }: { products: Product[] }) {
-  const recent = [...products]
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-    .slice(0, 5);
+export default function RecentInventory({
+  products,
+  recentProducts,
+}: {
+  products: Product[];
+  recentProducts: DashboardRecentProduct[];
+}) {
+  const productsById = new Map(
+    products.map((product) => [product.id, product]),
+  );
+  const recent = recentProducts
+    .map((receipt) => productsById.get(receipt.product_id))
+    .filter((product): product is Product => product !== undefined);
 
   return (
     <section className={styles.tablePanel}>
@@ -43,7 +53,14 @@ export default function RecentInventory({ products }: { products: Product[] }) {
           <tbody>
             {recent.map((product) => (
               <tr key={product.id}>
-                <td className={styles.itemName}>{product.name}</td>
+                <td className={styles.itemName}>
+                  <Link
+                    href={`${ROUTES.inventory}?search=${encodeURIComponent(product.sku)}`}
+                    className={styles.productLink}
+                  >
+                    {product.name}
+                  </Link>
+                </td>
                 <td>{product.sku}</td>
                 <td>{product.categoryName ?? "Uncategorized"}</td>
                 <td
@@ -60,7 +77,7 @@ export default function RecentInventory({ products }: { products: Product[] }) {
             ))}
             {recent.length === 0 && (
               <tr>
-                <td colSpan={5}>No inventory products have been added yet.</td>
+                <td colSpan={5}>No stock arrivals have been recorded yet.</td>
               </tr>
             )}
           </tbody>

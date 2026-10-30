@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { assignableRoles, ROLE_INFO, type Role } from "@/lib/auth/roles";
-import styles from "@/styles/modals/users/AddUserModal.module.css";
+import styles from "@/styles/users/AddUserModal.module.css";
 
 type Props = {
   currentRole: Role;

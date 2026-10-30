@@ -35,7 +35,7 @@ export default async function ReportsPage({
       <div className={styles.page}>
         <ReportsHeader days={days} />
         <section className={styles.accessNotice}>
-          <h2>Reports are for Owners and Admins</h2>
+          <h2>Reports are for Owners and Managers</h2>
           <p>
             Ask your organization owner to change your role if you need access
             to reports.
