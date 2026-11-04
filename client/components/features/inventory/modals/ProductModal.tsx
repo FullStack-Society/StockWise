@@ -11,10 +11,16 @@ import ProductFormFields from "./ProductFormFields";
 type Props = {
   product: Product | null;
   categories: Category[];
+  locationId: number;
   onClose: () => void;
 };
 
-export default function ProductModal({ product, categories, onClose }: Props) {
+export default function ProductModal({
+  product,
+  categories,
+  locationId,
+  onClose,
+}: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -79,6 +85,7 @@ export default function ProductModal({ product, categories, onClose }: Props) {
           <ProductFormFields
             product={product}
             categories={categories}
+            locationId={locationId}
             errors={errors}
           />
           {formError && !Object.keys(errors).length && (

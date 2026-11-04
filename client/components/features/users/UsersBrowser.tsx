@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Role } from "@/lib/auth/roles";
 import { canManageUser } from "@/lib/auth/roles";
@@ -54,18 +54,15 @@ export default function UsersBrowser({
 }: Props) {
   const router = useRouter();
   const { date_format: dateFormat } = useUserPreferences();
-  const [users, setUsers] = useState<TeamUser[]>(
-    initialMembers.map((member) => toTeamUser(member, dateFormat)),
+  const users = useMemo(
+    () => initialMembers.map((member) => toTeamUser(member, dateFormat)),
+    [initialMembers, dateFormat],
   );
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    setUsers(initialMembers.map((member) => toTeamUser(member, dateFormat)));
-  }, [initialMembers, dateFormat]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -104,7 +101,6 @@ export default function UsersBrowser({
         setError(result.error);
         return;
       }
-      setUsers((list) => list.filter((u) => u.id !== id));
       router.refresh();
     });
   }
@@ -118,9 +114,6 @@ export default function UsersBrowser({
         setError(result.error);
         return;
       }
-      setUsers((list) =>
-        list.map((user) => (user.id === id ? { ...user, role } : user)),
-      );
       router.refresh();
     });
   }

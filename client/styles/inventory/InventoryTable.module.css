@@ -78,6 +78,13 @@
 .qtyCritical {
   color: var(--color-danger);
 }
+.reorderHint {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 400;
+}
 .rowActions {
   display: inline-flex;
   gap: 6px;

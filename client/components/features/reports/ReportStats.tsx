@@ -69,9 +69,7 @@ export default function ReportStats({
     {
       id: "alerts",
       label: "Low / Critical",
-      value: (
-        report.low_stock_count + report.critical_count
-      ).toLocaleString(),
+      value: (report.low_stock_count + report.critical_count).toLocaleString(),
       change: `${report.low_stock_count} low · ${report.critical_count} critical`,
       icon: "alerts" as const,
       trend:

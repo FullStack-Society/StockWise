@@ -7,6 +7,7 @@ const HEADERS = [
   "Description",
   "Price",
   "Quantity",
+  "Reorder Point",
 ];
 
 function escapeCsv(value: string | number | null): string {
@@ -23,6 +24,7 @@ export function exportProductsCsv(products: Product[]): string {
       product.description,
       product.price.toFixed(2),
       product.quantity,
+      product.reorderPoint,
     ]),
   ];
 

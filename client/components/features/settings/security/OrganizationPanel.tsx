@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { renameOrganizationAction } from "@/lib/organization/actions";
-import styles from "@/styles/settings/ProfileForm.module.css";
+import styles from "@/styles/settings/security/OrganizationPanel.module.css";
 
 export default function OrganizationPanel({
   organizationId,
@@ -29,7 +29,11 @@ export default function OrganizationPanel({
   }
 
   return (
-    <form className={styles.card} onSubmit={onSubmit}>
+    <form
+      id="organization-settings-title"
+      className={styles.card}
+      onSubmit={onSubmit}
+    >
       <div className={styles.cardHead}>
         <div>
           <h2 className={styles.cardTitle}>Organization</h2>

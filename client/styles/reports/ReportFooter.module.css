@@ -4,7 +4,7 @@
   gap: 12px;
 }
 .footerCard {
-  background: var(--color-panel);
+  background: var(--color-ink);
   border: 1px solid var(--color-border);
   display: flex;
   align-items: center;

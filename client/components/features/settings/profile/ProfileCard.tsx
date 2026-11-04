@@ -9,7 +9,7 @@ import {
   Activity,
 } from "lucide-react";
 import type { AccountSettings } from "@/lib/api/settings";
-import styles from "@/styles/settings/ProfileCard.module.css";
+import styles from "@/styles/settings/profile/ProfileCard.module.css";
 import type { SettingsSection } from "@/lib/settings/types";
 
 const ITEMS = [

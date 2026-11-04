@@ -96,6 +96,8 @@ export default function UserPreferencesProvider({
             Number.isFinite(cachedEur) &&
             cachedEur > 0
           ) {
+            // Restores a validated localStorage cache before the network response.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCurrencyRates({ USD: 1, PHP: cachedPhp, EUR: cachedEur });
             setCurrencyRatesUpdatedAt(value.updatedAt);
           }

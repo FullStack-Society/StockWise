@@ -3,7 +3,7 @@ import { requireSession } from "@/lib/auth/session";
 import SettingsHeader from "@/components/features/settings/SettingsHeader";
 import { getAccountSettings } from "@/lib/api/settings";
 import { listOrganizations } from "@/lib/api/organizations";
-import SettingsBrowser from "@/components/features/settings/SettingsBrowser";
+import SettingsPageContent from "@/components/features/settings/SettingsBrowser";
 import styles from "@/styles/settings/SettingsPage.module.css";
 
 export const instant = false;
@@ -27,7 +27,7 @@ export default async function SettingsPage() {
   return (
     <div className={styles.page}>
       <SettingsHeader />
-      <SettingsBrowser
+      <SettingsPageContent
         settings={accountSettings}
         isOwner={isOwner}
         roleLabel={roleLabel}

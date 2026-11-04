@@ -22,13 +22,19 @@ The system is intended for retail businesses that need a more organized way to m
 StockWise currently includes:
 
 - Product information management, categories, and CSV import/export
-- Inventory stock monitoring and fixed low-stock/critical status indicators
+- Business-wide on-hand inventory quantities
+- Multi-product purchase orders with partial deliveries that update on-hand
+  stock when received
+- Manual stock issue, adjustment, and physical stock counts
+- Per-product reorder points, low-stock alerts, and movement history
 - Dashboard summaries and inventory reports
 - Organization accounts, invitations, and role-based access
 - Account preferences such as currency, appearance, timezone, and display density
 - Printing and CSV export for inventory reports
 
-The reporting system summarizes stock additions and deductions recorded in the inventory transaction data. Creating a product or changing its details does not itself record a stock movement.
+The reporting system summarizes recorded stock movements. Starting stock is
+recorded when a product is created with an opening quantity; changing product
+details does not change stock.
 
 ### Limitations
 
@@ -41,7 +47,10 @@ StockWise does not currently include:
 - Advanced AI-based demand forecasting
 - Offline inventory updates and synchronization
 
-StockWise requires an internet connection to access its centralized inventory system. Organizations provide separate workspaces; multi-branch inventory synchronization is not currently included.
+StockWise requires an internet connection to access its centralized inventory
+system. Each organization has one combined on-hand stock balance. Purchase
+orders track product quantities and optional notes; supplier management and POS
+synchronization are not currently included.
 
 ## Technologies and Tools
 
@@ -105,8 +114,6 @@ In PowerShell, from the repository root:
 Set-Location server
 Copy-Item .env.example .env
 ```
-
-Edit `server/.env` and set `DATABASE_URL` to your PostgreSQL connection string. Set `INTERNAL_API_KEY` to a unique secret of at least 32 characters. If the database does not already contain an owner, also set `OWNER_EMAIL` and `OWNER_PASSWORD` (at least 12 characters).
 
 Install the backend dependencies and start the API:
 

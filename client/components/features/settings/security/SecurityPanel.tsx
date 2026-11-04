@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
 import { changeAccountPassword } from "@/lib/settings/actions";
-import styles from "@/styles/settings/SecurityPanel.module.css";
+import styles from "@/styles/settings/security/SecurityPanel.module.css";
 import { METHODS, PRIVACY_OPTIONS } from "./types";
 
 function UnavailableSwitch({ label }: { label: string }) {

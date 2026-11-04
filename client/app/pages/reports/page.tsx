@@ -12,7 +12,7 @@ import ReportStats from "@/components/features/reports/ReportStats";
 import SalesTrendChart from "@/components/features/reports/SalesTrendChart";
 import CategoryShare from "@/components/features/reports/CategoryShare";
 import TopProductsTable from "@/components/features/reports/TopProductsTable";
-import ReportFooterStats from "@/components/features/reports/ReportFooterStats";
+import ReportFooterStats from "@/components/features/reports/ReportFooter";
 import styles from "@/styles/reports/ReportsPage.module.css";
 
 export const instant = false;

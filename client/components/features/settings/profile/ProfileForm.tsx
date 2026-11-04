@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Save, Search } from "lucide-react";
 import type { AccountSettings } from "@/lib/api/settings";
 import { saveProfileSettings } from "@/lib/settings/actions";
-import styles from "@/styles/settings/ProfileForm.module.css";
+import styles from "@/styles/settings/profile/ProfileForm.module.css";
 
 const TIMEZONES = [
   ["Asia/Manila", "Philippines (Asia/Manila)"],

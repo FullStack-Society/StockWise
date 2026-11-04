@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { InventoryReportData } from "@/lib/api/reports";
 import { formatPreferredCurrency } from "@/lib/utils/format";
-import { ROUTES } from "@/app/routes";
+import { ROUTES } from "@/lib/routes";
 import styles from "@/styles/reports/TopProductsTable.module.css";
 import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 

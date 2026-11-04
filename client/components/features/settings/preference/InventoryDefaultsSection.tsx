@@ -2,7 +2,7 @@
 
 import PreferenceToggle from "./PreferenceToggle";
 import type { EditablePreferences } from "./types";
-import styles from "@/styles/settings/PreferencesPanel.module.css";
+import styles from "@/styles/settings/preference/InventoryDefaultsSection.module.css";
 
 export default function InventoryDefaultsSection({
   preferences,

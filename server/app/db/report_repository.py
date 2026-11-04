@@ -25,4 +25,13 @@ def get_inventory_report(db: Session, organization_id: int, days: int) -> dict:
         """),
         {"organization_id": organization_id, "days": days},
     )
-    return result.scalar_one()
+    report = result.scalar_one()
+    reorder_summary = db.execute(
+        text("""
+            SELECT public.stockwise_get_reorder_summary(:organization_id)
+        """),
+        {"organization_id": organization_id},
+    ).scalar_one()
+    report["low_stock_count"] = reorder_summary["low_stock_count"]
+    report["critical_count"] = reorder_summary["critical_count"]
+    return report

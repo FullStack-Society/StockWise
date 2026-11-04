@@ -3,7 +3,12 @@ import type { ProductInput } from "./types";
 const INT_MAX = 2_147_483_647; // PostgreSQL integer limit
 
 export type ParsedProductForm =
-  | { ok: true; id: number | null; values: ProductInput }
+  | {
+      ok: true;
+      id: number | null;
+      locationId: number;
+      values: ProductInput;
+    }
   | { ok: false; errors: Record<string, string> };
 
 /** Server-side validation of the Add / Edit form. Field names match the form inputs. */
@@ -38,6 +43,15 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
     return n;
   };
   const quantity = parseInt0("quantity", "Enter a whole number, 0 or more.");
+  const reorderPoint = parseInt0("reorderPoint", "Enter a whole number, 0 or more.");
+  const locationIdRaw = text("locationId");
+  const locationId = /^\d+$/.test(locationIdRaw) ? Number(locationIdRaw) : 0;
+  if (
+    !Number.isSafeInteger(locationId) ||
+    locationId <= 0 ||
+    locationId > INT_MAX
+  )
+    errors.locationId = "Choose a valid inventory location.";
 
   const categoryRaw = text("categoryId");
   let categoryId: number | null = null;
@@ -54,6 +68,7 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
   return {
     ok: true,
     id,
+    locationId,
     values: {
       name,
       sku,
@@ -61,6 +76,7 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
       description: description || null,
       price,
       quantity,
+      reorderPoint,
     },
   };
 }

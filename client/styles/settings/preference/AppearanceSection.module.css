@@ -1,8 +1,3 @@
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
 .card {
   min-width: 0;
   padding: 18px;
@@ -111,8 +106,7 @@
   padding: 0;
   border: 0;
 }
-.input,
-.readonlySetting {
+.input {
   width: 100%;
   min-height: 34px;
   padding: 8px 10px;
@@ -166,132 +160,11 @@
   background: var(--color-accent-soft);
   color: var(--color-text);
 }
-.notificationWrap {
-  margin-top: 14px;
-  overflow-x: auto;
-}
-.notificationTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 9px;
-}
-.notificationTable th,
-.notificationTable td {
-  padding: 8px 7px;
-  border-bottom: 1px solid var(--color-border);
-  text-align: center;
-}
-.notificationTable thead th {
-  color: var(--color-text-muted);
-  font-size: 8px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-.notificationTable thead th:first-child,
-.notificationTable tbody th {
-  width: 55%;
-  text-align: left;
-}
-.notificationTable tbody th {
-  color: var(--color-text);
-  font-size: 9px;
-  font-weight: 600;
-}
-.notificationTable tbody th small {
-  display: block;
-  margin-top: 3px;
-  color: var(--color-text-muted);
-  font-size: 8px;
-  font-weight: 400;
-}
-.switch {
-  position: relative;
-  width: 31px;
-  height: 16px;
-  padding: 0;
-  border: 0;
-  background: rgba(255, 255, 255, 0.17);
-  vertical-align: middle;
-}
-.switch:disabled {
-  opacity: 0.52;
-  cursor: not-allowed;
-}
-.switch:not(:disabled) {
-  cursor: pointer;
-}
-.switchOn {
-  background: var(--color-accent);
-}
-.knob {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 10px;
-  height: 10px;
-  background: var(--color-text);
-  transition: transform 0.15s;
-}
-.switchOn .knob {
-  transform: translateX(15px);
-}
-.prefList {
-  margin: 12px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.prefRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 10px 0;
-  border-top: 1px solid var(--color-border);
-}
-.prefTitle {
-  color: var(--color-text);
-  font-size: 9px;
-  font-weight: 600;
-}
 .prefDesc {
   margin-top: 3px;
   color: var(--color-text-muted);
   font-size: 8px;
   line-height: 1.4;
-}
-.readonlySetting {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-.readonlySetting span {
-  color: var(--color-text-muted);
-  font-size: 7px;
-  text-align: right;
-}
-.regionalGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 15px;
-}
-.panelFooter {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 12px;
-}
-.message {
-  flex: 1;
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 9px;
-}
-.card > .message {
-  margin-top: 12px;
 }
 .saveButton {
   min-height: 30px;
@@ -310,34 +183,11 @@
   opacity: 0.6;
   cursor: wait;
 }
-.resetButton {
-  min-height: 30px;
-  padding: 0 11px;
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-text-muted);
-  font: inherit;
-  font-size: 9px;
-  cursor: pointer;
-}
-.resetButton:hover:not(:disabled) {
-  border-color: var(--color-accent);
-  color: var(--color-text);
-}
-.resetButton:disabled {
-  cursor: wait;
-  opacity: 0.6;
-}
 @media (max-width: 560px) {
-  .preferenceGrid,
-  .regionalGrid {
+  .preferenceGrid {
     grid-template-columns: 1fr;
   }
   .panelHead {
     flex-wrap: wrap;
-  }
-  .notificationTable thead th:first-child,
-  .notificationTable tbody th {
-    width: auto;
   }
 }

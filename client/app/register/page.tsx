@@ -3,7 +3,7 @@ import BrandPanel from "@/components/features/login/BrandPanel";
 import RegisterForm from "@/components/features/login/RegisterForm";
 import styles from "@/styles/login/LoginPage.module.css";
 import { getSession } from "@/lib/auth/session";
-import { ROUTES } from "../routes";
+import { ROUTES } from "@/lib/routes";
 
 export const instant = false;
 

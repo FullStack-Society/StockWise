@@ -18,6 +18,7 @@ server/.env.*
 # Build outputs
 client/.next/
 client/out/
+client/*.tsbuildinfo
 server/__pycache__/
 **/__pycache__/
 *.py[cod]
@@ -32,3 +33,4 @@ npm-debug.log*
 Thumbs.db
 
 migrations/
+

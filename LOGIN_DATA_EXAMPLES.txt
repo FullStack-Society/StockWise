@@ -1,15 +1,11 @@
 StockWise login examples (local development)
 ============================================
+this demo data only works if database is connected
 
 OWNER
 -----
-if database is connected:
 Email: zjzeppy08@gmail.com
 Password: zeppy1234567
-
-if not
-OWNER_EMAIL=owner@example.com
-OWNER_PASSWORD=mynameisowner
 
 ADMIN
 -----

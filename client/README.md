@@ -30,6 +30,8 @@ The Next.js frontend uses server-side API modules to communicate with the FastAP
    npm run dev
    ```
 
+   Run `npm run lint` to check the frontend with ESLint.
+
 The frontend runs at `http://localhost:3000`; API documentation is at `http://localhost:8000/docs`.
 
 The app includes authentication and organization membership, inventory management and CSV import, dashboard summaries, reports, user/role management, and account/organization settings. Available actions depend on the signed-in user's role and organization permissions.

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ROUTES } from "@/app/routes";
+import { ROUTES } from "@/lib/routes";
 import type { DashboardRecentProduct } from "@/lib/api/reports";
 import type { Product, StockStatus } from "@/lib/inventory/types";
 import styles from "@/styles/dashboard/RecentInventory.module.css";

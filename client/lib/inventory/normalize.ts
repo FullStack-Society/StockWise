@@ -29,7 +29,15 @@ export function toProduct(raw: unknown): Product {
   if (!isRecord(raw))
     throw new Error("Unexpected product format from the API.");
   const quantity = toNumber(raw.quantity);
-  const status = toStatus(quantity);
+  const rawStatus = toText(raw.status);
+  const status: StockStatus =
+    rawStatus === "Critical"
+      ? "out-of-stock"
+      : rawStatus === "Low stock"
+        ? "low-stock"
+        : rawStatus === "In stock"
+          ? "in-stock"
+          : toStatus(quantity);
 
   return {
     id: toNumber(raw.product_id),
@@ -40,6 +48,9 @@ export function toProduct(raw: unknown): Product {
     description: toText(raw.description),
     price: toNumber(raw.price), // the API may send "100.00" (string) or 100 (number)
     quantity,
+    reorderPoint: toNumber(raw.reorder_point, 50),
+    locationId: toNumber(raw.location_id),
+    locationName: toText(raw.location_name) ?? "",
     status,
     statusLabel: STATUS_LABEL[status],
     createdAt: toText(raw.created_at) ?? "",

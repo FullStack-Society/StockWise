@@ -12,7 +12,7 @@ import {
   DEFAULT_PREFERENCES,
   type EditablePreferences,
 } from "./types";
-import styles from "@/styles/settings/PreferencesPanel.module.css";
+import styles from "@/styles/settings/preference/PreferencesPanel.module.css";
 
 export default function PreferencesPanel({
   settings,

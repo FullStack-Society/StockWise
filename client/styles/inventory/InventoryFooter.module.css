@@ -1,11 +1,11 @@
-.stats {
+.footer {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
-.statCard {
+.card {
   border: 1px solid var(--color-border);
-  background: var(--color-panel);
+  background: var(--color-ink);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -28,7 +28,7 @@
   font-weight: 700;
 }
 @media (max-width: 800px) {
-.stats {
+  .footer {
     grid-template-columns: 1fr;
   }
 }

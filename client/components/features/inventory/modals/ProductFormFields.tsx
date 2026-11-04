@@ -4,6 +4,7 @@ import styles from "@/styles/inventory/InventoryActions.module.css";
 type Props = {
   product: Product | null;
   categories: Category[];
+  locationId: number;
   errors: Record<string, string>;
 };
 
@@ -40,6 +41,7 @@ function Field({
 export default function ProductFormFields({
   product,
   categories,
+  locationId,
   errors,
 }: Props) {
   const isEdit = product !== null;
@@ -55,6 +57,7 @@ export default function ProductFormFields({
   return (
     <>
       {isEdit && <input type="hidden" name="id" value={product.id} />}
+      <input type="hidden" name="locationId" value={locationId} />
       <Field label="Product name" name="name" error={errors.name}>
         <input
           {...inputProps("name")}
@@ -129,6 +132,18 @@ export default function ProductFormFields({
           </Field>
         )}
       </div>
+      <Field
+        label="Reorder when quantity reaches"
+        name="reorderPoint"
+        error={errors.reorderPoint}
+      >
+        <input
+          {...inputProps("reorderPoint")}
+          defaultValue={String(product?.reorderPoint ?? 50)}
+          inputMode="numeric"
+          className={cls(styles.input, "reorderPoint")}
+        />
+      </Field>
       {isEdit && (
         <p className={styles.hint}>
           To change the quantity, use a stock adjustment (stock in / stock out).

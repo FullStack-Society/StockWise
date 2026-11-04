@@ -3,7 +3,6 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
-import { SESSION_COOKIE } from "./constants";
 
 export type SessionUser = {
   id: string;
@@ -14,8 +13,9 @@ export type SessionUser = {
 };
 type StoredSessionUser = SessionUser & { remember: boolean };
 
-const SHORT_SESSION = 60 * 60 * 8; // 8 hours (cookie ends when browser closes)
-const LONG_SESSION = 60 * 60 * 24 * 30; // 30 days ("Remember me")
+const SESSION_COOKIE = "stockwise_session";
+const SHORT_SESSION = 60 * 60 * 8;
+const LONG_SESSION = 60 * 60 * 24 * 30;
 
 function getKey() {
   const secret = process.env.SESSION_SECRET;
@@ -40,7 +40,7 @@ export async function createSession(user: SessionUser, remember: boolean) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    ...(remember ? { maxAge: seconds } : {}), // no maxAge = session cookie
+    ...(remember ? { maxAge: seconds } : {}),
   });
 }
 
@@ -80,10 +80,7 @@ export async function updateOrganizationSession(
 ) {
   const session = await getSession();
   if (!session) redirect("/login");
-  await createSession(
-    { ...session, organizationId, role },
-    session.remember,
-  );
+  await createSession({ ...session, organizationId, role }, session.remember);
 }
 
 export async function updateProfileSession(name: string) {

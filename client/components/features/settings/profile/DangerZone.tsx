@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { deleteMyAccount } from "@/lib/settings/actions";
-import styles from "@/styles/settings/DangerZone.module.css";
+import styles from "@/styles/settings/profile/DangerZone.module.css";
 
 export default function DangerZone({ isOwner }: { isOwner: boolean }) {
   const [error, setError] = useState("");
@@ -23,7 +23,7 @@ export default function DangerZone({ isOwner }: { isOwner: boolean }) {
   }
 
   return (
-    <section className={styles.danger}>
+    <section id="delete-account" className={styles.danger}>
       <div>
         <h2 className={styles.dangerTitle}>Delete Account</h2>
         <p className={styles.dangerText}>

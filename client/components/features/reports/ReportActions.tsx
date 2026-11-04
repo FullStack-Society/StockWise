@@ -3,7 +3,7 @@
 import { Printer, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type InventoryReportData, type ReportPeriod } from "@/lib/api/reports";
-import { ROUTES } from "@/app/routes";
+import { ROUTES } from "@/lib/routes";
 import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 import styles from "@/styles/reports/ReportActions.module.css";
 

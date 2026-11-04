@@ -65,6 +65,7 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
     description: find("description", "details"),
     price: find("price", "unitprice"),
     quantity: find("quantity", "stock", "currentstock"),
+    reorderPoint: find("reorderpoint", "reorderlevel", "minimumstock"),
   };
   if (columns.name < 0 || columns.sku < 0) {
     throw new Error("The CSV needs Product Name (or Name) and SKU columns.");
@@ -85,6 +86,7 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
     const description = get(record, columns.description);
     const priceRaw = get(record, columns.price) || "0";
     const quantityRaw = get(record, columns.quantity) || "0";
+    const reorderPointRaw = get(record, columns.reorderPoint) || "50";
     const errors: string[] = [];
 
     if (!name) errors.push("product name is required");
@@ -98,6 +100,8 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
       errors.push("price must be a non-negative number with up to 2 decimals");
     if (!/^\d+$/.test(quantityRaw))
       errors.push("quantity must be a whole number of 0 or more");
+    if (!/^\d+$/.test(reorderPointRaw))
+      errors.push("reorder point must be a whole number of 0 or more");
 
     let categoryId: number | null = null;
     if (categoryRaw) {
@@ -121,7 +125,10 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
 
     const price = Number(priceRaw);
     const quantity = Number(quantityRaw);
+    const reorderPoint = Number(reorderPointRaw);
     if (quantity > 2_147_483_647) errors.push("quantity is too large");
+    if (reorderPoint > 2_147_483_647)
+      errors.push("reorder point is too large");
     if (errors.length) {
       issues.push({ row: rowNumber, error: errors.join("; ") });
       continue;
@@ -134,6 +141,7 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
       description: description || null,
       price,
       quantity,
+      reorderPoint,
     };
     rows.push({ row: rowNumber, product });
   }

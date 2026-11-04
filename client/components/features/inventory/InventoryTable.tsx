@@ -1,4 +1,10 @@
-import { Pencil, Trash2 } from "lucide-react";
+import {
+  ArrowUpFromLine,
+  ClipboardCheck,
+  Pencil,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { formatPreferredCurrency } from "@/lib/utils/format";
 import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
@@ -20,6 +26,7 @@ type Props = {
   onToggleAll: () => void;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onMovement: (product: Product, type: "OUT" | "ADJUST" | "STOCKTAKE") => void;
 };
 
 export default function InventoryTable({
@@ -31,11 +38,11 @@ export default function InventoryTable({
   onToggleAll,
   onEdit,
   onDelete,
+  onMovement,
 }: Props) {
   const { currency, currencyRates } = useUserPreferences();
   const allSelected =
-    allProductIds.length > 0 &&
-    allProductIds.every((id) => selected.has(id));
+    allProductIds.length > 0 && allProductIds.every((id) => selected.has(id));
 
   return (
     <div className={styles.tableWrap}>
@@ -54,7 +61,7 @@ export default function InventoryTable({
             <th>Product</th>
             <th>SKU</th>
             <th>Category</th>
-            <th>Quantity</th>
+            <th>Quantity / reorder at</th>
             <th>Unit price ({currency})</th>
             <th>Status</th>
             <th className={styles.alignRight}>Actions</th>
@@ -94,8 +101,13 @@ export default function InventoryTable({
                 </td>
                 <td>{p.sku}</td>
                 <td>{p.categoryName ?? "Uncategorized"}</td>
-                <td className={`${styles.qty} ${QTY_CLASS[p.status]}`}>
-                  {p.quantity}
+                <td>
+                  <span className={`${styles.qty} ${QTY_CLASS[p.status]}`}>
+                    {p.quantity}
+                  </span>
+                  <small className={styles.reorderHint}>
+                    Reorder at {p.reorderPoint}
+                  </small>
                 </td>
                 <td>
                   {formatPreferredCurrency(p.price, currency, currencyRates)}
@@ -105,6 +117,33 @@ export default function InventoryTable({
                 </td>
                 <td className={styles.alignRight}>
                   <div className={styles.rowActions}>
+                    <button
+                      type="button"
+                      aria-label={`Issue stock for ${p.name}`}
+                      title="Issue stock"
+                      onClick={() => onMovement(p, "OUT")}
+                      className={styles.iconButton}
+                    >
+                      <ArrowUpFromLine size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Adjust stock for ${p.name}`}
+                      title="Adjust stock"
+                      onClick={() => onMovement(p, "ADJUST")}
+                      className={styles.iconButton}
+                    >
+                      <SlidersHorizontal size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Count stock for ${p.name}`}
+                      title="Record stocktake"
+                      onClick={() => onMovement(p, "STOCKTAKE")}
+                      className={styles.iconButton}
+                    >
+                      <ClipboardCheck size={13} />
+                    </button>
                     <button
                       type="button"
                       aria-label={`Edit ${p.name}`}

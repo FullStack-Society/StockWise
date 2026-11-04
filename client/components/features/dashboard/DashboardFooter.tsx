@@ -1,14 +1,18 @@
 "use client";
 
-import { Clock3, DollarSign, Package } from "lucide-react";
+import { Clock3, DollarSign, Package, ShoppingCart } from "lucide-react";
 import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
+import type { PurchaseOrder } from "@/lib/api/orders";
 import { formatPreferredCurrency } from "@/lib/utils/format";
 import type { Product } from "@/lib/inventory/types";
 import styles from "@/styles/dashboard/DashboardFooter.module.css";
 
-function relativeTime(timestamp: number | null) {
-  if (timestamp === null) return "No stock updates";
-  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60_000));
+function relativeTime(timestamp: number | null, emptyLabel: string) {
+  if (timestamp === null) return emptyLabel;
+  const elapsedMinutes = Math.max(
+    0,
+    Math.floor((Date.now() - timestamp) / 60_000),
+  );
   if (elapsedMinutes < 1) return "Just now";
   if (elapsedMinutes < 60)
     return `${elapsedMinutes} min${elapsedMinutes === 1 ? "" : "s"} ago`;
@@ -18,7 +22,13 @@ function relativeTime(timestamp: number | null) {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
-export default function DashboardFooter({ products }: { products: Product[] }) {
+export default function DashboardFooter({
+  products,
+  orders,
+}: {
+  products: Product[];
+  orders: PurchaseOrder[];
+}) {
   const { currency, currencyRates } = useUserPreferences();
   const latestUpdate = products.reduce<number | null>((latest, product) => {
     const timestamp = Date.parse(product.updatedAt);
@@ -37,8 +47,13 @@ export default function DashboardFooter({ products }: { products: Product[] }) {
       icon: Package,
     },
     {
+      label: "Orders tracked",
+      value: orders.length.toLocaleString(),
+      icon: ShoppingCart,
+    },
+    {
       label: "Last inventory update",
-      value: relativeTime(latestUpdate),
+      value: relativeTime(latestUpdate, "No stock updates"),
       icon: Clock3,
     },
     {
@@ -49,7 +64,10 @@ export default function DashboardFooter({ products }: { products: Product[] }) {
   ];
 
   return (
-    <section className={styles.footer} aria-label="Inventory summary">
+    <section
+      className={styles.footer}
+      aria-label="Inventory and orders summary"
+    >
       {stats.map(({ label, value, icon: Icon }) => (
         <article className={styles.card} key={label}>
           <Icon size={16} aria-hidden />

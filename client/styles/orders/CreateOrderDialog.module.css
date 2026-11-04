@@ -1,0 +1,173 @@
+.dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  background: var(--color-modal);
+  color: var(--color-text);
+  box-shadow: 0 24px 70px var(--color-shadow);
+}
+
+.dialog::backdrop {
+  background: var(--color-overlay);
+  backdrop-filter: blur(3px);
+}
+
+.body {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.header,
+.actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.header p {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.close,
+.removeLine {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.lines {
+  display: grid;
+  gap: 10px;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.line label,
+.notes {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.line input,
+.line select,
+.notes textarea {
+  min-width: 0;
+  height: 36px;
+  padding: 0 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.line select {
+  width: 100%;
+}
+
+.notes textarea {
+  width: 100%;
+  height: auto;
+  min-height: 82px;
+  padding: 10px;
+  resize: vertical;
+  font-weight: 400;
+}
+
+.addLine {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.addLine:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-soft);
+  font-size: 12px;
+}
+
+.actions {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.actions .cancel {
+  border-color: var(--color-border);
+  background: transparent;
+}
+
+@media (max-width: 600px) {
+  .body {
+    padding: 16px;
+  }
+
+  .line {
+    grid-template-columns: minmax(0, 1fr) 100px auto;
+  }
+}

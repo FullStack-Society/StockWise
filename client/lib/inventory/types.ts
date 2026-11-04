@@ -17,6 +17,9 @@ export type Product = {
   description: string | null;
   price: number;
   quantity: number;
+  reorderPoint: number;
+  locationId: number;
+  locationName: string;
   status: StockStatus;
   statusLabel: string;
   createdAt: string;
@@ -32,6 +35,33 @@ export type ProductInput = {
   description: string | null;
   price: number;
   quantity: number;
+  reorderPoint: number;
 };
 
 export type InventoryImportRow = { row: number; product: ProductInput };
+
+export type InventoryLocation = {
+  id: number;
+  name: string;
+  createdAt: string;
+};
+
+export type InventoryMovement = {
+  id: number;
+  occurredAt: string;
+  type:
+    | "IN"
+    | "OUT"
+    | "STOCKTAKE"
+    | "TRANSFER_IN"
+    | "TRANSFER_OUT"
+    | "OTHER";
+  productId: number;
+  productName: string;
+  sku: string;
+  quantity: number;
+  expectedQuantity: number | null;
+  countedQuantity: number | null;
+  actorEmail: string;
+  remarks: string | null;
+};

@@ -1,4 +1,4 @@
-import styles from "@/styles/settings/PreferencesPanel.module.css";
+import styles from "@/styles/settings/preference/PreferenceToggle.module.css";
 
 export default function PreferenceToggle({
   label,

@@ -27,7 +27,6 @@ export default function LoginForm() {
       </div>
       <h2 className={styles.cardTitle}>Sign in</h2>
       <p className={styles.cardSubtitle}>Enter your credentials to continue</p>
-
       <form action={formAction} className={styles.form}>
         <label htmlFor="email" className={styles.label}>
           Email

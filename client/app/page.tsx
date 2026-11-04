@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
-import { ROUTES } from "./routes";
+import { ROUTES } from "@/lib/routes";
 
 export const instant = false;
 

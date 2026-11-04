@@ -1,5 +1,5 @@
 import { Bell, RefreshCw, ShieldCheck } from "lucide-react";
-import styles from "@/styles/settings/ProfileOverviewPanel.module.css";
+import styles from "@/styles/settings/profile/ProfileOverviewPanel.module.css";
 
 const ITEMS = [
   {

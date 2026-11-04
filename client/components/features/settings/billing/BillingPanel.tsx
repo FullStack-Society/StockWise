@@ -6,7 +6,7 @@ import {
   Package,
   Users,
 } from "lucide-react";
-import styles from "@/styles/settings/BillingPanel.module.css";
+import styles from "@/styles/settings/billing/BillingPanel.module.css";
 import { PLANS } from "./types";
 
 export default function BillingPanel() {

@@ -13,7 +13,7 @@ import {
   renameOrganization,
   respondToInvitation,
 } from "@/lib/api/organizations";
-import { ROUTES } from "@/app/routes";
+import { ROUTES } from "@/lib/routes";
 import {
   getSession,
   requireSession,

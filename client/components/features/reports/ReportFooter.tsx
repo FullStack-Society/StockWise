@@ -1,6 +1,6 @@
 import { ReceiptText, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import type { InventoryReportData } from "@/lib/api/reports";
-import styles from "@/styles/reports/ReportFooterStats.module.css";
+import styles from "@/styles/reports/ReportFooter.module.css";
 
 const ICONS = {
   transactions: ReceiptText,
@@ -8,7 +8,7 @@ const ICONS = {
   issued: ArrowUpFromLine,
 };
 
-export default function ReportFooterStats({
+export default function ReportFooter({
   report,
 }: {
   report: InventoryReportData;

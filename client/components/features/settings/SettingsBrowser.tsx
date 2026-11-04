@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Activity, Clock3, HardDrive } from "lucide-react";
 import type { AccountSettings } from "@/lib/api/settings";
@@ -15,7 +14,7 @@ import OrganizationPanel from "./security/OrganizationPanel";
 import ProfileOverviewPanel from "./profile/ProfileOverviewPanel";
 import styles from "@/styles/settings/SettingsPage.module.css";
 
-export default function SettingsBrowser({
+export default function SettingsPage({
   settings,
   isOwner,
   roleLabel,
@@ -30,23 +29,16 @@ export default function SettingsBrowser({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [active, setActive] = useState<SettingsSection>("profile");
-
-  useEffect(() => {
-    const section = searchParams.get("section");
-    if (
-      section === "profile" ||
-      section === "security" ||
-      section === "preferences" ||
-      section === "billing"
-    ) {
-      if (section === "billing" && !isOwner) return;
-      setActive(section);
-    }
-  }, [searchParams, isOwner]);
+  const section = searchParams.get("section");
+  const active: SettingsSection =
+    (section === "profile" ||
+    section === "security" ||
+    section === "preferences" ||
+    (section === "billing" && isOwner)
+      ? section
+      : "profile");
 
   function selectSection(section: SettingsSection) {
-    setActive(section);
     router.replace(`/pages/settings?section=${section}`, { scroll: false });
   }
 

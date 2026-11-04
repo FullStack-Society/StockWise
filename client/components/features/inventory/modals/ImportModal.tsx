@@ -11,13 +11,14 @@ import buttons from "@/styles/inventory/InventoryHeader.module.css";
 
 type Props = {
   categories: Category[];
+  locationId: number;
   onClose: () => void;
   onImported: () => void;
 };
 
 function downloadTemplate() {
   const blob = new Blob(
-    ["Product Name,SKU,Category,Description,Price,Quantity\r\n"],
+    ["Product Name,SKU,Category,Description,Price,Quantity,Reorder Point\r\n"],
     { type: "text/csv;charset=utf-8" },
   );
   const url = URL.createObjectURL(blob);
@@ -30,6 +31,7 @@ function downloadTemplate() {
 
 export default function ImportModal({
   categories,
+  locationId,
   onClose,
   onImported,
 }: Props) {
@@ -81,7 +83,7 @@ export default function ImportModal({
       try {
         for (let offset = 0; offset < parsed.rows.length; offset += 500) {
           const batch = parsed.rows.slice(offset, offset + 500);
-          const response = await importProductsAction(batch);
+          const response = await importProductsAction(batch, locationId);
           totalImported += response.imported;
           failures.push(...response.failures);
           setImportedCount(totalImported);
@@ -149,7 +151,7 @@ export default function ImportModal({
         <p className={extra.help}>
           This template contains headers only. Add at least one product row
           before importing. Required columns: Product Name and SKU. Optional
-          columns: Category, Description, Price, and Quantity.
+          columns: Category, Description, Price, Quantity, and Reorder Point.
           Category names must match this organization’s categories.
         </p>
 

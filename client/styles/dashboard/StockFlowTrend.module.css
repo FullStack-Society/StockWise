@@ -169,6 +169,14 @@
   font-size: 8px;
   text-transform: uppercase;
 }
+.orderTag {
+  flex: none;
+  padding: 3px 5px;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  font-size: 8px;
+  text-transform: uppercase;
+}
 .noAlerts {
   margin: 0;
   padding: 11px 9px;

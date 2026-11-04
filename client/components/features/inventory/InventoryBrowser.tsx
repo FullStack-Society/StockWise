@@ -3,17 +3,22 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Trash2, X } from "lucide-react";
-import {
-  deleteProductAction,
-  deleteProductsAction,
-} from "@/lib/inventory/actions";
 import { exportProductsCsv } from "@/lib/inventory/csv-export";
 import type { InventoryFilters } from "@/lib/inventory/query";
-import type { Category, Product } from "@/lib/inventory/types";
+import type {
+  Category,
+  InventoryMovement,
+  Product,
+} from "@/lib/inventory/types";
 import FilterBar from "./FilterBar";
 import InventoryHeader from "./InventoryHeader";
 import InventoryTable from "./InventoryTable";
 import Pagination from "./Pagination";
+import InventoryHistoryModal from "./modals/InventoryHistoryModal";
+import StockWorkflowModal, {
+  type StockMode,
+} from "./modals/StockWorkflowModal";
+import { useInventorySelection } from "./useInventorySelection";
 import ProductModal from "@/components/features/inventory/modals/ProductModal";
 import ImportModal from "@/components/features/inventory/modals/ImportModal";
 import styles from "@/styles/inventory/InventoryBrowser.module.css";
@@ -27,6 +32,8 @@ type Props = {
   start: number;
   exportProducts: Product[];
   categories: Category[];
+  locationId: number;
+  history: InventoryMovement[];
   filters: InventoryFilters;
 };
 
@@ -49,18 +56,34 @@ export default function InventoryBrowser({
   start,
   exportProducts,
   categories,
+  locationId,
+  history,
   filters,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isPending, startTransition] = useTransition();
-
+  const [isNavigating, startTransition] = useTransition();
   const [query, setQuery] = useState(filters.query);
   const [previousUrlQuery, setPreviousUrlQuery] = useState(filters.query);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [modal, setModal] = useState<ModalState>(null);
   const [showImport, setShowImport] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [stockWorkflow, setStockWorkflow] = useState<{
+    product: Product;
+    mode: StockMode;
+  } | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const {
+    selected,
+    error: actionError,
+    isPending: isDeleting,
+    clearError,
+    toggleOne,
+    toggleAll,
+    deleteSelected,
+    deleteProduct,
+  } = useInventorySelection();
+  const isPending = isNavigating || isDeleting;
+  const productIds = exportProducts.map((product) => product.id);
 
   function downloadInventory() {
     const blob = new Blob(["\uFEFF", exportProductsCsv(exportProducts)], {
@@ -74,7 +97,12 @@ export default function InventoryBrowser({
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  const { query: urlQuery, category, status } = filters;
+  const {
+    query: urlQuery,
+    category,
+    status,
+    locationId: urlLocationId,
+  } = filters;
 
   if (urlQuery !== previousUrlQuery) {
     setPreviousUrlQuery(urlQuery);
@@ -82,20 +110,27 @@ export default function InventoryBrowser({
   }
 
   const navigate = useCallback(
-    (patch: Patch) => {
-      const next = { search: urlQuery, category, status, page: 1, ...patch }; // page resets to 1 unless given
+    (patch: Patch & { locationId?: string }) => {
+      const next = {
+        search: urlQuery,
+        category,
+        status,
+        locationId: urlLocationId || String(locationId),
+        page: 1,
+        ...patch,
+      };
       const qs = new URLSearchParams();
       if (next.search) qs.set("search", next.search);
       if (next.category) qs.set("category", next.category);
       if (next.status) qs.set("status", next.status);
+      if (next.locationId) qs.set("location", next.locationId);
       if (next.page > 1) qs.set("page", String(next.page));
       const url = qs.toString() ? `${pathname}?${qs}` : pathname;
       startTransition(() => router.replace(url, { scroll: false }));
     },
-    [urlQuery, category, status, pathname, router],
+    [urlQuery, category, status, urlLocationId, locationId, pathname, router],
   );
 
-  // Wait until the user stops typing, then put the search in the URL.
   useEffect(() => {
     const trimmed = query.trim();
     if (trimmed === urlQuery) return;
@@ -106,83 +141,6 @@ export default function InventoryBrowser({
   function clearFilters() {
     setQuery("");
     navigate({ search: "", category: "", status: "" });
-  }
-
-  function toggleOne(id: number) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleAll() {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      const allOn =
-        exportProducts.length > 0 &&
-        exportProducts.every((product) => next.has(product.id));
-      exportProducts.forEach((product) =>
-        allOn ? next.delete(product.id) : next.add(product.id),
-      );
-      return next;
-    });
-  }
-
-  function handleDeleteSelected() {
-    const ids = [...selected];
-    if (ids.length === 0) return;
-    if (
-      !window.confirm(
-        `Mark ${ids.length} selected ${ids.length === 1 ? "product" : "products"} as deleted? They will be hidden from active inventory.`,
-      )
-    )
-      return;
-
-    setActionError(null);
-    startTransition(async () => {
-      const result = await deleteProductsAction(ids);
-      setSelected((current) => {
-        const next = new Set(current);
-        result.deletedIds.forEach((id) => next.delete(id));
-        return next;
-      });
-
-      if (result.failures.length > 0) {
-        const failedCount = result.failures.length;
-        const deletedCount = result.deletedIds.length;
-        setActionError(
-          deletedCount > 0
-            ? `${deletedCount} deleted; ${failedCount} could not be deleted. The failed products remain selected.`
-            : `Unable to delete the selected products: ${result.failures.map((failure) => failure.error).join("; ")}`,
-        );
-      }
-
-      if (result.deletedIds.length > 0) router.refresh();
-    });
-  }
-
-  function handleDelete(product: Product) {
-    if (
-      !window.confirm(
-        `Mark "${product.name}" as deleted? It will be hidden from active inventory.`,
-      )
-    )
-      return;
-    setActionError(null);
-    startTransition(async () => {
-      const result = await deleteProductAction(product.id);
-      if (!result.ok) {
-        setActionError(result.error);
-        return;
-      }
-      setSelected((prev) => {
-        const next = new Set(prev);
-        next.delete(product.id);
-        return next;
-      });
-    });
   }
 
   const hasFilters = Boolean(urlQuery || category || status);
@@ -197,6 +155,7 @@ export default function InventoryBrowser({
         onImport={() => setShowImport(true)}
         onExport={downloadInventory}
         canExport={exportProducts.length > 0}
+        onHistory={() => setShowHistory(true)}
       />
 
       {selected.size > 0 && (
@@ -208,7 +167,7 @@ export default function InventoryBrowser({
           <button
             type="button"
             className={styles.deleteSelected}
-            onClick={handleDeleteSelected}
+            onClick={deleteSelected}
             disabled={isPending}
           >
             <Trash2 size={14} />
@@ -223,7 +182,7 @@ export default function InventoryBrowser({
           <button
             type="button"
             aria-label="Dismiss"
-            onClick={() => setActionError(null)}
+            onClick={clearError}
             className={extra.bannerClose}
           >
             <X size={14} />
@@ -249,12 +208,13 @@ export default function InventoryBrowser({
         <InventoryTable
           rows={rows}
           selected={selected}
-          allProductIds={exportProducts.map((product) => product.id)}
+          allProductIds={productIds}
           emptyMessage={emptyMessage}
           onToggle={toggleOne}
-          onToggleAll={toggleAll}
+          onToggleAll={() => toggleAll(productIds)}
           onEdit={(product) => setModal({ mode: "edit", product })}
-          onDelete={handleDelete}
+          onDelete={deleteProduct}
+          onMovement={(product, mode) => setStockWorkflow({ product, mode })}
         />
 
         <div className={styles.footer}>
@@ -278,14 +238,31 @@ export default function InventoryBrowser({
           key={modal.mode === "edit" ? modal.product.id : "new"}
           product={modal.mode === "edit" ? modal.product : null}
           categories={categories}
+          locationId={locationId}
           onClose={() => setModal(null)}
         />
       )}
       {showImport && (
         <ImportModal
           categories={categories}
+          locationId={locationId}
           onClose={() => setShowImport(false)}
           onImported={() => router.refresh()}
+        />
+      )}
+      {stockWorkflow && (
+        <StockWorkflowModal
+          product={stockWorkflow.product}
+          locationId={locationId}
+          mode={stockWorkflow.mode}
+          onClose={() => setStockWorkflow(null)}
+          onSuccess={() => router.refresh()}
+        />
+      )}
+      {showHistory && (
+        <InventoryHistoryModal
+          movements={history}
+          onClose={() => setShowHistory(false)}
         />
       )}
     </>

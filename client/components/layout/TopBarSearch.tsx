@@ -4,9 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BarChart3,
+  Bell,
   Boxes,
+  ClipboardList,
   CreditCard,
+  Globe2,
   LayoutDashboard,
+  Palette,
+  Package,
   Search,
   Settings,
   ShieldCheck,
@@ -15,7 +20,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { ROUTES } from "@/app/routes";
+import { ROUTES } from "@/lib/routes";
 import styles from "@/styles/layout/TopBarSearch.module.css";
 
 type SearchItem = {
@@ -43,6 +48,14 @@ const SEARCH_ITEMS: SearchItem[] = [
     keywords: "products stock categories items add import export",
     href: ROUTES.inventory,
     icon: Boxes,
+  },
+  {
+    id: "orders",
+    label: "Orders",
+    detail: "Create purchase orders and receive deliveries",
+    keywords: "purchase order purchasing supplier ordered delivery receive stock",
+    href: ROUTES.orders,
+    icon: ClipboardList,
   },
   {
     id: "reports",
@@ -82,7 +95,7 @@ const SEARCH_ITEMS: SearchItem[] = [
     label: "Organization name",
     detail: "Change the organization name in Security & Privacy",
     keywords: "settings company workspace organization name",
-    href: `${ROUTES.settings}?section=security`,
+    href: `${ROUTES.settings}?section=security#organization-settings-title`,
     icon: ShieldCheck,
   },
   {
@@ -97,16 +110,127 @@ const SEARCH_ITEMS: SearchItem[] = [
     id: "preferences",
     label: "Preferences",
     detail: "Timezone and invitation notifications",
-    keywords: "settings notification notifications timezone email alerts",
+    keywords:
+      "settings notification notifications timezone regional appearance theme date format currency inventory defaults low stock display",
     href: `${ROUTES.settings}?section=preferences`,
     icon: SlidersHorizontal,
+  },
+  {
+    id: "appearance",
+    label: "Appearance & display",
+    detail: "Theme, date format, currency, and display density",
+    keywords:
+      "settings preferences appearance display theme dark light system date format currency usd php eur density compact comfortable language",
+    href: `${ROUTES.settings}?section=preferences#appearance-title`,
+    icon: Palette,
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    detail: "Organization invitation notifications",
+    keywords:
+      "settings preferences notifications email push in app invitation membership alerts",
+    href: `${ROUTES.settings}?section=preferences#notifications-title`,
+    icon: Bell,
+  },
+  {
+    id: "inventory-defaults",
+    label: "Inventory defaults",
+    detail: "Stock thresholds and inventory display behavior",
+    keywords:
+      "settings preferences inventory defaults low stock critical threshold reorder unit measure pieces warehouse auto sync reports prioritize",
+    href: `${ROUTES.settings}?section=preferences#inventory-defaults-title`,
+    icon: Package,
+  },
+  {
+    id: "regional",
+    label: "Regional settings",
+    detail: "Timezone and calendar preferences",
+    keywords:
+      "settings preferences regional timezone time zone calendar first day week monday",
+    href: `${ROUTES.settings}?section=preferences#regional-title`,
+    icon: Globe2,
+  },
+  {
+    id: "password",
+    label: "Password",
+    detail: "Change your account password",
+    keywords: "settings security password change update current new",
+    href: `${ROUTES.settings}?section=security#password-title`,
+    icon: ShieldCheck,
+  },
+  {
+    id: "two-factor",
+    label: "Two-factor authentication",
+    detail: "Additional account security",
+    keywords:
+      "settings security two factor authentication 2fa backup codes recovery",
+    href: `${ROUTES.settings}?section=security#two-factor-title`,
+    icon: ShieldCheck,
+  },
+  {
+    id: "privacy",
+    label: "Privacy",
+    detail: "Account information and activity controls",
+    keywords: "settings security privacy data activity controls",
+    href: `${ROUTES.settings}?section=security#privacy-title`,
+    icon: ShieldCheck,
+  },
+  {
+    id: "delete-account",
+    label: "Delete account",
+    detail: "Deactivate your account",
+    keywords: "settings profile delete deactivate account danger zone",
+    href: `${ROUTES.settings}?section=profile#delete-account`,
+    icon: UserRound,
   },
   {
     id: "billing",
     label: "Billing & subscription",
     detail: "Subscription details",
-    keywords: "settings billing subscription plan payment",
+    keywords:
+      "settings billing subscription plan payment invoice receipt company address history",
     href: `${ROUTES.settings}?section=billing`,
+    icon: CreditCard,
+  },
+  {
+    id: "current-plan",
+    label: "Current plan",
+    detail: "Subscription status and plan details",
+    keywords: "settings billing subscription current plan status",
+    href: `${ROUTES.settings}?section=billing#billing-title`,
+    icon: CreditCard,
+  },
+  {
+    id: "billing-plans",
+    label: "Available plans",
+    detail: "View subscription plan options",
+    keywords: "settings billing subscription available plans pricing",
+    href: `${ROUTES.settings}?section=billing#plans-title`,
+    icon: CreditCard,
+  },
+  {
+    id: "payment-method",
+    label: "Payment method",
+    detail: "Payment setup",
+    keywords: "settings billing payment method card",
+    href: `${ROUTES.settings}?section=billing#payment-title`,
+    icon: CreditCard,
+  },
+  {
+    id: "billing-information",
+    label: "Billing information",
+    detail: "Company name, billing email, and address",
+    keywords: "settings billing information company email address",
+    href: `${ROUTES.settings}?section=billing#billing-info-title`,
+    icon: CreditCard,
+  },
+  {
+    id: "billing-history",
+    label: "Billing history",
+    detail: "Invoices and receipts",
+    keywords: "settings billing history invoices receipts",
+    href: `${ROUTES.settings}?section=billing#history-title`,
     icon: CreditCard,
   },
 ];
@@ -124,7 +248,13 @@ export default function TopBarSearch({ role }: { role: string | null }) {
       SEARCH_ITEMS.filter((item) => {
         if (role !== "owner" && item.id === "organization-settings")
           return false;
-        if (role !== "owner" && item.id === "billing") return false;
+        if (
+          role !== "owner" &&
+          (item.id === "billing" || item.id.startsWith("billing-") ||
+            item.id === "current-plan" ||
+            item.id === "payment-method")
+        )
+          return false;
         if (role === "staff" && item.id === "reports") return false;
         return true;
       }),
@@ -132,7 +262,12 @@ export default function TopBarSearch({ role }: { role: string | null }) {
   );
 
   const results = useMemo(() => {
-    const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    const terms = query
+      .toLocaleLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
     if (terms.length === 0) return items.slice(0, 6);
 
     return items
@@ -154,10 +289,6 @@ export default function TopBarSearch({ role }: { role: string | null }) {
       .map(({ item }) => item)
       .slice(0, 8);
   }, [items, query]);
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [query]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -185,6 +316,7 @@ export default function TopBarSearch({ role }: { role: string | null }) {
   function navigateTo(item: SearchItem) {
     setOpen(false);
     setQuery("");
+    setActiveIndex(0);
     router.push(item.href);
   }
 
@@ -227,6 +359,7 @@ export default function TopBarSearch({ role }: { role: string | null }) {
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
+            setActiveIndex(0);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}

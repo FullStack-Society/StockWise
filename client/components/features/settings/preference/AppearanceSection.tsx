@@ -3,7 +3,7 @@
 import { Check, ChevronDown } from "lucide-react";
 import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 import type { EditablePreferences } from "./types";
-import styles from "@/styles/settings/PreferencesPanel.module.css";
+import styles from "@/styles/settings/preference/AppearanceSection.module.css";
 import { THEMES } from "./types";
 
 export default function AppearanceSection({

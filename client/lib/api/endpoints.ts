@@ -7,7 +7,17 @@ export const ENDPOINTS = {
   inventory: {
     root: "/api/inventory/",
     item: (id: number) => `/api/inventory/${id}`,
+    locations: "/api/inventory/locations",
+    movements: "/api/inventory/movements",
+    productMovements: (id: number) => `/api/inventory/${id}/movements`,
+    productTransfer: (id: number) => `/api/inventory/${id}/transfers`,
+    stocktake: (id: number) => `/api/inventory/${id}/stocktake`,
     categories: ["/api/inventory/categories/", "/api/categories/"],
+  },
+  orders: {
+    root: "/api/orders/",
+    receive: (orderId: number, itemId: number) =>
+      `/api/orders/${orderId}/items/${itemId}/receive`,
   },
   organizations: {
     create: "/api/organizations/",

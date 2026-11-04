@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ROUTES } from "@/app/routes";
+import { ROUTES } from "@/lib/routes";
+import type { PurchaseOrder } from "@/lib/api/orders";
 import type { DashboardStockFlow } from "@/lib/api/reports";
 import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
 import { formatDate } from "@/lib/utils/format";
@@ -23,9 +24,11 @@ function chartCoordinates(values: number[], max: number) {
 export default function StockFlowTrend({
   stockFlow,
   days,
+  orders,
 }: {
   stockFlow: DashboardStockFlow;
   days: 7 | 14 | 30;
+  orders: PurchaseOrder[];
 }) {
   const router = useRouter();
   const { date_format: dateFormat } = useUserPreferences();
@@ -36,6 +39,30 @@ export default function StockFlowTrend({
   const path = points
     .map(({ x, y }, index) => `${index === 0 ? "M" : "L"}${x},${y}`)
     .join(" ");
+  const firstDay = stockFlow.days[0]?.day;
+  const cutoff = firstDay
+    ? Date.parse(`${firstDay}T00:00:00Z`)
+    : Number.POSITIVE_INFINITY;
+  const alerts = [
+    ...stockFlow.recent_receipts.map((receipt) => ({
+      type: "receipt" as const,
+      timestamp: Date.parse(receipt.received_at),
+      receipt,
+    })),
+    ...orders
+      .map((order) => ({
+        type: "order" as const,
+        timestamp: Date.parse(order.createdAt),
+        order,
+      }))
+      .filter(
+        ({ timestamp }) =>
+          !Number.isNaN(timestamp) && timestamp >= cutoff,
+      ),
+  ]
+    .filter(({ timestamp }) => !Number.isNaN(timestamp))
+    .sort((left, right) => right.timestamp - left.timestamp);
+
   return (
     <section className={styles.panel} aria-labelledby="stock-flow-title">
       <div className={styles.panelHead}>
@@ -83,7 +110,12 @@ export default function StockFlowTrend({
                     y2={y}
                     className={styles.gridLine}
                   />
-                  <text x="26" y={y + 3} textAnchor="end" className={styles.axis}>
+                  <text
+                    x="26"
+                    y={y + 3}
+                    textAnchor="end"
+                    className={styles.axis}
+                  >
                     {label}
                   </text>
                 </g>
@@ -96,7 +128,8 @@ export default function StockFlowTrend({
                 <title>
                   {`${formatDate(stockFlow.days[index].day, dateFormat)}: ${received[index]} units received`}
                 </title>
-                {(index % labelInterval === 0 || index === points.length - 1) && (
+                {(index % labelInterval === 0 ||
+                  index === points.length - 1) && (
                   <text
                     x={x}
                     y="179"
@@ -129,36 +162,62 @@ export default function StockFlowTrend({
 
       <div className={styles.alertHead}>
         <h3>Urgent Alerts</h3>
-        <span>{stockFlow.recent_receipts.length}</span>
+        <span>{alerts.length}</span>
       </div>
       <div className={styles.alertList}>
-        {stockFlow.recent_receipts.length ? (
-          stockFlow.recent_receipts.map((receipt, index) => (
-            <Link
-              className={styles.alert}
-              href={`${ROUTES.inventory}?search=${encodeURIComponent(receipt.sku)}`}
-              key={`${receipt.product_id}-${receipt.received_at}-${index}`}
-            >
-              <div className={styles.alertText}>
-                <strong>{receipt.product_name}</strong>
-                <span>
-                  {receipt.quantity.toLocaleString()}{" "}
-                  {receipt.quantity === 1 ? "unit" : "units"} added ·{" "}
-                  {formatDate(receipt.received_at, dateFormat)}
-                </span>
-              </div>
-              <span className={styles.receivedTag}>Received</span>
-            </Link>
-          ))
+        {alerts.length ? (
+          alerts.map((alert, index) =>
+            alert.type === "receipt" ? (
+              <Link
+                className={styles.alert}
+                href={`${ROUTES.inventory}?search=${encodeURIComponent(alert.receipt.sku)}`}
+                key={`receipt-${alert.receipt.product_id}-${alert.timestamp}-${index}`}
+              >
+                <div className={styles.alertText}>
+                  <strong>{alert.receipt.product_name}</strong>
+                  <span>
+                    {alert.receipt.quantity.toLocaleString()}{" "}
+                    {alert.receipt.quantity === 1 ? "unit" : "units"} added ·{" "}
+                    {formatDate(alert.receipt.received_at, dateFormat)}
+                  </span>
+                </div>
+                <span className={styles.receivedTag}>Received</span>
+              </Link>
+            ) : (
+              <Link
+                className={styles.alert}
+                href={ROUTES.orders}
+                key={`order-${alert.order.id}-${index}`}
+              >
+                <div className={styles.alertText}>
+                  <strong>Purchase order #{alert.order.id}</strong>
+                  <span>
+                    {alert.order.items.length.toLocaleString()}{" "}
+                    {alert.order.items.length === 1 ? "item" : "items"} ·{" "}
+                    {orderUnits(alert.order).toLocaleString()} units ordered ·{" "}
+                    {formatDate(alert.order.createdAt, dateFormat)}
+                  </span>
+                </div>
+                <span className={styles.orderTag}>{alert.order.status}</span>
+              </Link>
+            ),
+          )
         ) : (
           <p className={styles.noAlerts}>
-            No stock arrivals were recorded in the last {days} days.
+            No stock arrivals or purchase orders in the last {days} days.
           </p>
         )}
       </div>
       <Link href={ROUTES.inventory} className={styles.inventoryLink}>
         View inventory
       </Link>
+      <Link href={ROUTES.orders} className={styles.inventoryLink}>
+        View orders
+      </Link>
     </section>
   );
+}
+
+function orderUnits(order: PurchaseOrder) {
+  return order.items.reduce((total, item) => total + item.quantityOrdered, 0);
 }

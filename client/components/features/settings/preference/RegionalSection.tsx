@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { TIMEZONES } from "./types";
-import styles from "@/styles/settings/PreferencesPanel.module.css";
+import styles from "@/styles/settings/preference/RegionalSection.module.css";
 
 export default function RegionalSection({
   timezone,
