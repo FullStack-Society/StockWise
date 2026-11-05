@@ -1,0 +1,100 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Scrolling area under the top bar, with the teal -> orange -> dark gradient */
+.content {
+  --scrollbar-thumb: transparent;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+  padding: 32px;
+  transition: scrollbar-color 180ms ease;
+  background:
+    radial-gradient(
+      60% 40% at 50% 0%,
+      rgba(29, 87, 100, 0.75) 0%,
+      rgba(38, 112, 128, 0) 70%
+    ),
+    radial-gradient(
+      200% 45% at 50% 55%,
+      rgba(140, 70, 30, 0.62) 30%,
+      rgba(140, 70, 30, 0) 75%
+    ),
+    linear-gradient(
+      180deg,
+      #12303ccc 0%,
+      #2b5867cc 25%,
+      #813c1dcc 55%,
+      #301e1fcc 85%,
+      #06090ecc 100%
+    );
+}
+
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+  transition: background-color 180ms ease;
+}
+
+.content.scrolling {
+  --scrollbar-thumb: #080b10;
+}
+
+[data-theme="light"] .content {
+  background:
+    radial-gradient(65% 42% at 12% 0%, rgba(89, 157, 177, 0.2), transparent 72%),
+    radial-gradient(70% 50% at 95% 35%, rgba(225, 160, 111, 0.18), transparent 72%),
+    radial-gradient(55% 40% at 45% 100%, rgba(164, 190, 199, 0.2), transparent 70%),
+    linear-gradient(145deg, #edf3f5 0%, #e8eef1 52%, #f4f1ec 100%);
+}
+
+[data-theme="light"] .content.scrolling {
+  --scrollbar-thumb: #343a40;
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] .content {
+    background:
+    radial-gradient(65% 42% at 12% 0%, rgba(89, 157, 177, 0.2), transparent 72%),
+    radial-gradient(70% 50% at 95% 35%, rgba(225, 160, 111, 0.18), transparent 72%),
+    radial-gradient(55% 40% at 45% 100%, rgba(164, 190, 199, 0.2), transparent 70%),
+    linear-gradient(145deg, #edf3f5 0%, #e8eef1 52%, #f4f1ec 100%);
+  }
+
+  [data-theme="system"] .content.scrolling {
+    --scrollbar-thumb: #343a40;
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .content {
+    padding: 20px;
+  }
+}

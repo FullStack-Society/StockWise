@@ -1,0 +1,25 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: var(--color-accent);
+}
+
+.mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: 600;
+}

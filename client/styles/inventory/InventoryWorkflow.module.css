@@ -1,0 +1,168 @@
+.modal {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-modal);
+  color: var(--color-text);
+  color-scheme: inherit;
+  box-shadow: 0 24px 70px var(--color-shadow);
+  overflow: auto;
+}
+
+.modal::backdrop {
+  background: var(--color-overlay);
+  backdrop-filter: blur(3px);
+}
+
+.historyModal {
+  width: min(1100px, calc(100vw - 32px));
+}
+
+.body {
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.close {
+  display: inline-flex;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.field input {
+  height: 40px;
+  padding: 0 12px;
+}
+
+.field textarea {
+  min-height: 84px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible,
+.field select:focus-visible,
+.close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-soft);
+  font-size: 12px;
+}
+
+.empty {
+  margin: 24px 0 0;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.historyWrap {
+  max-height: 65vh;
+  margin-top: 20px;
+  overflow: auto;
+}
+
+.history {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+
+.history th,
+.history td {
+  padding: 10px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.history th {
+  position: sticky;
+  top: 0;
+  background: var(--color-modal);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.history small {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+
+@media (max-width: 720px) {
+  .body {
+    padding: 18px;
+  }
+
+  .history {
+    min-width: 760px;
+  }
+}

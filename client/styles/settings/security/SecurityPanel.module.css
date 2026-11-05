@@ -1,0 +1,240 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.panel {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  background: none;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.header h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.header p {
+  margin: 5px 0 0;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.available {
+  flex: none;
+  padding: 4px 7px;
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.fieldLabel {
+  color: var(--color-text-muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.input {
+  width: 100%;
+  min-height: 35px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 10px;
+}
+.input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.passwordFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+}
+.passwordFoot p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.formMessage {
+  margin: 12px 0 0;
+  color: var(--color-text-muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 9px;
+}
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.methodGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.method {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-glass);
+  color: var(--color-accent);
+}
+.method h3 {
+  margin: 9px 0 0;
+  color: var(--color-text);
+  font-size: 10px;
+}
+.method p {
+  min-height: 24px;
+  margin: 4px 0 8px;
+  color: var(--color-text-muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+.method span {
+  color: var(--color-text-muted);
+  font-size: 8px;
+}
+.backup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 11px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-glass);
+}
+.backupIcon {
+  display: grid;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  color: var(--color-accent);
+}
+.backup > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.backup h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 10px;
+}
+.backup p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.privacyList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.privacyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--color-border);
+}
+.privacyRow h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 10px;
+  font-weight: 600;
+}
+.privacyRow p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+.switch {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: rgba(255, 255, 255, 0.16);
+  opacity: 0.6;
+}
+.switch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-text-muted);
+}
+.note {
+  margin: 10px 0 0;
+  color: var(--color-text-muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.input:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+@media (max-width: 560px) {
+  .fieldGrid,
+  .methodGrid {
+    grid-template-columns: 1fr;
+  }
+  .passwordFoot,
+  .backup {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .header {
+    flex-wrap: wrap;
+  }
+}

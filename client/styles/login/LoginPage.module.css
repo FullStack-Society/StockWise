@@ -1,0 +1,53 @@
+.page {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+.formPanel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 85px;
+  color: var(--color-text);
+}
+.formPanel::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  background:
+    radial-gradient(
+      100% 30% at 50% 30%,
+      hsla(195, 36%, 36%, 0.8) 40%,
+      rgba(38, 112, 128, 0) 60%
+    ),
+    radial-gradient(
+      200% 20% at 0% 45%,
+      hsla(22, 70%, 49%, 0.8) 100%,
+      rgba(214, 122, 52, 0) 70%
+    ),
+    radial-gradient(
+      60% 50% at 50% 60%,
+      hsla(357, 23%, 15%, 0.8) 0%,
+      rgba(120, 70, 40, 0) 70%
+    ),
+    linear-gradient(
+      180deg,
+      #12303ccc 5%,
+      #2b5867cc 40%,
+      #b55923cc 40%,
+      #301e1fcc 85%,
+      #06090ecc 100%
+    );
+  filter: blur(100px);
+  transform: rotate(30deg);
+}
+@media (max-width: 767px) {
+.formPanel {
+    padding: 32px 20px;
+  }
+}

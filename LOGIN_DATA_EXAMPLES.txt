@@ -1,0 +1,20 @@
+StockWise login examples (local development)
+============================================
+this demo data only works if database is connected
+
+OWNER
+-----
+Email: zjzeppy08@gmail.com
+Password: zeppy1234567
+
+ADMIN
+-----
+Name: James 
+Email: james@example.com
+Password: mynameisjames
+
+STAFF
+-----
+Name: Daniel 
+Email: daniel@example.com
+Password: mynameisdaniel
