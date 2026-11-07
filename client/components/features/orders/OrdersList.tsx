@@ -1,16 +1,30 @@
 import type { PurchaseOrder } from "@/lib/api/orders";
 import ReceiveOrderItem from "./ReceiveOrderItem";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
+import { formatDateTime } from "@/lib/utils/format";
+import { formatPreferredCurrency } from "@/lib/utils/format";
+import { Pencil, Trash2 } from "lucide-react";
 import styles from "@/styles/orders/OrdersList.module.css";
 
 export default function OrdersList({
   orders,
+  onEdit,
+  onDelete,
   emptyTitle,
   emptyDescription,
 }: {
   orders: PurchaseOrder[];
+  onEdit: (order: PurchaseOrder) => void;
+  onDelete: (order: PurchaseOrder) => void;
   emptyTitle: string;
   emptyDescription: string;
 }) {
+  const {
+    date_format: dateFormat,
+    timezone,
+    currency,
+    currencyRates,
+  } = useUserPreferences();
   if (orders.length === 0) {
     return (
       <section className={styles.empty}>
@@ -26,18 +40,26 @@ export default function OrdersList({
         <section className={styles.card} key={order.id}>
           <header className={styles.header}>
             <div>
-              <h2>Order #{order.id}</h2>
+              <h2>Order #{order.orderNumber}</h2>
               <p>
-                <time
-                  dateTime={order.createdAt}
-                  suppressHydrationWarning
-                >
-                  {new Date(order.createdAt).toLocaleDateString()}
+                <time dateTime={order.createdAt}>
+                  {formatDateTime(order.createdAt, dateFormat, timezone)}
                 </time>{" "}
-                ·{" "}
-                {order.createdByEmail}
+                · {order.createdByEmail}
               </p>
               {order.notes && <p className={styles.notes}>{order.notes}</p>}
+              <p className={styles.orderValue}>
+                Order value:{" "}
+                {formatPreferredCurrency(
+                  order.items.reduce(
+                    (total, item) =>
+                      total + item.unitPrice * item.quantityOrdered,
+                    0,
+                  ),
+                  currency,
+                  currencyRates,
+                )}
+              </p>
             </div>
             <span
               className={`${styles.status} ${
@@ -48,15 +70,37 @@ export default function OrdersList({
                     : ""
               }`}
             >
-              {order.status}
+              {order.status === "Received" ? "Done" : order.status}
             </span>
+            {order.status === "Open" && (
+              <button
+                type="button"
+                className={styles.editOrder}
+                onClick={() => onEdit(order)}
+                aria-label={`Edit order ${order.orderNumber}`}
+              >
+                <Pencil size={14} aria-hidden />
+                Edit order
+              </button>
+            )}
+            <button
+              type="button"
+              className={styles.deleteOrder}
+              onClick={() => onDelete(order)}
+              aria-label={`Delete order ${order.orderNumber}`}
+            >
+              <Trash2 size={14} aria-hidden />
+              Delete
+            </button>
           </header>
-          <div className={styles.tableWrap}>
+          <div className={`${styles.tableWrap} mobileTableScroll`}>
             <table>
               <thead>
                 <tr>
                   <th>Product</th>
                   <th>Ordered</th>
+                  <th>Unit value</th>
+                  <th>Line value</th>
                   <th>Received</th>
                   <th>Remaining</th>
                   <th>Receive delivery</th>
@@ -70,6 +114,20 @@ export default function OrdersList({
                       <small>{item.sku}</small>
                     </td>
                     <td>{item.quantityOrdered}</td>
+                    <td>
+                      {formatPreferredCurrency(
+                        item.unitPrice,
+                        currency,
+                        currencyRates,
+                      )}
+                    </td>
+                    <td>
+                      {formatPreferredCurrency(
+                        item.unitPrice * item.quantityOrdered,
+                        currency,
+                        currencyRates,
+                      )}
+                    </td>
                     <td>{item.quantityReceived}</td>
                     <td>{item.quantityRemaining}</td>
                     <td>

@@ -16,14 +16,20 @@ function SubmitButton() {
   );
 }
 
-export default function RegisterForm() {
+export default function RegisterForm({
+  onSwitch,
+  googleError = false,
+}: {
+  onSwitch?: () => void;
+  googleError?: boolean;
+}) {
   const [state, formAction] = useActionState<RegisterState, FormData>(
     register,
     {},
   );
 
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${styles.registerCard}`}>
       <div className={styles.mobileBrand}>
         <Logo />
       </div>
@@ -31,7 +37,11 @@ export default function RegisterForm() {
       <p className={styles.cardSubtitle}>
         Set up your organization or accept a team invitation after signing up.
       </p>
-
+      {googleError && (
+        <p role="alert" className={styles.error}>
+          Google sign-in did not complete. Please try again.
+        </p>
+      )}
       <form action={formAction} className={styles.form}>
         <label htmlFor="name" className={styles.label}>
           Full name
@@ -78,11 +88,16 @@ export default function RegisterForm() {
             autoComplete="new-password"
             minLength={12}
             maxLength={128}
+            pattern="(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,128}"
+            title="Use at least 12 characters, including a capital letter and a special character."
             required
             className={styles.input}
           />
         </div>
-        <p className={styles.fieldHint}>Use 12–128 characters.</p>
+        <p className={styles.fieldHint}>
+          Use at least 12 characters, including a capital letter and a special
+          character.
+        </p>
 
         <label htmlFor="confirm_password" className={styles.labelSpaced}>
           Confirm password
@@ -109,13 +124,36 @@ export default function RegisterForm() {
         <SubmitButton />
       </form>
 
-      <hr className={styles.divider} />
+      <div className={styles.orDivider}><span>or</span></div>
+      <a href="/api/auth/google/start?mode=register" className={styles.googleButton}>
+        <GoogleMark />
+        Sign up with Google
+      </a>
       <p className={styles.help}>
         Already have an account?{" "}
-        <a className={styles.link} href="/login">
+        <a
+          className={styles.link}
+          href="/login"
+          onClick={(event) => {
+            if (!onSwitch) return;
+            event.preventDefault();
+            onSwitch();
+          }}
+        >
           Sign in
         </a>
       </p>
     </div>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 48 48" width="18" height="18">
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.24 5.48-4.7 7.18l7.2 5.59c4.2-3.87 6.54-9.58 6.54-17.24Z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.94-2.13 15.92-5.78l-7.2-5.59c-2 1.34-4.56 2.13-8.72 2.13-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
+      <path fill="#FBBC05" d="M10.53 28.59a14.4 14.4 0 0 1 0-9.18l-7.98-6.19a23.9 23.9 0 0 0 0 21.56l7.98-6.19Z" />
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
+    </svg>
   );
 }

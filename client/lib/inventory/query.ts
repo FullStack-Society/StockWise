@@ -52,7 +52,8 @@ export function applyView(
     (p) =>
       (!q ||
         p.name.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q)) &&
+        p.sku.toLowerCase().includes(q) ||
+        (p.variant?.toLowerCase().includes(q) ?? false)) &&
       (!category || String(p.categoryId) === category) &&
       (!status || p.status === status),
   );

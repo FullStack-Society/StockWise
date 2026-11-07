@@ -145,7 +145,7 @@ export default function BillingPanel() {
           </div>
           <FileText size={15} aria-hidden className={styles.mutedIcon} />
         </div>
-        <div className={styles.historyWrap}>
+        <div className={`${styles.historyWrap} mobileTableScroll`}>
           <table className={styles.historyTable}>
             <thead>
               <tr>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { X } from "lucide-react";
 import type { Product } from "@/lib/inventory/types";
 import {
   adjustProductStockAction,
@@ -83,13 +82,6 @@ export default function StockWorkflowModal({
       className={styles.modal}
       aria-labelledby="stock-workflow-title"
       onClose={onClose}
-      onCancel={(event) => {
-        if (isPending) event.preventDefault();
-      }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget && !isPending)
-          dialogRef.current?.close();
-      }}
     >
       <div className={styles.body}>
         <header className={styles.header}>
@@ -102,15 +94,6 @@ export default function StockWorkflowModal({
               {product.quantity}
             </p>
           </div>
-          <button
-            type="button"
-            className={styles.close}
-            aria-label="Close"
-            disabled={isPending}
-            onClick={() => dialogRef.current?.close()}
-          >
-            <X size={15} />
-          </button>
         </header>
 
         <form className={styles.form} onSubmit={submit}>

@@ -13,7 +13,7 @@ import type {
 import FilterBar from "./FilterBar";
 import InventoryHeader from "./InventoryHeader";
 import InventoryTable from "./InventoryTable";
-import Pagination from "./Pagination";
+import Pagination from "@/components/ui/Pagination";
 import InventoryHistoryModal from "./modals/InventoryHistoryModal";
 import StockWorkflowModal, {
   type StockMode,
@@ -21,6 +21,8 @@ import StockWorkflowModal, {
 import { useInventorySelection } from "./useInventorySelection";
 import ProductModal from "@/components/features/inventory/modals/ProductModal";
 import ImportModal from "@/components/features/inventory/modals/ImportModal";
+import CategoryManagementModal from "@/components/features/inventory/modals/CategoryManagementModal";
+import DeleteProductConfirmationModal from "@/components/features/inventory/modals/DeleteProductConfirmationModal";
 import styles from "@/styles/inventory/InventoryBrowser.module.css";
 import extra from "@/styles/inventory/InventoryActions.module.css";
 
@@ -33,6 +35,7 @@ type Props = {
   exportProducts: Product[];
   categories: Category[];
   locationId: number;
+  defaultReorderPoint: number;
   history: InventoryMovement[];
   filters: InventoryFilters;
 };
@@ -57,6 +60,7 @@ export default function InventoryBrowser({
   exportProducts,
   categories,
   locationId,
+  defaultReorderPoint,
   history,
   filters,
 }: Props) {
@@ -66,6 +70,7 @@ export default function InventoryBrowser({
   const [query, setQuery] = useState(filters.query);
   const [previousUrlQuery, setPreviousUrlQuery] = useState(filters.query);
   const [modal, setModal] = useState<ModalState>(null);
+  const [showCategories, setShowCategories] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [stockWorkflow, setStockWorkflow] = useState<{
     product: Product;
@@ -76,11 +81,14 @@ export default function InventoryBrowser({
     selected,
     error: actionError,
     isPending: isDeleting,
+    deleteConfirmation,
     clearError,
+    cancelDelete,
     toggleOne,
     toggleAll,
-    deleteSelected,
-    deleteProduct,
+    requestDeleteSelected,
+    requestDeleteProduct,
+    confirmDelete,
   } = useInventorySelection();
   const isPending = isNavigating || isDeleting;
   const productIds = exportProducts.map((product) => product.id);
@@ -156,6 +164,7 @@ export default function InventoryBrowser({
         onExport={downloadInventory}
         canExport={exportProducts.length > 0}
         onHistory={() => setShowHistory(true)}
+        onCategories={() => setShowCategories(true)}
       />
 
       {selected.size > 0 && (
@@ -167,7 +176,7 @@ export default function InventoryBrowser({
           <button
             type="button"
             className={styles.deleteSelected}
-            onClick={deleteSelected}
+            onClick={requestDeleteSelected}
             disabled={isPending}
           >
             <Trash2 size={14} />
@@ -213,7 +222,7 @@ export default function InventoryBrowser({
           onToggle={toggleOne}
           onToggleAll={() => toggleAll(productIds)}
           onEdit={(product) => setModal({ mode: "edit", product })}
-          onDelete={deleteProduct}
+          onDelete={requestDeleteProduct}
           onMovement={(product, mode) => setStockWorkflow({ product, mode })}
         />
 
@@ -239,12 +248,14 @@ export default function InventoryBrowser({
           product={modal.mode === "edit" ? modal.product : null}
           categories={categories}
           locationId={locationId}
+          defaultReorderPoint={defaultReorderPoint}
           onClose={() => setModal(null)}
         />
       )}
       {showImport && (
         <ImportModal
           categories={categories}
+          defaultReorderPoint={defaultReorderPoint}
           locationId={locationId}
           onClose={() => setShowImport(false)}
           onImported={() => router.refresh()}
@@ -263,6 +274,39 @@ export default function InventoryBrowser({
         <InventoryHistoryModal
           movements={history}
           onClose={() => setShowHistory(false)}
+        />
+      )}
+      {showCategories && (
+        <CategoryManagementModal
+          categories={categories}
+          onClose={() => setShowCategories(false)}
+          onSuccess={(deletedCategoryId) => {
+            setShowCategories(false);
+            if (
+              deletedCategoryId !== undefined &&
+              category === String(deletedCategoryId)
+            ) {
+              navigate({ category: "" });
+            }
+            router.refresh();
+          }}
+        />
+      )}
+      {deleteConfirmation && (
+        <DeleteProductConfirmationModal
+          product={
+            deleteConfirmation.type === "single"
+              ? deleteConfirmation.product
+              : null
+          }
+          selectedCount={
+            deleteConfirmation.type === "selected"
+              ? deleteConfirmation.ids.length
+              : 0
+          }
+          isPending={isDeleting}
+          onCancel={cancelDelete}
+          onConfirm={confirmDelete}
         />
       )}
     </>

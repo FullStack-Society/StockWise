@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { X } from "lucide-react";
 import { saveProduct } from "@/lib/inventory/actions";
 import type { Category, Product } from "@/lib/inventory/types";
 import buttons from "@/styles/inventory/InventoryHeader.module.css";
@@ -12,6 +11,7 @@ type Props = {
   product: Product | null;
   categories: Category[];
   locationId: number;
+  defaultReorderPoint: number;
   onClose: () => void;
 };
 
@@ -19,6 +19,7 @@ export default function ProductModal({
   product,
   categories,
   locationId,
+  defaultReorderPoint,
   onClose,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -55,9 +56,6 @@ export default function ProductModal({
       className={styles.modal}
       aria-labelledby="product-modal-title"
       onClose={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) dialogRef.current?.close();
-      }}
     >
       <div className={styles.modalBody}>
         <header className={styles.modalHeader}>
@@ -71,14 +69,6 @@ export default function ProductModal({
                 : "Create a new product in your inventory."}
             </p>
           </div>
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={() => dialogRef.current?.close()}
-            className={styles.closeButton}
-          >
-            <X size={14} />
-          </button>
         </header>
 
         <form onSubmit={handleSubmit} noValidate className={styles.form}>
@@ -86,6 +76,7 @@ export default function ProductModal({
             product={product}
             categories={categories}
             locationId={locationId}
+            defaultReorderPoint={defaultReorderPoint}
             errors={errors}
           />
           {formError && !Object.keys(errors).length && (

@@ -16,20 +16,20 @@ export default function ReportFooter({
   const stats = [
     {
       id: "transactions",
-      label: `Transactions · ${report.days} days`,
-      value: report.transaction_count.toLocaleString(),
+      label: "Transactions · This month",
+      value: report.monthly_transaction_count.toLocaleString(),
       icon: "transactions" as const,
     },
     {
       id: "received",
-      label: "Units received",
-      value: report.units_received.toLocaleString(),
+      label: "Units received · This month",
+      value: report.monthly_units_received.toLocaleString(),
       icon: "received" as const,
     },
     {
       id: "issued",
-      label: "Net stock movement",
-      value: `${report.units_received - report.units_issued >= 0 ? "+" : ""}${(report.units_received - report.units_issued).toLocaleString()} units`,
+      label: "Net stock movement · This month",
+      value: `${report.monthly_units_received - report.monthly_units_issued >= 0 ? "+" : ""}${(report.monthly_units_received - report.monthly_units_issued).toLocaleString()} units`,
       icon: "issued" as const,
     },
   ];

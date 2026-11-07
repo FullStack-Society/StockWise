@@ -18,13 +18,58 @@ export type InvitationNotice = {
   created_at: string;
 };
 
+export type OrganizationLeaveNotification = {
+  notification_id: number;
+  organization_id: number;
+  organization_name: string;
+  actor_email: string;
+  actor_name: string;
+  created_at: string;
+  read_at: string | null;
+};
+
+export type OrganizationLoginNotification = {
+  notification_id: number;
+  organization_id: number;
+  actor_name: string;
+  actor_role: "manager" | "staff";
+  created_at: string;
+  read_at: string | null;
+};
+
 export type OrganizationMember = {
   email: string;
   full_name: string;
   role: "owner" | "manager" | "staff";
   status: "Active" | "Invited";
+  online_status: "Active" | "Offline" | null;
   joined_at: string | null;
 };
+
+export function heartbeatOrganizationPresence() {
+  return apiRequest<void>(ENDPOINTS.organizations.presenceHeartbeat, {
+    method: "POST",
+  });
+}
+
+export function publishMemberLogin() {
+  return apiRequest<void>(ENDPOINTS.organizations.publishMemberLogin, {
+    method: "POST",
+  });
+}
+
+export function listOrganizationLoginNotifications() {
+  return apiRequest<OrganizationLoginNotification[]>(
+    ENDPOINTS.organizations.loginNotifications,
+  );
+}
+
+export function markOrganizationLoginNotificationRead(notificationId: number) {
+  return apiRequest<void>(
+    ENDPOINTS.organizations.loginNotificationRead(notificationId),
+    { method: "PUT" },
+  );
+}
 
 export function listOrganizations(email: string) {
   return apiRequest<OrganizationSummary[]>(ENDPOINTS.organizations.mine, {
@@ -53,8 +98,53 @@ export function renameOrganization(
   );
 }
 
+export function transferOrganizationOwnership(
+  organizationId: number,
+  actorEmail: string,
+  targetEmail: string,
+) {
+  return apiRequest<void>(ENDPOINTS.organizations.transferOwnership(organizationId), {
+    method: "POST",
+    body: { actor_email: actorEmail, target_email: targetEmail },
+  });
+}
+
+export function deleteOrganization(organizationId: number, actorEmail: string) {
+  return apiRequest<void>(ENDPOINTS.organizations.item(organizationId), {
+    method: "DELETE",
+    query: { actor_email: actorEmail },
+  });
+}
+
 export function listPendingInvitations(email: string) {
   return apiRequest<InvitationNotice[]>(ENDPOINTS.organizations.invitations, {
+    query: { email },
+  });
+}
+
+export function listOrganizationLeaveNotifications(email: string) {
+  return apiRequest<OrganizationLeaveNotification[]>(
+    ENDPOINTS.organizations.notifications,
+    { query: { email } },
+  );
+}
+
+export function markOrganizationLeaveNotificationRead(
+  notificationId: number,
+  email: string,
+) {
+  return apiRequest<void>(
+    ENDPOINTS.organizations.notificationRead(notificationId),
+    { method: "PUT", query: { email } },
+  );
+}
+
+export function deleteOrganizationLeaveNotification(
+  notificationId: number,
+  email: string,
+) {
+  return apiRequest<void>(ENDPOINTS.organizations.notification(notificationId), {
+    method: "DELETE",
     query: { email },
   });
 }

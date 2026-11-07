@@ -1,26 +1,14 @@
-import { Mail, MessageSquareText, Smartphone } from "lucide-react";
-
-export const METHODS = [
-  {
-    name: "Authenticator app",
-    detail: "Use a verification app",
-    icon: Smartphone,
-  },
-  { name: "SMS", detail: "Code sent to your phone", icon: MessageSquareText },
-  { name: "Email", detail: "Code sent to your email", icon: Mail },
-];
-
 export const PRIVACY_OPTIONS = [
   {
     title: "Store usage analytics",
-    description: "Help improve StockWise by sharing anonymized usage data.",
+    description: "Share anonymous daily page-view totals with your organization’s Reports page.",
   },
   {
-    title: "Show my profile to team members",
-    description: "Let colleagues see your name and role.",
+    title: "Auto sign-out after inactivity",
+    description: "Sign out after 30 minutes without activity on this device.",
   },
   {
     title: "Login alert emails",
-    description: "Get notified when a new device signs in to your account.",
+    description: "Email me when a device or browser signs in for the first time.",
   },
 ];

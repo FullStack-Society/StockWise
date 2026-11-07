@@ -21,6 +21,20 @@ export type MonthlyMovement = {
   units_issued: number;
 };
 
+export type DailyMovement = {
+  day: string;
+  units_received: number;
+  units_issued: number;
+  received_value: number | string;
+};
+
+export type YearlyMovement = {
+  year: number;
+  units_received: number;
+  units_issued: number;
+  received_value: number | string;
+};
+
 export type DailyStockFlow = {
   day: string;
   units_received: number;
@@ -54,6 +68,7 @@ export type InventoryReportData = {
   product_count: number;
   stock_units: number;
   inventory_value: number | string;
+  stock_cost_value: number | string;
   low_stock_count: number;
   critical_count: number;
   units_received: number;
@@ -62,13 +77,45 @@ export type InventoryReportData = {
   previous_units_received: number;
   previous_units_issued: number;
   previous_transaction_count: number;
+  monthly_transaction_count: number;
+  monthly_units_received: number;
+  monthly_units_issued: number;
   products: ReportProduct[];
   monthly_movement: MonthlyMovement[];
+  daily_movement: DailyMovement[];
+  yearly_movement: YearlyMovement[];
 };
 
-export function getInventoryReport(days: ReportPeriod) {
-  return apiRequest<InventoryReportData>(ENDPOINTS.reports.inventory, {
+export type UsageAnalyticsPage =
+  | "dashboard"
+  | "inventory"
+  | "orders"
+  | "reports"
+  | "settings"
+  | "users";
+
+export type UsageAnalyticsSummary = {
+  days: number;
+  total_views: number;
+  by_page: Array<{ page: UsageAnalyticsPage; views: number }>;
+};
+
+export function getUsageAnalyticsSummary(days = 30) {
+  return apiRequest<UsageAnalyticsSummary>(ENDPOINTS.reports.usageAnalytics, {
     query: { days },
+  });
+}
+
+export function recordUsagePageView(page: UsageAnalyticsPage) {
+  return apiRequest<void>(ENDPOINTS.reports.usagePageView, {
+    method: "POST",
+    body: { page },
+  });
+}
+
+export function getInventoryReport(days: ReportPeriod, offset = 0) {
+  return apiRequest<InventoryReportData>(ENDPOINTS.reports.inventory, {
+    query: { days, offset },
   });
 }
 

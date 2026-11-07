@@ -5,17 +5,25 @@ import { unstable_rethrow } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import {
   changeOrganizationMemberRole,
+  deleteOrganizationLeaveNotification,
+  heartbeatOrganizationPresence,
+  listOrganizationLoginNotifications,
+  markOrganizationLoginNotificationRead,
   createOrganization,
+  deleteOrganization,
   inviteOrganizationMember,
   leaveOrganization,
   listOrganizations,
+  markOrganizationLeaveNotificationRead,
   removeOrganizationMember,
   renameOrganization,
   respondToInvitation,
+  transferOrganizationOwnership,
 } from "@/lib/api/organizations";
 import { ROUTES } from "@/lib/routes";
 import {
   getSession,
+  requireOrganizationSession,
   requireSession,
   updateOrganizationSession,
 } from "@/lib/auth/session";
@@ -23,6 +31,36 @@ import {
 export type OrganizationActionResult =
   | { ok: true }
   | { ok: false; error: string };
+
+export async function heartbeatOrganizationPresenceAction() {
+  await requireOrganizationSession();
+  await heartbeatOrganizationPresence();
+}
+
+export async function listOrganizationLoginNotificationsAction() {
+  const session = await requireSession();
+  if (!session.organizationId || !["owner", "manager"].includes(session.role)) {
+    return [];
+  }
+  return listOrganizationLoginNotifications();
+}
+
+export async function markOrganizationLoginNotificationReadAction(
+  notificationId: number,
+): Promise<OrganizationActionResult> {
+  const session = await requireOrganizationSession();
+  if (!["owner", "manager"].includes(session.role)) {
+    return { ok: false, error: "You cannot access this notification." };
+  }
+  try {
+    await markOrganizationLoginNotificationRead(notificationId);
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return failure(error);
+  }
+}
 
 function failure(error: unknown): OrganizationActionResult {
   if (error instanceof ApiError) return { ok: false, error: error.message };
@@ -54,6 +92,59 @@ export async function renameOrganizationAction(
   }
   try {
     await renameOrganization(session.organizationId, session.email, name);
+    refreshOrganizationViews();
+    return { ok: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return failure(error);
+  }
+}
+
+export async function transferOrganizationOwnershipAction(
+  organizationId: number,
+  targetEmail: string,
+): Promise<OrganizationActionResult> {
+  const session = await requireSession();
+  if (session.organizationId !== organizationId) {
+    return { ok: false, error: "Switch to the organization you want to transfer." };
+  }
+  const email = targetEmail.trim().toLowerCase();
+  if (!email || email === session.email.toLowerCase()) {
+    return { ok: false, error: "Enter another active member’s email address." };
+  }
+  try {
+    await transferOrganizationOwnership(organizationId, session.email, email);
+    const organizations = await listOrganizations(session.email);
+    const selected = organizations.find(
+      (organization) => organization.organization_id === organizationId,
+    );
+    await updateOrganizationSession(
+      selected?.organization_id ?? null,
+      selected?.role ?? "manager",
+    );
+    refreshOrganizationViews();
+    return { ok: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return failure(error);
+  }
+}
+
+export async function deleteOrganizationAction(
+  organizationId: number,
+): Promise<OrganizationActionResult> {
+  const session = await requireSession();
+  if (session.organizationId !== organizationId) {
+    return { ok: false, error: "Switch to the organization you want to delete." };
+  }
+  try {
+    await deleteOrganization(organizationId, session.email);
+    const remaining = await listOrganizations(session.email);
+    const next = remaining[0] ?? null;
+    await updateOrganizationSession(
+      next?.organization_id ?? null,
+      next?.role ?? session.role,
+    );
     refreshOrganizationViews();
     return { ok: true };
   } catch (error) {
@@ -123,6 +214,37 @@ export async function respondToInvitationAction(
       await updateOrganizationSession(response.organization_id, response.role);
     }
     refreshOrganizationViews();
+    return { ok: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return failure(error);
+  }
+}
+
+export async function markOrganizationLeaveNotificationReadAction(
+  notificationId: number,
+): Promise<OrganizationActionResult> {
+  const session = await requireSession();
+  try {
+    await markOrganizationLeaveNotificationRead(
+      notificationId,
+      session.email,
+    );
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return failure(error);
+  }
+}
+
+export async function deleteOrganizationLeaveNotificationAction(
+  notificationId: number,
+): Promise<OrganizationActionResult> {
+  const session = await requireSession();
+  try {
+    await deleteOrganizationLeaveNotification(notificationId, session.email);
+    revalidatePath("/", "layout");
     return { ok: true };
   } catch (error) {
     unstable_rethrow(error);

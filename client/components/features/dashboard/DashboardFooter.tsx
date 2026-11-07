@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock3, DollarSign, Package, ShoppingCart } from "lucide-react";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 import type { PurchaseOrder } from "@/lib/api/orders";
 import { formatPreferredCurrency } from "@/lib/utils/format";
 import type { Product } from "@/lib/inventory/types";
@@ -36,8 +36,8 @@ export default function DashboardFooter({
       ? latest
       : timestamp;
   }, null);
-  const valuation = products.reduce(
-    (total, product) => total + product.price * product.quantity,
+  const stockCost = products.reduce(
+    (total, product) => total + product.unitCost * product.quantity,
     0,
   );
   const stats = [
@@ -57,8 +57,8 @@ export default function DashboardFooter({
       icon: Clock3,
     },
     {
-      label: `Valuation (${currency})`,
-      value: formatPreferredCurrency(valuation, currency, currencyRates),
+      label: `Stock cost value (${currency})`,
+      value: formatPreferredCurrency(stockCost, currency, currencyRates),
       icon: DollarSign,
     },
   ];

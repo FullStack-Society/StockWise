@@ -1,191 +1,220 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
-import { changeAccountPassword } from "@/lib/settings/actions";
+import { useEffect, useState, useTransition } from "react";
+import { Link2, ShieldCheck, Smartphone } from "lucide-react";
+import type { AccountSecurityStatus } from "@/lib/api/settings";
+import {
+  beginTwoFactorEnrollment,
+  confirmTwoFactorEnrollment,
+  disableTwoFactor,
+  getTwoFactorStatus,
+} from "@/lib/settings/actions";
 import styles from "@/styles/settings/security/SecurityPanel.module.css";
-import { METHODS, PRIVACY_OPTIONS } from "./types";
+import PasswordSection from "./PasswordSection";
+import PrivacySection from "./PrivacySection";
 
-function UnavailableSwitch({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked="false"
-      aria-label={`${label} unavailable`}
-      disabled
-      className={styles.switch}
-    >
-      <span />
-    </button>
-  );
-}
-
-export default function SecurityPanel() {
-  const [passwords, setPasswords] = useState({
-    current: "",
-    next: "",
-    confirm: "",
-  });
-  const [message, setMessage] = useState("");
+export default function SecurityPanel({
+  securityStatus,
+}: {
+  securityStatus: AccountSecurityStatus | null;
+}) {
   const [isPending, startTransition] = useTransition();
+  const [mfaEnabled, setMfaEnabled] = useState<boolean | null>(null);
+  const [enrollment, setEnrollment] = useState<{
+    secret: string;
+    otpauth_uri: string;
+  } | null>(null);
+  const [enrollmentCode, setEnrollmentCode] = useState("");
+  const [disableCode, setDisableCode] = useState("");
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [mfaMessage, setMfaMessage] = useState("");
 
-  function submitPassword(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage("");
-    startTransition(async () => {
-      const result = await changeAccountPassword({
-        current_password: passwords.current,
-        new_password: passwords.next,
-        confirm_password: passwords.confirm,
+  useEffect(() => {
+    let active = true;
+    getTwoFactorStatus()
+      .then((result) => {
+        if (active) setMfaEnabled(result.enabled);
+      })
+      .catch(() => {
+        if (active) setMfaMessage("Could not load two-factor status. Refresh and try again.");
       });
-      setMessage(result.ok ? "Password updated successfully." : result.error);
-      if (result.ok) {
-        setPasswords({ current: "", next: "", confirm: "" });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function startEnrollment() {
+    setMfaMessage("");
+    startTransition(async () => {
+      try {
+        setEnrollment(await beginTwoFactorEnrollment());
+        setEnrollmentCode("");
+      } catch {
+        setMfaMessage("Could not start authenticator setup. Try again.");
+      }
+    });
+  }
+
+  function confirmEnrollment(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMfaMessage("");
+    startTransition(async () => {
+      try {
+        const result = await confirmTwoFactorEnrollment(enrollmentCode);
+        setMfaEnabled(true);
+        setEnrollment(null);
+        setRecoveryCodes(result.recovery_codes);
+        setMfaMessage("Two-factor authentication is enabled. Save your recovery codes now.");
+      } catch {
+        setMfaMessage("That code was not accepted. Enter the current code from your authenticator app.");
+      }
+    });
+  }
+
+  function turnOffMfa(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMfaMessage("");
+    startTransition(async () => {
+      try {
+        await disableTwoFactor(disableCode);
+        setMfaEnabled(false);
+        setDisableCode("");
+        setRecoveryCodes([]);
+        setMfaMessage("Two-factor authentication is disabled.");
+      } catch {
+        setMfaMessage("Enter a valid authenticator code or unused recovery code.");
       }
     });
   }
 
   return (
     <div className={styles.stack}>
-      <form
-        className={styles.panel}
-        aria-labelledby="password-title"
-        onSubmit={submitPassword}
-      >
-        <header className={styles.header}>
-          <div>
-            <h2 id="password-title">Password</h2>
-            <p>Use a strong password you don’t use anywhere else.</p>
-          </div>
-          <span className={styles.available}>Available</span>
-        </header>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>Current password</span>
-          <input
-            type="password"
-            className={styles.input}
-            autoComplete="current-password"
-            value={passwords.current}
-            onChange={(event) =>
-              setPasswords((value) => ({
-                ...value,
-                current: event.target.value,
-              }))
-            }
-            required
-          />
-        </label>
-        <div className={styles.fieldGrid}>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>New password</span>
-            <input
-              type="password"
-              className={styles.input}
-              autoComplete="new-password"
-              minLength={12}
-              maxLength={256}
-              value={passwords.next}
-              onChange={(event) =>
-                setPasswords((value) => ({
-                  ...value,
-                  next: event.target.value,
-                }))
-              }
-              required
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>Confirm new password</span>
-            <input
-              type="password"
-              className={styles.input}
-              autoComplete="new-password"
-              minLength={12}
-              maxLength={256}
-              value={passwords.confirm}
-              onChange={(event) =>
-                setPasswords((value) => ({
-                  ...value,
-                  confirm: event.target.value,
-                }))
-              }
-              required
-            />
-          </label>
-        </div>
-        <div className={styles.passwordFoot}>
-          <p>Choose a password with at least 12 characters.</p>
-          <button type="submit" className={styles.button} disabled={isPending}>
-            <KeyRound size={12} aria-hidden />
-            {isPending ? "Updating…" : "Update Password"}
-          </button>
-        </div>
-        {message && (
-          <p className={styles.formMessage} role="status">
-            {message}
-          </p>
-        )}
-      </form>
+      <PasswordSection />
 
-      <section className={styles.panel} aria-labelledby="two-factor-title">
+      <section className={styles.panel} aria-labelledby="security-title">
         <header className={styles.header}>
           <div>
-            <h2 id="two-factor-title">Two-Factor Authentication</h2>
-            <p>Add an extra layer of security to your account.</p>
+            <h2 id="security-title">Security</h2>
+            <p>Manage your authenticator app and Google sign-in connection.</p>
           </div>
-          <UnavailableSwitch label="Two-factor authentication" />
+          <span className={mfaEnabled ? styles.enabledBadge : styles.disabledBadge}>
+            {mfaEnabled === null
+              ? "Authenticator loading…"
+              : mfaEnabled
+                ? "Authenticator enabled"
+                : "Authenticator disabled"}
+          </span>
         </header>
-        <div className={styles.methodGrid}>
-          {METHODS.map(({ name, detail, icon: Icon }) => (
-            <article key={name} className={styles.method}>
-              <Icon size={15} aria-hidden />
-              <h3>{name}</h3>
-              <p>{detail}</p>
-              <span>Not available</span>
-            </article>
-          ))}
-        </div>
+        {mfaEnabled ? (
+          <form className={styles.mfaCodeForm} onSubmit={turnOffMfa}>
+            <p className={styles.mfaDescription}>
+              Authenticator codes are required for password and Google sign-in. Use one of the recovery codes if you lose access to the app.
+            </p>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Authenticator or recovery code</span>
+              <input
+                className={styles.input}
+                value={disableCode}
+                onChange={(event) => setDisableCode(event.target.value)}
+                autoComplete="one-time-code"
+                required
+              />
+            </label>
+            <button type="submit" className={styles.button} disabled={isPending}>
+              <ShieldCheck size={12} aria-hidden />
+              {isPending ? "Updating…" : "Turn off two-factor authentication"}
+            </button>
+          </form>
+        ) : enrollment ? (
+          <div className={styles.mfaSetup}>
+            <p className={styles.mfaDescription}>
+              In your authenticator app, add an account using the setup key below. Choose time-based codes (TOTP).
+            </p>
+            <div className={styles.secretKey}>
+              <span>Setup key</span>
+              <code>{enrollment.secret}</code>
+            </div>
+            <form className={styles.mfaCodeForm} onSubmit={confirmEnrollment}>
+              <label className={styles.field}>
+                <span className={styles.fieldLabel}>Enter the 6-digit app code to confirm</span>
+                <input
+                  className={styles.input}
+                  value={enrollmentCode}
+                  onChange={(event) => setEnrollmentCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  minLength={6}
+                  maxLength={6}
+                  required
+                />
+              </label>
+              <div className={styles.mfaActions}>
+                <button type="submit" className={styles.button} disabled={isPending}>
+                  <ShieldCheck size={12} aria-hidden />
+                  {isPending ? "Verifying…" : "Verify and enable"}
+                </button>
+                <button type="button" className={styles.secondaryButton} onClick={() => setEnrollment(null)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div className={styles.backup}>
+            <div className={styles.backupIcon}>
+              <Smartphone size={14} aria-hidden />
+            </div>
+            <div>
+              <h3>Authenticator app</h3>
+              <p>Use Google Authenticator, Microsoft Authenticator, or another TOTP app. No SMS plan or email delivery is needed.</p>
+            </div>
+            <button
+              type="button"
+              className={styles.button}
+              disabled={isPending || mfaEnabled === null}
+              onClick={startEnrollment}
+            >
+              <ShieldCheck size={12} aria-hidden />
+              {isPending ? "Starting…" : "Set up"}
+            </button>
+          </div>
+        )}
+        {recoveryCodes.length > 0 && (
+          <div className={styles.recoveryCodes}>
+            <h3>Save these recovery codes</h3>
+            <p>Each code works once. They will not be shown again after you leave this page.</p>
+            <div>{recoveryCodes.map((code) => <code key={code}>{code}</code>)}</div>
+            <button type="button" className={styles.secondaryButton} onClick={() => setRecoveryCodes([])}>
+              I saved these codes
+            </button>
+          </div>
+        )}
+        {mfaMessage && <p className={styles.formMessage} role="status">{mfaMessage}</p>}
         <div className={styles.backup}>
           <div className={styles.backupIcon}>
-            <LockKeyhole size={14} aria-hidden />
+            <Link2 size={14} aria-hidden />
           </div>
           <div>
-            <h3>Backup codes</h3>
+            <h3>Google account</h3>
             <p>
-              Recovery codes aren’t available until two-factor authentication is
-              supported.
+              {securityStatus?.google_account_connected
+                ? "Your Google account has been used to sign in to this StockWise account."
+                : "Sign in with Google using the same email address to connect it to this account."}
             </p>
           </div>
-          <button type="button" className={styles.button} disabled>
-            <ShieldCheck size={12} aria-hidden /> View Backup Codes
-          </button>
+          <span
+            className={securityStatus?.google_account_connected ? styles.enabledBadge : styles.disabledBadge}
+          >
+            {securityStatus === null
+              ? "Loading…"
+              : securityStatus.google_account_connected
+                ? "Connected"
+                : "Not connected"}
+          </span>
         </div>
       </section>
 
-      <section className={styles.panel} aria-labelledby="privacy-title">
-        <header className={styles.header}>
-          <div>
-            <h2 id="privacy-title">Privacy</h2>
-            <p>Manage how account information and activity are used.</p>
-          </div>
-        </header>
-        <ul className={styles.privacyList}>
-          {PRIVACY_OPTIONS.map(({ title, description }) => (
-            <li key={title} className={styles.privacyRow}>
-              <div>
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </div>
-              <UnavailableSwitch label={title} />
-            </li>
-          ))}
-        </ul>
-        <p className={styles.note}>
-          Privacy controls remain unavailable until the account service supports
-          them.
-        </p>
-      </section>
+      <PrivacySection />
     </div>
   );
 }

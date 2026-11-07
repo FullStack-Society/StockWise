@@ -29,18 +29,7 @@ export function formatDate(
   value: string | Date,
   format: DateFormat = "mdy",
 ) {
-  let date: Date;
-  if (value instanceof Date) {
-    date = value;
-  } else {
-    const normalized = value.replace(" ", "T");
-    const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
-    date = new Date(
-      !hasTimezone && normalized.includes("T")
-        ? `${normalized}Z`
-        : normalized,
-    );
-  }
+  const date = parseDate(value);
   if (Number.isNaN(date.getTime())) return "—";
   const parts: Record<string, string> = {
     month: String(date.getUTCMonth() + 1).padStart(2, "0"),
@@ -50,4 +39,48 @@ export function formatDate(
   if (format === "dmy") return `${parts.day}/${parts.month}/${parts.year}`;
   if (format === "ymd") return `${parts.year}-${parts.month}-${parts.day}`;
   return `${parts.month}/${parts.day}/${parts.year}`;
+}
+
+export function formatDateTime(
+  value: string | Date,
+  format: DateFormat,
+  timeZone: string,
+) {
+  const date = parseDate(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const locale =
+    format === "dmy" ? "en-GB" : format === "ymd" ? "sv-SE" : "en-US";
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+    timeZoneName: "short",
+  }).format(date);
+}
+
+export function formatDateKey(value: string | Date, timeZone: string) {
+  const date = parseDate(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone,
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function parseDate(value: string | Date) {
+  if (value instanceof Date) return value;
+  const normalized = value.replace(" ", "T");
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
+  return new Date(
+    !hasTimezone && normalized.includes("T")
+      ? `${normalized}Z`
+      : normalized,
+  );
 }

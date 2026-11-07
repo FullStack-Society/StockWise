@@ -5,6 +5,7 @@ type Props = {
   product: Product | null;
   categories: Category[];
   locationId: number;
+  defaultReorderPoint: number;
   errors: Record<string, string>;
 };
 
@@ -42,6 +43,7 @@ export default function ProductFormFields({
   product,
   categories,
   locationId,
+  defaultReorderPoint,
   errors,
 }: Props) {
   const isEdit = product !== null;
@@ -103,7 +105,7 @@ export default function ProductFormFields({
         />
       </Field>
       <div className={styles.row2}>
-        <Field label="Unit price (USD)" name="price" error={errors.price}>
+        <Field label="Selling price (USD)" name="price" error={errors.price}>
           <input
             {...inputProps("price")}
             defaultValue={product ? product.price.toFixed(2) : "0"}
@@ -111,6 +113,16 @@ export default function ProductFormFields({
             className={cls(styles.input, "price")}
           />
         </Field>
+        <Field label="Unit cost (USD)" name="unitCost" error={errors.unitCost}>
+          <input {...inputProps("unitCost")} defaultValue={product?.unitCost.toFixed(2) ?? "0"} inputMode="decimal" className={cls(styles.input, "unitCost")} />
+        </Field>
+      </div>
+      <div className={styles.row2}>
+        <Field label="Variant (optional)" name="variant" error={errors.variant}>
+          <input {...inputProps("variant")} defaultValue={product?.variant ?? ""} maxLength={200} placeholder="Size, color, pack…" className={cls(styles.input, "variant")} />
+        </Field>
+      </div>
+      <div className={styles.row2}>
         {isEdit ? (
           <div className={styles.field}>
             <span className={styles.label}>Quantity</span>
@@ -139,7 +151,7 @@ export default function ProductFormFields({
       >
         <input
           {...inputProps("reorderPoint")}
-          defaultValue={String(product?.reorderPoint ?? 50)}
+          defaultValue={String(product?.reorderPoint ?? defaultReorderPoint)}
           inputMode="numeric"
           className={cls(styles.input, "reorderPoint")}
         />

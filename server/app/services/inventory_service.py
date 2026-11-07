@@ -91,12 +91,48 @@ def get_inventory_by_id(
 
 def get_categories(db: Session, organization_id: int) -> list[dict]:
     try:
-        repository.ensure_default_categories(db, organization_id)
         return repository.get_categories(db, organization_id)
     except SQLAlchemyError as exc:
         raise InventoryOperationError(
             "Unable to retrieve categories."
         ) from exc
+
+
+def create_category(
+    db: Session, organization_id: int, category_name: str
+) -> dict:
+    try:
+        category = repository.create_category(
+            db, organization_id, category_name.strip()
+        )
+        db.commit()
+        return category
+    except IntegrityError as exc:
+        db.rollback()
+        raise InventoryConflictError(
+            "A category with this name already exists."
+        ) from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise InventoryOperationError("Unable to create the category.") from exc
+
+
+def delete_category(
+    db: Session, organization_id: int, category_id: int
+) -> None:
+    try:
+        deleted = repository.delete_category(
+            db, organization_id, category_id
+        )
+        if not deleted:
+            db.rollback()
+            raise InventoryNotFoundError("Category was not found.")
+        db.commit()
+    except InventoryNotFoundError:
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise InventoryOperationError("Unable to delete the category.") from exc
 
 
 def create_inventory(
@@ -138,6 +174,7 @@ def update_inventory(
     product_id: int,
     product_data: dict,
     location_id: int,
+    supplied_fields: set[str] | None = None,
 ) -> dict:
     try:
         product = repository.update_inventory(
@@ -145,6 +182,7 @@ def update_inventory(
             organization_id=organization_id,
             product_id=product_id,
             location_id=location_id,
+            supplied_fields=supplied_fields,
             **product_data,
         )
 
@@ -273,6 +311,11 @@ def record_stocktake(
         db.commit()
         return quantity_after
     except IntegrityError as exc:
+        db.rollback()
+        raise InventoryConflictError(
+            "The stocktake conflicts with existing inventory data."
+        ) from exc
+    except ValueError as exc:
         db.rollback()
         raise InventoryConflictError(
             "The stocktake conflicts with existing inventory data."

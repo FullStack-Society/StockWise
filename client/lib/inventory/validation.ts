@@ -32,6 +32,12 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
   if (!/^\d+(\.\d{1,2})?$/.test(priceText))
     errors.price = "Enter a price like 25 or 25.50.";
   const price = Number(priceText);
+  const costText = text("unitCost");
+  if (!/^\d+(\.\d{1,2})?$/.test(costText))
+    errors.unitCost = "Enter a unit cost like 10 or 10.50.";
+  const unitCost = Number(costText);
+  const variant = text("variant");
+  if (variant.length > 200) errors.variant = "Use 200 characters or fewer.";
 
   const parseInt0 = (key: string, message: string) => {
     const raw = text(key);
@@ -75,6 +81,8 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
       categoryId,
       description: description || null,
       price,
+      unitCost,
+      variant: variant || null,
       quantity,
       reorderPoint,
     },

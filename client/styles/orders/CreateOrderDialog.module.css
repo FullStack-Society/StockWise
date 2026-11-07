@@ -1,12 +1,15 @@
 .dialog {
+  box-sizing: border-box;
   position: fixed;
   inset: 0;
   z-index: 20;
   width: min(680px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
   margin: auto;
   padding: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--color-border);
   background: var(--color-modal);
   color: var(--color-text);
@@ -43,7 +46,6 @@
   font-size: 13px;
 }
 
-.close,
 .removeLine {
   display: inline-flex;
   align-items: center;
@@ -63,7 +65,7 @@
 
 .line {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 170px auto;
+  grid-template-columns: minmax(0, 1fr) 105px 150px minmax(90px, auto) auto;
   align-items: end;
   gap: 10px;
 }
@@ -93,6 +95,30 @@
 
 .line select {
   width: 100%;
+}
+
+.lineTotal {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orderTotal {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.orderTotal strong {
+  color: var(--color-text);
+  font-size: 15px;
 }
 
 .notes textarea {
@@ -168,6 +194,12 @@
   }
 
   .line {
-    grid-template-columns: minmax(0, 1fr) 100px auto;
+    grid-template-columns: minmax(0, 1fr) 85px 115px auto;
+  }
+
+  .lineTotal {
+    grid-column: 1 / 4;
+    justify-content: flex-start;
+    min-height: 20px;
   }
 }

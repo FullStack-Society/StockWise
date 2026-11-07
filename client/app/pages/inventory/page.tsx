@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import InventoryBrowser from "@/components/features/inventory/InventoryBrowser";
 import InventoryStats from "@/components/features/inventory/InventoryFooter";
+import OrganizationSetup from "@/components/features/users/organizations/OrganizationSetup";
 import styles from "@/styles/inventory/InventoryPage.module.css";
-import { requireOrganizationSession } from "@/lib/auth/session";
-import { getAccountSettings } from "@/lib/api/settings";
+import { getOrganizationPageContext } from "@/lib/organization/page-context";
+import { getAccountSettings, getInventoryDefaults } from "@/lib/api/settings";
 import {
   listCategories,
   listInventoryLocations,
   listInventoryMovements,
   listProducts,
 } from "@/lib/api/inventory";
-import { listOrganizations } from "@/lib/api/organizations";
 import { buildInventoryStats } from "@/lib/inventory/stats";
 import { applyView, parseSearchParams } from "@/lib/inventory/query";
 
@@ -24,18 +23,14 @@ type PageProps = {
 };
 
 export default async function InventoryPage({ searchParams }: PageProps) {
-  const session = await requireOrganizationSession();
-  const organizations = await listOrganizations(session.email);
-  if (
-    !organizations.some((org) => org.organization_id === session.organizationId)
-  ) {
-    redirect("/pages/users");
-  }
-  const [locations, categories, params, settings] = await Promise.all([
+  const { organization } = await getOrganizationPageContext();
+  if (!organization) return <OrganizationSetup />;
+  const [locations, categories, params, settings, inventoryDefaults] = await Promise.all([
     listInventoryLocations(),
     listCategories(),
     searchParams,
     getAccountSettings(),
+    getInventoryDefaults(),
   ]);
   if (locations.length === 0)
     throw new Error(
@@ -61,16 +56,17 @@ export default async function InventoryPage({ searchParams }: PageProps) {
   );
 
   return (
-    <div className={styles.page}>
-      <InventoryBrowser
+    <div className={`${styles.page} pageEnterInventory`}>
+      <div className="pageEnterBlock"><InventoryBrowser
         {...inventory}
         exportProducts={products}
         categories={categories}
         locationId={selectedLocation.id}
+        defaultReorderPoint={inventoryDefaults.default_reorder_point}
         history={history}
         filters={filters}
-      />
-      <InventoryStats items={buildInventoryStats(products)} />
+      /></div>
+      <div className="pageEnterBlock pageEnterDelay1"><InventoryStats items={buildInventoryStats(products)} /></div>
     </div>
   );
 }

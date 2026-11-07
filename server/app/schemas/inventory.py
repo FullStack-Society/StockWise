@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class InventoryCreate(BaseModel):
@@ -12,6 +12,8 @@ class InventoryCreate(BaseModel):
     category_id: int | None = None
     description: str | None = None
     price: Decimal = Field(default=Decimal("0"), ge=0)
+    unit_cost: Decimal = Field(default=Decimal("0"), ge=0)
+    variant: str | None = Field(default=None, max_length=200)
     quantity: int = Field(default=0, ge=0, le=2_147_483_647)
     location_id: int = Field(gt=0, le=2_147_483_647)
     reorder_point: int = Field(default=50, ge=0, le=2_147_483_647)
@@ -23,6 +25,8 @@ class InventoryUpdate(BaseModel):
     category_id: int | None
     description: str | None
     price: Decimal = Field(ge=0)
+    unit_cost: Decimal = Field(default=Decimal("0"), ge=0)
+    variant: str | None = Field(default=None, max_length=200)
     quantity: int = Field(ge=0, le=2_147_483_647)
     location_id: int = Field(gt=0, le=2_147_483_647)
     reorder_point: int = Field(ge=0, le=2_147_483_647)
@@ -37,6 +41,8 @@ class InventoryResponse(BaseModel):
     category_id: int | None
     description: str | None
     price: Decimal
+    unit_cost: Decimal = Decimal("0")
+    variant: str | None = None
     quantity: int
     reorder_point: int
     location_id: int
@@ -51,6 +57,18 @@ class CategoryResponse(BaseModel):
     category_id: int
     category_name: str
     description: str | None
+
+
+class InventoryCategoryCreate(BaseModel):
+    category_name: str = Field(min_length=1, max_length=100)
+
+    @field_validator("category_name")
+    @classmethod
+    def normalize_category_name(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Category name cannot be blank.")
+        return normalized
 
 
 class StockAdjustment(BaseModel):

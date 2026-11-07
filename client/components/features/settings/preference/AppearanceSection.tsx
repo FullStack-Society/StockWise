@@ -1,21 +1,26 @@
 "use client";
 
 import { Check, ChevronDown } from "lucide-react";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
-import type { EditablePreferences } from "./types";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
+import { THEMES, TIMEZONES, type EditablePreferences } from "./types";
 import styles from "@/styles/settings/preference/AppearanceSection.module.css";
-import { THEMES } from "./types";
 
 export default function AppearanceSection({
   preferences,
   onUpdate,
   onSave,
   pending,
+  timezone,
+  timezones = TIMEZONES,
+  onTimezoneChange,
 }: {
   preferences: EditablePreferences;
   onUpdate: (updates: Partial<EditablePreferences>) => void;
   onSave: () => void;
   pending: boolean;
+  timezone: string;
+  timezones: readonly (readonly [string, string])[];
+  onTimezoneChange: (timezone: string) => void;
 }) {
   const { currencyRates, currencyRatesUpdatedAt, currencyRatesError } =
     useUserPreferences();
@@ -79,6 +84,21 @@ export default function AppearanceSection({
           </span>
           <span className={styles.prefDesc}>
             Additional languages are not available yet.
+          </span>
+        </label>
+        <label className={styles.field}>
+          <span className={styles.sectionLabel}>Time zone</span>
+          <span className={styles.selectWrap}>
+            <select
+              className={styles.input}
+              value={timezone}
+              onChange={(event) => onTimezoneChange(event.target.value)}
+            >
+              {timezones.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <ChevronDown size={12} aria-hidden />
           </span>
         </label>
         <label className={styles.field}>

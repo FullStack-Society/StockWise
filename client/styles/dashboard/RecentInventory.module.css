@@ -107,3 +107,9 @@
   background: var(--color-accent-soft);
   color: var(--color-accent);
 }
+
+@media (max-width: 700px) {
+  .table {
+    min-width: 640px;
+  }
+}

@@ -48,7 +48,11 @@ function normalizedHeader(value: string) {
     .replace(/[^a-z0-9]/g, "");
 }
 
-export function parseProducts(csv: string, categories: Category[]): ParseResult {
+export function parseProducts(
+  csv: string,
+  categories: Category[],
+  defaultReorderPoint = 50,
+): ParseResult {
   const records = parseCsv(csv);
   if (records.length < 2)
     throw new Error(
@@ -64,6 +68,8 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
     category: find("category", "categoryname", "categoryid"),
     description: find("description", "details"),
     price: find("price", "unitprice"),
+    unitCost: find("unitcost", "cost"),
+    variant: find("variant", "option"),
     quantity: find("quantity", "stock", "currentstock"),
     reorderPoint: find("reorderpoint", "reorderlevel", "minimumstock"),
   };
@@ -85,8 +91,10 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
     const categoryRaw = get(record, columns.category);
     const description = get(record, columns.description);
     const priceRaw = get(record, columns.price) || "0";
+    const costRaw = get(record, columns.unitCost) || "0";
     const quantityRaw = get(record, columns.quantity) || "0";
-    const reorderPointRaw = get(record, columns.reorderPoint) || "50";
+    const reorderPointRaw =
+      get(record, columns.reorderPoint) || String(defaultReorderPoint);
     const errors: string[] = [];
 
     if (!name) errors.push("product name is required");
@@ -98,6 +106,8 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
       errors.push("description exceeds 1,000 characters");
     if (!/^\d+(\.\d{1,2})?$/.test(priceRaw))
       errors.push("price must be a non-negative number with up to 2 decimals");
+    if (!/^\d+(\.\d{1,2})?$/.test(costRaw))
+      errors.push("unit cost must be a non-negative number with up to 2 decimals");
     if (!/^\d+$/.test(quantityRaw))
       errors.push("quantity must be a whole number of 0 or more");
     if (!/^\d+$/.test(reorderPointRaw))
@@ -129,6 +139,8 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
     if (quantity > 2_147_483_647) errors.push("quantity is too large");
     if (reorderPoint > 2_147_483_647)
       errors.push("reorder point is too large");
+    if (!Number.isSafeInteger(reorderPoint) || reorderPoint < 0)
+      errors.push("reorder point must be a whole number of 0 or more");
     if (errors.length) {
       issues.push({ row: rowNumber, error: errors.join("; ") });
       continue;
@@ -140,6 +152,8 @@ export function parseProducts(csv: string, categories: Category[]): ParseResult 
       categoryId,
       description: description || null,
       price,
+      unitCost: Number(costRaw),
+      variant: get(record, columns.variant) || null,
       quantity,
       reorderPoint,
     };

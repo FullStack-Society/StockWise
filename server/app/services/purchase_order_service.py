@@ -45,6 +45,7 @@ def _group_orders(rows: list[dict]) -> list[dict]:
             order_id,
             {
                 "order_id": order_id,
+                "order_number": int(row["order_number"]),
                 "notes": row["notes"],
                 "created_by_email": row["created_by_email"],
                 "created_at": row["created_at"],
@@ -61,6 +62,7 @@ def _group_orders(rows: list[dict]) -> list[dict]:
                 "product_name": row["product_name"],
                 "sku": row["sku"],
                 "quantity_ordered": ordered,
+                "unit_price": row["unit_price"],
                 "quantity_received": received,
                 "quantity_remaining": ordered - received,
             }
@@ -79,6 +81,30 @@ def get_purchase_orders(
         raise PurchaseOrderOperationError(
             "Unable to retrieve purchase orders."
         ) from exc
+
+
+def get_purchase_order_history(
+    db: Session, organization_id: int, limit: int = 200
+) -> list[dict]:
+    try:
+        return repository.get_purchase_order_history(
+            db, organization_id, limit=limit
+        )
+    except SQLAlchemyError as exc:
+        raise PurchaseOrderOperationError(
+            "Unable to retrieve purchase order history."
+        ) from exc
+
+
+def delete_purchase_order(
+    db: Session, organization_id: int, email: str, order_id: int
+) -> None:
+    try:
+        repository.delete_purchase_order(db, organization_id, email, order_id)
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc, "Unable to delete the purchase order.")
 
 
 def create_purchase_order(
@@ -115,6 +141,39 @@ def create_purchase_order(
         _raise_database_error(exc, "Unable to create the purchase order.")
 
 
+def update_purchase_order(
+    db: Session,
+    organization_id: int,
+    email: str,
+    order_id: int,
+    notes: str | None,
+    items: list[dict],
+) -> dict:
+    try:
+        repository.update_purchase_order(
+            db, organization_id, email, order_id, notes, items
+        )
+        orders = repository.get_purchase_orders(
+            db, organization_id, order_id=order_id, limit=1
+        )
+        grouped = _group_orders(orders)
+        if not grouped:
+            raise PurchaseOrderNotFoundError("Purchase order was not found.")
+        db.commit()
+        return grouped[0]
+    except PurchaseOrderNotFoundError:
+        db.rollback()
+        raise
+    except IntegrityError as exc:
+        db.rollback()
+        raise PurchaseOrderConflictError(
+            "The purchase order references invalid or duplicate products."
+        ) from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc, "Unable to update the purchase order.")
+
+
 def receive_purchase_order_item(
     db: Session,
     organization_id: int,
@@ -138,6 +197,9 @@ def receive_purchase_order_item(
     except PurchaseOrderNotFoundError:
         db.rollback()
         raise
+    except ValueError as exc:
+        db.rollback()
+        raise PurchaseOrderConflictError(str(exc)) from exc
     except IntegrityError as exc:
         db.rollback()
         raise PurchaseOrderConflictError(

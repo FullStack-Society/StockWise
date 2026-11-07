@@ -55,6 +55,12 @@
   white-space: pre-wrap;
 }
 
+.header .orderValue {
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .status {
   display: inline-flex;
   align-items: center;
@@ -75,6 +81,45 @@
   color: var(--color-success);
 }
 
+.editOrder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  margin-left: auto;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.editOrder:hover {
+  background: var(--color-hover);
+}
+
+.deleteOrder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--color-danger);
+  background: var(--color-input);
+  color: var(--color-danger);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.deleteOrder:hover {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
 .tableWrap {
   max-width: 100%;
   overflow-x: auto;
@@ -82,7 +127,7 @@
 
 .tableWrap table {
   width: 100%;
-  min-width: 760px;
+  min-width: 980px;
   border-collapse: collapse;
   text-align: left;
   font-size: 12px;
@@ -116,5 +161,13 @@
 @media (max-width: 600px) {
   .header {
     padding: 14px;
+  }
+
+  .tableWrap {
+    min-width: 0;
+  }
+
+  .tableWrap table {
+    min-width: 980px;
   }
 }

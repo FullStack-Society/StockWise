@@ -1,10 +1,8 @@
 "use client";
 
 import { Printer, Download } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { type InventoryReportData, type ReportPeriod } from "@/lib/api/reports";
-import { ROUTES } from "@/lib/routes";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 import styles from "@/styles/reports/ReportActions.module.css";
 
 export default function ReportActions({
@@ -14,8 +12,7 @@ export default function ReportActions({
   days: ReportPeriod;
   report?: InventoryReportData;
 }) {
-  const router = useRouter();
-  const { currency, currencyRates } = useUserPreferences();
+  const { currency, currencyRates, timezone } = useUserPreferences();
   const conversionRate =
     currency === "USD" ? 1 : (currencyRates?.[currency] ?? null);
 
@@ -24,6 +21,7 @@ export default function ReportActions({
     const rows = [
       ["Inventory Report", `Last ${days} days`],
       ["Currency", currency],
+      ["Timezone", timezone],
       ["Period start", report.period_start],
       ["Products", report.product_count],
       ["Stock units", report.stock_units],
@@ -31,9 +29,30 @@ export default function ReportActions({
         `Current inventory value (${currency})`,
         Number(report.inventory_value) * conversionRate,
       ],
+      [
+        `Stock cost value (${currency})`,
+        Number(report.stock_cost_value) * conversionRate,
+      ],
       ["Units received", report.units_received],
       ["Units issued", report.units_issued],
       ["Transactions", report.transaction_count],
+      [],
+      [
+        "Daily stock movement",
+        "Received value uses current unit costs",
+      ],
+      [
+        "Date",
+        "Units received",
+        "Units issued",
+        `Received stock value (${currency})`,
+      ],
+      ...report.daily_movement.map((day) => [
+        day.day,
+        day.units_received,
+        day.units_issued,
+        Number(day.received_value) * conversionRate,
+      ]),
       [],
       [
         "Product",
@@ -63,26 +82,8 @@ export default function ReportActions({
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  function changeRange(value: string) {
-    const nextDays = Number(value);
-    if (nextDays === 30 || nextDays === 90 || nextDays === 365) {
-      router.push(`${ROUTES.reports}?days=${nextDays}`);
-    }
-  }
-
   return (
     <div className={styles.actions}>
-      <label className={styles.rangeLabel}>
-        <span>Period</span>
-        <select
-          value={days}
-          onChange={(event) => changeRange(event.target.value)}
-        >
-          <option value={30}>30 days</option>
-          <option value={90}>90 days</option>
-          <option value={365}>12 months</option>
-        </select>
-      </label>
       <button
         type="button"
         className={styles.actionBtn}

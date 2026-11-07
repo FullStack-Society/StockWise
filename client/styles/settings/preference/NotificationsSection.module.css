@@ -2,7 +2,7 @@
   min-width: 0;
   padding: 18px;
   border: 1px solid var(--color-border);
-  background: var(--color-panel);
+  background: none;
   backdrop-filter: blur(12px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
 }
@@ -20,7 +20,34 @@
 }
 .notificationWrap {
   margin-top: 14px;
-  overflow-x: auto;
+  display: grid;
+  gap: 14px;
+}
+.alertRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.alertRow strong,
+.alertRow small {
+  display: block;
+}
+.alertRow strong {
+  color: var(--color-text);
+  font-size: 11px;
+}
+.alertRow small,
+.alertDetails {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.alertDetails {
+  margin: -8px 0 0;
 }
 .notificationTable {
   width: 100%;
@@ -63,8 +90,5 @@
   font-size: 9px;
 }
 @media (max-width: 560px) {
-  .notificationTable thead th:first-child,
-  .notificationTable tbody th {
-    width: auto;
-  }
+  .alertRow { gap: 10px; }
 }

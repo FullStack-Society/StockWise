@@ -82,3 +82,34 @@
 .clear:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 640px) {
+  .filters {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .search {
+    flex-basis: 100%;
+  }
+
+  .selectWrap {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+
+  .select {
+    padding-left: 10px;
+  }
+
+  .clear {
+    min-height: 36px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 360px) {
+  .selectWrap {
+    flex-basis: 100%;
+  }
+}

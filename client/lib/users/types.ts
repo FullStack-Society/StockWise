@@ -8,5 +8,6 @@ export type TeamUser = {
   email: string;
   role: Role;
   status: UserStatus;
+  presenceStatus: "Active" | "Offline" | null;
   joinedAt: string;
 };

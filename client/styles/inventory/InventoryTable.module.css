@@ -1,9 +1,12 @@
 .tableWrap {
+  width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
 }
 .table {
   width: 100%;
-  min-width: 860px;
+  min-width: 900px;
   border-collapse: collapse;
   font-size: 13px;
 }

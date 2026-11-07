@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { formatPreferredCurrency } from "@/lib/utils/format";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 import type { Product, StockStatus } from "@/lib/inventory/types";
 import styles from "@/styles/inventory/InventoryTable.module.css";
 
@@ -45,8 +45,8 @@ export default function InventoryTable({
     allProductIds.length > 0 && allProductIds.every((id) => selected.has(id));
 
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.table} style={{ minWidth: 900 }}>
+    <div className={`${styles.tableWrap} mobileTableScroll`}>
+      <table className={styles.table}>
         <thead>
           <tr>
             <th className={styles.checkCell}>
@@ -62,7 +62,7 @@ export default function InventoryTable({
             <th>SKU</th>
             <th>Category</th>
             <th>Quantity / reorder at</th>
-            <th>Unit price ({currency})</th>
+            <th>Selling price ({currency})</th>
             <th>Status</th>
             <th className={styles.alignRight}>Actions</th>
           </tr>

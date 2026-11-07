@@ -1,14 +1,16 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  width: min(100%, 1280px);
+  gap: 20px;
+  width: min(100%, 1360px);
   margin: 0 auto;
+  padding-bottom: 20px;
 }
 .chartsRow {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  align-items: stretch;
+  gap: 16px;
 }
 .accessNotice {
   padding: 22px 24px;
@@ -48,5 +50,10 @@
 @media (max-width: 1100px) {
   .chartsRow {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .page {
+    gap: 14px;
   }
 }

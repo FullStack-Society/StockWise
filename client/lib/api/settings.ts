@@ -16,6 +16,69 @@ export type AccountSettings = {
   prioritize_low_stock: boolean;
 };
 
+export type TwoFactorStatus = { enabled: boolean };
+export type InventoryDefaults = { default_reorder_point: number };
+export type AccountSecurityStatus = {
+  two_factor_enabled: boolean;
+  google_account_connected: boolean;
+};
+export type SecurityPrivacyPreferences = {
+  login_alert_emails: boolean;
+  auto_sign_out_idle: boolean;
+};
+
+export function getAccountSecurityStatus() {
+  return apiRequest<AccountSecurityStatus>(ENDPOINTS.settings.securityStatus, {
+    signActor: true,
+  });
+}
+
+export function getInventoryDefaults() {
+  return apiRequest<InventoryDefaults>(ENDPOINTS.settings.inventoryDefaults, {
+    signActor: true,
+  });
+}
+
+export function updateInventoryDefaults(defaultReorderPoint: number) {
+  return apiRequest<InventoryDefaults>(ENDPOINTS.settings.inventoryDefaults, {
+    method: "PUT",
+    body: { default_reorder_point: defaultReorderPoint },
+    signActor: true,
+  });
+}
+
+export function getSecurityPrivacyPreferences() {
+  return apiRequest<SecurityPrivacyPreferences>(
+    ENDPOINTS.settings.securityPrivacyPreferences,
+    { signActor: true },
+  );
+}
+
+export function updateSecurityPrivacyPreferences(
+  preferences: SecurityPrivacyPreferences,
+) {
+  return apiRequest<SecurityPrivacyPreferences>(
+    ENDPOINTS.settings.securityPrivacyPreferences,
+    { method: "PUT", body: preferences, signActor: true },
+  );
+}
+export type TwoFactorEnrollment = { secret: string; otpauth_uri: string };
+export type TwoFactorRecoveryCodes = { recovery_codes: string[] };
+export type UsageAnalyticsConsent = { enabled: boolean };
+
+export function getUsageAnalyticsConsent() {
+  return apiRequest<UsageAnalyticsConsent>(
+    ENDPOINTS.settings.usageAnalyticsConsent,
+    { signActor: true },
+  );
+}
+
+export function updateUsageAnalyticsConsent(enabled: boolean) {
+  return apiRequest<UsageAnalyticsConsent>(
+    ENDPOINTS.settings.usageAnalyticsConsent,
+    { method: "PUT", body: { enabled }, signActor: true },
+  );
+}
 export function getAccountSettings() {
   return apiRequest<AccountSettings>(ENDPOINTS.settings.root, {
     signActor: true,
@@ -64,6 +127,33 @@ export function updateAccountPassword(input: {
 export function softDeleteCurrentAccount() {
   return apiRequest<void>(ENDPOINTS.settings.account, {
     method: "DELETE",
+    signActor: true,
+  });
+}
+
+export function getTwoFactorStatus() {
+  return apiRequest<TwoFactorStatus>(ENDPOINTS.settings.mfa, { signActor: true });
+}
+
+export function beginTwoFactorEnrollment() {
+  return apiRequest<TwoFactorEnrollment>(ENDPOINTS.settings.mfaEnroll, {
+    method: "POST",
+    signActor: true,
+  });
+}
+
+export function confirmTwoFactorEnrollment(code: string) {
+  return apiRequest<TwoFactorRecoveryCodes>(ENDPOINTS.settings.mfaConfirm, {
+    method: "POST",
+    body: { code },
+    signActor: true,
+  });
+}
+
+export function disableTwoFactor(code: string) {
+  return apiRequest<void>(ENDPOINTS.settings.mfaDisable, {
+    method: "POST",
+    body: { code },
     signActor: true,
   });
 }

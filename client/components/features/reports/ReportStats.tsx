@@ -4,18 +4,21 @@ import {
   DollarSign,
   Package,
   ArrowUpFromLine,
+  ArrowDownToLine,
   TriangleAlert,
 } from "lucide-react";
 import type { InventoryReportData } from "@/lib/api/reports";
 import { formatPreferredCurrency } from "@/lib/utils/format";
 import styles from "@/styles/reports/ReportStats.module.css";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 
 const ICONS = {
   value: DollarSign,
   products: Package,
   issued: ArrowUpFromLine,
+  received: ArrowDownToLine,
   alerts: TriangleAlert,
+  cost: Package,
 };
 
 function comparison(current: number, previous: number) {
@@ -37,14 +40,26 @@ export default function ReportStats({
   const stats = [
     {
       id: "value",
-      label: "Current Inventory Value",
+      label: "Inventory Selling Value",
       value: formatPreferredCurrency(
         Number(report.inventory_value),
         currency,
         currencyRates,
       ),
-      change: "Based on current product prices",
+      change: "On-hand units × selling price",
       icon: "value" as const,
+      trend: "up" as const,
+    },
+    {
+      id: "cost",
+      label: "Stock Cost Value",
+      value: formatPreferredCurrency(
+        Number(report.stock_cost_value),
+        currency,
+        currencyRates,
+      ),
+      change: "On-hand units × unit cost",
+      icon: "cost" as const,
       trend: "up" as const,
     },
     {
@@ -53,6 +68,14 @@ export default function ReportStats({
       value: report.product_count.toLocaleString(),
       change: `${report.stock_units.toLocaleString()} units in stock`,
       icon: "products" as const,
+      trend: "up" as const,
+    },
+    {
+      id: "received",
+      label: "Units Received",
+      value: report.units_received.toLocaleString(),
+      change: `${report.previous_units_received.toLocaleString()} units in previous period`,
+      icon: "received" as const,
       trend: "up" as const,
     },
     {

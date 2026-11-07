@@ -3,14 +3,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 
-def ensure_default_categories(db: Session, organization_id: int) -> None:
-    db.execute(
-        text("SELECT public.stockwise_ensure_default_categories(:organization_id)"),
-        {"organization_id": organization_id},
-    )
-    db.commit()
-
-
 def get_inventory_list(
     db: Session,
     organization_id: int,
@@ -39,7 +31,24 @@ def get_inventory_list(
         },
     )
 
-    return [dict(row) for row in result.mappings().all()]
+    rows = [dict(row) for row in result.mappings().all()]
+    return _enrich_retail_fields(db, rows)
+
+
+def _enrich_retail_fields(db: Session, rows: list[dict]) -> list[dict]:
+    if not rows:
+        return rows
+    ids = list({int(row["product_id"]) for row in rows})
+    details = db.execute(
+        text("""
+            SELECT product_id, unit_cost, variant
+            FROM public.products WHERE product_id = ANY(:ids)
+        """), {"ids": ids}
+    ).mappings().all()
+    by_id = {int(item["product_id"]): dict(item) for item in details}
+    for row in rows:
+        row.update(by_id.get(int(row["product_id"]), {}))
+    return rows
 
 
 def get_inventory_by_id(
@@ -63,7 +72,7 @@ def get_inventory_by_id(
     )
 
     row = result.mappings().first()
-    return dict(row) if row is not None else None
+    return _enrich_retail_fields(db, [dict(row)])[0] if row is not None else None
 
 
 def get_categories(db: Session, organization_id: int) -> list[dict]:
@@ -78,6 +87,42 @@ def get_categories(db: Session, organization_id: int) -> list[dict]:
     return [dict(row) for row in result.mappings().all()]
 
 
+def create_category(
+    db: Session, organization_id: int, category_name: str
+) -> dict:
+    result = db.execute(
+        text("""
+            INSERT INTO public.categories
+                (organization_id, category_name, description)
+            VALUES (:p_organization_id, :p_category_name, NULL)
+            RETURNING category_id, category_name, description
+        """),
+        {
+            "p_organization_id": organization_id,
+            "p_category_name": category_name,
+        },
+    )
+    return dict(result.mappings().one())
+
+
+def delete_category(
+    db: Session, organization_id: int, category_id: int
+) -> bool:
+    result = db.execute(
+        text("""
+            DELETE FROM public.categories
+            WHERE organization_id = :p_organization_id
+              AND category_id = :p_category_id
+            RETURNING category_id
+        """),
+        {
+            "p_organization_id": organization_id,
+            "p_category_id": category_id,
+        },
+    )
+    return result.scalar_one_or_none() is not None
+
+
 def create_inventory(
     db: Session,
     organization_id: int,
@@ -90,6 +135,8 @@ def create_inventory(
     location_id: int,
     reorder_point: int,
     actor_email: str,
+    unit_cost=0,
+    variant: str | None = None,
 ) -> dict:
     result = db.execute(
         text("""
@@ -121,8 +168,14 @@ def create_inventory(
         },
     )
 
-    row = result.mappings().one()
-    return dict(row)
+    row = dict(result.mappings().one())
+    db.execute(text("""
+        UPDATE public.products SET unit_cost=:unit_cost, variant=:variant
+        WHERE organization_id=:org AND product_id=:product
+    """), {"unit_cost": unit_cost, "variant": variant,
+          "org": organization_id,
+          "product": row["product_id"]})
+    return _enrich_retail_fields(db, [row])[0]
 
 
 def update_inventory(
@@ -137,6 +190,9 @@ def update_inventory(
     quantity: int,
     location_id: int,
     reorder_point: int,
+    unit_cost=None,
+    variant: str | None = None,
+    supplied_fields: set[str] | None = None,
 ) -> dict | None:
     result = db.execute(
         text("""
@@ -169,7 +225,23 @@ def update_inventory(
     )
 
     row = result.mappings().first()
-    return dict(row) if row is not None else None
+    if row is None:
+        return None
+    fields = supplied_fields or set()
+    retail_updates = []
+    retail_params = {"org": organization_id, "product": product_id}
+    if "unit_cost" in fields:
+        retail_updates.append("unit_cost=:unit_cost")
+        retail_params["unit_cost"] = unit_cost
+    if "variant" in fields:
+        retail_updates.append("variant=:variant")
+        retail_params["variant"] = variant
+    if retail_updates:
+        db.execute(text(
+            "UPDATE public.products SET " + ", ".join(retail_updates) +
+            " WHERE organization_id=:org AND product_id=:product"
+        ), retail_params)
+    return _enrich_retail_fields(db, [dict(row)])[0]
 
 
 def delete_inventory(db: Session, organization_id: int, product_id: int) -> bool:

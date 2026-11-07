@@ -8,7 +8,7 @@ import {
   ChevronRight,
   Activity,
 } from "lucide-react";
-import type { AccountSettings } from "@/lib/api/settings";
+import type { AccountSecurityStatus, AccountSettings } from "@/lib/api/settings";
 import styles from "@/styles/settings/profile/ProfileCard.module.css";
 import type { SettingsSection } from "@/lib/settings/types";
 
@@ -24,25 +24,25 @@ export default function ProfileCard({
   roleLabel,
   active,
   isOwner,
+  securityStatus,
   onSelect,
 }: {
   settings: AccountSettings;
   roleLabel: string;
   active: SettingsSection;
   isOwner: boolean;
+  securityStatus: AccountSecurityStatus | null;
   onSelect: (section: SettingsSection) => void;
 }) {
   const visibleItems = ITEMS.filter((item) => {
     if (item.id === "billing") return isOwner;
     return true;
   });
-  const completedDetails = [
-    settings.name,
-    settings.email,
-    roleLabel,
-    settings.timezone,
-  ].filter(Boolean).length;
-  const completion = Math.round((completedDetails / 4) * 100);
+  const completedChecks = securityStatus
+    ? Number(securityStatus.two_factor_enabled) +
+      Number(securityStatus.google_account_connected)
+    : 0;
+  const completion = Math.round((completedChecks / 2) * 100);
 
   return (
     <div className={styles.sidebarStack}>
@@ -76,7 +76,7 @@ export default function ProfileCard({
         <div
           className={styles.healthTrack}
           role="progressbar"
-          aria-label="Profile details complete"
+          aria-label="Account security checks complete"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={completion}
@@ -84,7 +84,9 @@ export default function ProfileCard({
           <span style={{ width: `${completion}%` }} />
         </div>
         <p className={styles.healthNote}>
-          {completion}% complete · {completedDetails} of 4 details available
+          {securityStatus
+            ? `${completedChecks} of 2 security checks · ${completion}% complete`
+            : "Checking authentication and Google account…"}
         </p>
       </section>
     </div>

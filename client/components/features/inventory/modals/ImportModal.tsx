@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Download, FileUp, X } from "lucide-react";
+import { Download, FileUp } from "lucide-react";
 import { importProductsAction } from "@/lib/inventory/actions";
 import { parseProducts, type ParseResult } from "@/lib/inventory/csv-import";
 import type { Category } from "@/lib/inventory/types";
@@ -12,13 +12,14 @@ import buttons from "@/styles/inventory/InventoryHeader.module.css";
 type Props = {
   categories: Category[];
   locationId: number;
+  defaultReorderPoint: number;
   onClose: () => void;
   onImported: () => void;
 };
 
 function downloadTemplate() {
   const blob = new Blob(
-    ["Product Name,SKU,Category,Description,Price,Quantity,Reorder Point\r\n"],
+    ["Product Name,SKU,Category,Description,Price,Unit Cost,Variant,Quantity,Reorder Point\r\n"],
     { type: "text/csv;charset=utf-8" },
   );
   const url = URL.createObjectURL(blob);
@@ -32,6 +33,7 @@ function downloadTemplate() {
 export default function ImportModal({
   categories,
   locationId,
+  defaultReorderPoint,
   onClose,
   onImported,
 }: Props) {
@@ -65,7 +67,9 @@ export default function ImportModal({
       return;
     }
     try {
-      setParsed(parseProducts(await file.text(), categories));
+      setParsed(
+        parseProducts(await file.text(), categories, defaultReorderPoint),
+      );
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -109,9 +113,6 @@ export default function ImportModal({
       className={styles.modal}
       aria-labelledby="import-inventory-title"
       onClose={onClose}
-      onClick={(event) =>
-        event.target === event.currentTarget && dialogRef.current?.close()
-      }
     >
       <div className={styles.modalBody}>
         <header className={styles.modalHeader}>
@@ -123,14 +124,6 @@ export default function ImportModal({
               Upload a CSV to add products to this organization.
             </p>
           </div>
-          <button
-            type="button"
-            className={styles.closeButton}
-            onClick={() => dialogRef.current?.close()}
-            aria-label="Close import"
-          >
-            <X size={15} />
-          </button>
         </header>
 
         <div className={extra.fileRow}>
@@ -151,7 +144,8 @@ export default function ImportModal({
         <p className={extra.help}>
           This template contains headers only. Add at least one product row
           before importing. Required columns: Product Name and SKU. Optional
-          columns: Category, Description, Price, Quantity, and Reorder Point.
+          columns: Category, Description, Price, Unit Cost, Variant, Quantity,
+          and Reorder Point.
           Category names must match this organization’s categories.
         </p>
 

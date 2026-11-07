@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Role } from "@/lib/auth/roles";
 import { canManageUser } from "@/lib/auth/roles";
@@ -19,7 +19,8 @@ import UsersTable from "./UsersTable";
 import AddUserModal from "@/components/features/users/modals/AddUserModal";
 import styles from "@/styles/users/UsersBrowser.module.css";
 import { formatDate } from "@/lib/utils/format";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
+import DestructiveConfirmationModal from "@/components/ui/DestructiveConfirmationModal";
 
 type Props = {
   currentRole: Role;
@@ -38,6 +39,7 @@ function toTeamUser(
     email: member.email,
     role: member.role,
     status: member.status,
+    presenceStatus: member.online_status,
     joinedAt: member.joined_at
       ? formatDate(member.joined_at, dateFormat)
       : member.status === "Invited"
@@ -60,9 +62,23 @@ export default function UsersBrowser({
   );
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [userPage, setUserPage] = useState(1);
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+  const [confirmation, setConfirmation] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (!document.hidden) router.refresh();
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [router]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -74,6 +90,11 @@ export default function UsersBrowser({
         (!roleFilter || u.role === roleFilter),
     );
   }, [users, search, roleFilter]);
+  const userPageSize = 10;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / userPageSize));
+  const currentPage = Math.min(userPage, pageCount);
+  const start = (currentPage - 1) * userPageSize;
+  const visibleUsers = filtered.slice(start, start + userPageSize);
 
   async function inviteUser(email: string, role: Exclude<Role, "owner">) {
     const result = await inviteOrganizationMemberAction(email, role);
@@ -86,22 +107,24 @@ export default function UsersBrowser({
   function removeUser(id: string) {
     const target = users.find((u) => u.id === id);
     if (!target || !canManageUser(currentRole, target.role)) return;
-    if (
-      !window.confirm(
-        target.status === "Invited"
-          ? `Revoke the invitation for ${target.email}?`
-          : `Remove ${target.name} from ${organizationName}?`,
-      )
-    )
-      return;
-    setError("");
-    startTransition(async () => {
-      const result = await removeOrganizationMemberAction(target.email);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      router.refresh();
+    const isInvited = target.status === "Invited";
+    setConfirmation({
+      title: isInvited ? "Revoke invitation?" : "Remove organization member?",
+      description: isInvited
+        ? `Revoke the invitation for ${target.email}?`
+        : `Remove ${target.name} from ${organizationName}? They will lose access to this organization.`,
+      confirmLabel: isInvited ? "Revoke invitation" : "Remove member",
+      onConfirm: () => {
+        setError("");
+        startTransition(async () => {
+          const result = await removeOrganizationMemberAction(target.email);
+          if (!result.ok) {
+            setError(result.error);
+            return;
+          }
+          router.refresh();
+        });
+      },
     });
   }
 
@@ -119,19 +142,20 @@ export default function UsersBrowser({
   }
 
   function leaveOrganization() {
-    if (
-      !window.confirm(
-        `Leave ${organizationName}? You will lose access to its inventory.`,
-      )
-    )
-      return;
-    startTransition(async () => {
-      const result = await leaveOrganizationAction();
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      router.refresh();
+    setConfirmation({
+      title: "Leave organization?",
+      description: `Leave ${organizationName}? You will lose access to its inventory.`,
+      confirmLabel: "Leave organization",
+      onConfirm: () => {
+        startTransition(async () => {
+          const result = await leaveOrganizationAction();
+          if (!result.ok) {
+            setError(result.error);
+            return;
+          }
+          router.refresh();
+        });
+      },
     });
   }
 
@@ -154,16 +178,27 @@ export default function UsersBrowser({
         <UsersFilterBar
           search={search}
           role={roleFilter}
-          onSearch={setSearch}
-          onRole={setRoleFilter}
+          onSearch={(value) => {
+            setSearch(value);
+            setUserPage(1);
+          }}
+          onRole={(value) => {
+            setRoleFilter(value);
+            setUserPage(1);
+          }}
           onClear={() => {
             setSearch("");
             setRoleFilter("");
+            setUserPage(1);
           }}
         />
         <UsersTable
-          users={filtered}
-          total={users.length}
+          users={visibleUsers}
+          total={filtered.length}
+          start={start}
+          page={currentPage}
+          pageCount={pageCount}
+          onPageChange={setUserPage}
           currentRole={currentRole}
           currentUserId={currentUserId}
           onRemove={removeUser}
@@ -176,6 +211,20 @@ export default function UsersBrowser({
           existingEmails={users.map((u) => u.email.toLowerCase())}
           onClose={() => setShowAdd(false)}
           onInvite={inviteUser}
+        />
+      )}
+      {confirmation && (
+        <DestructiveConfirmationModal
+          title={confirmation.title}
+          description={confirmation.description}
+          confirmLabel={confirmation.confirmLabel}
+          isPending={pending}
+          onCancel={() => setConfirmation(null)}
+          onConfirm={() => {
+            const action = confirmation.onConfirm;
+            setConfirmation(null);
+            action();
+          }}
         />
       )}
     </>

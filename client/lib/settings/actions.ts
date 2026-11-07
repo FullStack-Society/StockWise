@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import {
   deleteSession,
+  requireOrganizationSession,
   requireSession,
   updateProfileSession,
 } from "@/lib/auth/session";
@@ -12,7 +13,20 @@ import {
   softDeleteCurrentAccount,
   updateAccountPreferences,
   updateAccountProfile,
+  getTwoFactorStatus as loadTwoFactorStatus,
+  beginTwoFactorEnrollment as beginTwoFactorEnrollmentRequest,
+  confirmTwoFactorEnrollment as confirmTwoFactorEnrollmentRequest,
+  disableTwoFactor as disableTwoFactorRequest,
+  getUsageAnalyticsConsent as loadUsageAnalyticsConsent,
+  updateUsageAnalyticsConsent,
+  getAccountSecurityStatus as loadAccountSecurityStatus,
+  updateInventoryDefaults as updateInventoryDefaultsRequest,
+  getSecurityPrivacyPreferences as loadSecurityPrivacyPreferences,
+  updateSecurityPrivacyPreferences as updateSecurityPrivacyPreferencesRequest,
+  type SecurityPrivacyPreferences,
 } from "@/lib/api/settings";
+import { recordUsagePageView as recordUsagePageViewRequest } from "@/lib/api/reports";
+import type { UsageAnalyticsPage } from "@/lib/api/reports";
 
 const TIMEZONES = new Set([
   "Asia/Manila",
@@ -26,6 +40,94 @@ const TIMEZONES = new Set([
 ]);
 
 export type SettingsActionResult = { ok: true } | { ok: false; error: string };
+
+export async function getTwoFactorStatus() {
+  await requireSession();
+  return loadTwoFactorStatus();
+}
+
+export async function beginTwoFactorEnrollment() {
+  await requireSession();
+  return beginTwoFactorEnrollmentRequest();
+}
+
+export async function confirmTwoFactorEnrollment(code: string) {
+  await requireSession();
+  return confirmTwoFactorEnrollmentRequest(code);
+}
+
+export async function disableTwoFactor(code: string) {
+  await requireSession();
+  return disableTwoFactorRequest(code);
+}
+
+export async function getUsageAnalyticsConsent() {
+  await requireSession();
+  return loadUsageAnalyticsConsent();
+}
+
+export async function setUsageAnalyticsConsent(enabled: boolean) {
+  await requireSession();
+  return updateUsageAnalyticsConsent(enabled);
+}
+
+export async function getAccountSecurityStatus() {
+  await requireSession();
+  return loadAccountSecurityStatus();
+}
+
+export async function getSecurityPrivacyPreferences() {
+  await requireSession();
+  return loadSecurityPrivacyPreferences();
+}
+
+export async function saveSecurityPrivacyPreferences(
+  preferences: SecurityPrivacyPreferences,
+) {
+  await requireSession();
+  if (
+    typeof preferences?.login_alert_emails !== "boolean" ||
+    typeof preferences?.auto_sign_out_idle !== "boolean"
+  ) {
+    return { ok: false as const, error: "The privacy preference values are invalid." };
+  }
+  try {
+    const saved = await updateSecurityPrivacyPreferencesRequest(preferences);
+    return { ok: true as const, preferences: saved };
+  } catch (error) {
+    console.error("[StockWise] Unable to save security privacy preferences:", error);
+    return {
+      ok: false as const,
+      error: error instanceof ApiError ? error.message : "Could not save this privacy setting. Try again.",
+    };
+  }
+}
+
+export async function saveInventoryDefaults(defaultReorderPoint: number) {
+  await requireSession();
+  if (
+    !Number.isInteger(defaultReorderPoint) ||
+    defaultReorderPoint < 0 ||
+    defaultReorderPoint > 2_147_483_647
+  ) {
+    return { ok: false as const, error: "Enter a valid non-negative whole number." };
+  }
+  try {
+    await updateInventoryDefaultsRequest(defaultReorderPoint);
+    return { ok: true as const };
+  } catch (error) {
+    console.error("[StockWise] Unable to save inventory defaults:", error);
+    return {
+      ok: false as const,
+      error: error instanceof ApiError ? error.message : "Could not save inventory defaults. Try again.",
+    };
+  }
+}
+
+export async function recordUsageAnalyticsPageView(page: UsageAnalyticsPage) {
+  await requireOrganizationSession();
+  await recordUsagePageViewRequest(page);
+}
 
 export async function saveProfileSettings(input: {
   name: string;

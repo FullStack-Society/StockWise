@@ -1,6 +1,9 @@
 .modal {
+  box-sizing: border-box;
   width: min(620px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  margin: auto;
   padding: 0;
   border: 1px solid var(--color-border);
   background: var(--color-modal);
@@ -8,6 +11,7 @@
   color-scheme: inherit;
   box-shadow: 0 24px 70px var(--color-shadow);
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .modal::backdrop {
@@ -17,6 +21,46 @@
 
 .historyModal {
   width: min(1100px, calc(100vw - 32px));
+}
+
+.categoryList {
+  display: grid;
+  gap: 8px;
+  max-height: 40vh;
+  margin: 20px 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.categoryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+}
+
+.categoryDelete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.categoryDelete:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 .body {
@@ -39,15 +83,6 @@
   margin: 6px 0 0;
   color: var(--color-text-muted);
   font-size: 12px;
-}
-
-.close {
-  display: inline-flex;
-  padding: 6px;
-  border: 1px solid var(--color-border);
-  background: none;
-  color: var(--color-text);
-  cursor: pointer;
 }
 
 .form {
@@ -92,8 +127,7 @@
 
 .field input:focus-visible,
 .field textarea:focus-visible,
-.field select:focus-visible,
-.close:focus-visible {
+.field select:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
@@ -122,20 +156,86 @@
 }
 
 .historyWrap {
-  max-height: 65vh;
+  max-height: min(65vh, 500px);
+  max-height: min(65dvh, 500px);
+  max-width: 100%;
+  min-width: 0;
   margin-top: 20px;
   overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.historyFilters {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-glass);
+}
+
+.historyFilters label {
+  display: grid;
+  gap: 5px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.historyFilters input {
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.historyFilters input:focus-visible,
+.historyClearDay:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.historyClearDay {
+  min-height: 34px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.historyCount {
+  margin-left: auto;
+  padding-bottom: 9px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.historyLimitNotice {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
 }
 
 .history {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   font-size: 12px;
   text-align: left;
+  table-layout: fixed;
 }
 
 .history th,
 .history td {
+  overflow-wrap: anywhere;
   padding: 10px;
   border-bottom: 1px solid var(--color-border);
   vertical-align: top;
@@ -162,7 +262,15 @@
     padding: 18px;
   }
 
-  .history {
-    min-width: 760px;
+  .historyFilters label {
+    flex: 1 1 135px;
+  }
+
+  .historyFilters input {
+    width: 100%;
+  }
+
+  .historyCount {
+    margin-left: 0;
   }
 }

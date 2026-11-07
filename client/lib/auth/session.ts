@@ -3,6 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
+import { randomUUID } from "node:crypto";
 
 export type SessionUser = {
   id: string;
@@ -14,8 +15,26 @@ export type SessionUser = {
 type StoredSessionUser = SessionUser & { remember: boolean };
 
 const SESSION_COOKIE = "stockwise_session";
+const LAST_ORGANIZATION_COOKIE = "stockwise_last_organization";
+const LOGIN_DEVICE_COOKIE = "stockwise_login_device";
 const SHORT_SESSION = 60 * 60 * 8;
 const LONG_SESSION = 60 * 60 * 24 * 30;
+
+export async function getOrCreateLoginDeviceId() {
+  const jar = await cookies();
+  const current = jar.get(LOGIN_DEVICE_COOKIE)?.value;
+  if (current && /^[0-9a-f-]{36}$/i.test(current)) return current;
+
+  const deviceId = randomUUID();
+  jar.set(LOGIN_DEVICE_COOKIE, deviceId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  return deviceId;
+}
 
 function getKey() {
   const secret = process.env.SESSION_SECRET;
@@ -46,6 +65,34 @@ export async function createSession(user: SessionUser, remember: boolean) {
 
 export async function deleteSession() {
   (await cookies()).delete(SESSION_COOKIE);
+}
+
+export async function getLastOrganizationId(email: string) {
+  const value = (await cookies()).get(LAST_ORGANIZATION_COOKIE)?.value;
+  const [storedEmail, storedId] = value?.split("|") ?? [];
+  if (storedEmail !== email.trim().toLowerCase()) return null;
+  const organizationId = Number(storedId);
+  return Number.isSafeInteger(organizationId) && organizationId > 0
+    ? organizationId
+    : null;
+}
+
+export async function rememberLastOrganization(
+  email: string,
+  organizationId: number | null,
+) {
+  const jar = await cookies();
+  if (!organizationId || !Number.isSafeInteger(organizationId) || organizationId <= 0) {
+    jar.delete(LAST_ORGANIZATION_COOKIE);
+    return;
+  }
+  jar.set(LAST_ORGANIZATION_COOKIE, `${email.trim().toLowerCase()}|${organizationId}`, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: LONG_SESSION,
+  });
 }
 
 /** Returns the logged-in user, or null. Verified on the server every time. */

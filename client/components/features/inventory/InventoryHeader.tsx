@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, Download, FileUp, Plus } from "lucide-react";
+import { ClipboardList, Download, FileUp, FolderCog, Plus } from "lucide-react";
 import styles from "@/styles/inventory/InventoryHeader.module.css";
 
 export default function InventoryHeader({
@@ -9,12 +9,14 @@ export default function InventoryHeader({
   onExport,
   canExport,
   onHistory,
+  onCategories,
 }: {
   onAdd: () => void;
   onImport: () => void;
   onExport: () => void;
   canExport: boolean;
   onHistory: () => void;
+  onCategories?: () => void;
 }) {
   return (
     <div className={styles.header}>
@@ -26,6 +28,12 @@ export default function InventoryHeader({
       </div>
 
       <div className={styles.actions}>
+        {onCategories && (
+          <button type="button" onClick={onCategories} className={styles.button}>
+            <FolderCog size={14} />
+            Manage Categories
+          </button>
+        )}
         <button type="button" onClick={onHistory} className={styles.button}>
           <ClipboardList size={14} />
           Stock history

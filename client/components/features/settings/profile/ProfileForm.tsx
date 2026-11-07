@@ -7,43 +7,39 @@ import type { AccountSettings } from "@/lib/api/settings";
 import { saveProfileSettings } from "@/lib/settings/actions";
 import styles from "@/styles/settings/profile/ProfileForm.module.css";
 
-const TIMEZONES = [
-  ["Asia/Manila", "Philippines (Asia/Manila)"],
-  ["Asia/Singapore", "Singapore (Asia/Singapore)"],
-  ["America/Los_Angeles", "Pacific Time (US)"],
-  ["America/Chicago", "Central Time (US)"],
-  ["America/New_York", "Eastern Time (US)"],
-  ["Europe/London", "United Kingdom (Europe/London)"],
-  ["Europe/Berlin", "Central Europe (Europe/Berlin)"],
-  ["UTC", "UTC"],
-];
-
 export default function ProfileForm({
   settings,
   roleLabel,
+  ownedOrganizationCount,
 }: {
   settings: AccountSettings;
   roleLabel: string;
+  ownedOrganizationCount: number;
 }) {
   const router = useRouter();
-  const [timezone, setTimezone] = useState(settings.timezone);
-  const [name, setName] = useState(settings.name);
+  const [firstName = "", ...initialLastNameParts] = settings.name
+    .trim()
+    .split(/\s+/);
+  const [firstNameValue, setFirstNameValue] = useState(firstName);
+  const [lastNameValue, setLastNameValue] = useState(
+    initialLastNameParts.join(" "),
+  );
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [firstName = "", ...lastNameParts] = name.trim().split(/\s+/);
-  const lastName = lastNameParts.join(" ");
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+    const name = [firstNameValue.trim(), lastNameValue.trim()]
+      .filter(Boolean)
+      .join(" ");
     startTransition(async () => {
-      const result = await saveProfileSettings({ name, timezone });
+      const result = await saveProfileSettings({
+        name,
+        timezone: settings.timezone,
+      });
       setMessage(result.ok ? "Profile settings saved." : result.error);
       if (result.ok) router.refresh();
     });
-  }
-
-  function setNameParts(nextFirst: string, nextLast: string) {
-    setName([nextFirst.trim(), nextLast.trim()].filter(Boolean).join(" "));
   }
 
   return (
@@ -66,8 +62,8 @@ export default function ProfileForm({
           <span className={styles.fieldLabel}>First Name</span>
           <input
             className={styles.input}
-            value={firstName}
-            onChange={(event) => setNameParts(event.target.value, lastName)}
+            value={firstNameValue}
+            onChange={(event) => setFirstNameValue(event.target.value)}
             maxLength={160}
             autoComplete="given-name"
             required
@@ -77,8 +73,8 @@ export default function ProfileForm({
           <span className={styles.fieldLabel}>Last Name</span>
           <input
             className={styles.input}
-            value={lastName}
-            onChange={(event) => setNameParts(firstName, event.target.value)}
+            value={lastNameValue}
+            onChange={(event) => setLastNameValue(event.target.value)}
             maxLength={160}
             autoComplete="family-name"
           />
@@ -106,18 +102,13 @@ export default function ProfileForm({
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>Timezone</span>
-          <select
+          <span className={styles.fieldLabel}>Organizations owned</span>
+          <input
             className={styles.input}
-            value={timezone}
-            onChange={(event) => setTimezone(event.target.value)}
-          >
-            {TIMEZONES.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+            value={ownedOrganizationCount.toLocaleString()}
+            readOnly
+            aria-readonly="true"
+          />
         </label>
       </div>
       {message && (

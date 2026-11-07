@@ -8,10 +8,15 @@ import {
 } from "@/lib/auth/roles";
 import type { TeamUser } from "@/lib/users/types";
 import styles from "@/styles/users/UsersTable.module.css";
+import Pagination from "@/components/ui/Pagination";
 
 type Props = {
   users: TeamUser[];
   total: number;
+  start: number;
+  page: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
   currentRole: Role;
   currentUserId: string;
   onRemove: (id: string) => void;
@@ -29,6 +34,10 @@ const initials = (name: string) =>
 export default function UsersTable({
   users,
   total,
+  start,
+  page,
+  pageCount,
+  onPageChange,
   currentRole,
   currentUserId,
   onRemove,
@@ -36,13 +45,14 @@ export default function UsersTable({
 }: Props) {
   return (
     <>
-      <div className={styles.tableWrap}>
+      <div className={`${styles.tableWrap} mobileTableScroll`}>
         <table className={styles.table}>
           <thead>
             <tr>
+              <th aria-label="Row number">#</th>
               <th>User</th>
               <th>Role</th>
-              <th>Status</th>
+              <th>Presence</th>
               <th>Joined</th>
               <th className={styles.alignRight}>Actions</th>
             </tr>
@@ -50,18 +60,19 @@ export default function UsersTable({
           <tbody>
             {users.length === 0 && (
               <tr>
-                <td colSpan={5} className={styles.empty}>
+                <td colSpan={6} className={styles.empty}>
                   No users match your filters.
                 </td>
               </tr>
             )}
-            {users.map((u) => {
+            {users.map((u, index) => {
               const isSelf = u.id === currentUserId;
               const manageable = !isSelf && canManageUser(currentRole, u.role);
               const roleEditable =
                 !isSelf && canChangeRole(currentRole, u.role);
               return (
                 <tr key={u.id}>
+                  <td className={styles.muted}>{start + index + 1}</td>
                   <td>
                     <div className={styles.userCell}>
                       <span className={styles.avatar} aria-hidden>
@@ -97,15 +108,26 @@ export default function UsersTable({
                     )}
                   </td>
                   <td>
-                    <span
-                      className={
-                        u.status === "Active"
-                          ? styles.statusActive
-                          : styles.statusInvited
-                      }
-                    >
-                      {u.status}
-                    </span>
+                    {(() => {
+                      const status =
+                        u.status === "Invited"
+                          ? "Invited"
+                          : (u.presenceStatus ?? "Offline");
+                      return (
+                        <span
+                          className={
+                            status === "Active"
+                              ? styles.statusActive
+                              : status === "Offline"
+                                ? styles.statusOffline
+                                : styles.statusInvited
+                          }
+                          title={status === "Active" ? "Seen within the last 90 seconds" : undefined}
+                        >
+                          {status}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className={styles.muted}>{u.joinedAt}</td>
                   <td className={styles.alignRight}>
@@ -134,7 +156,18 @@ export default function UsersTable({
         </table>
       </div>
       <div className={styles.tableFooter}>
-        Showing {users.length} of {total} users
+        <span>
+          {total === 0
+            ? "No users"
+            : `Showing ${start + 1}-${start + users.length} of ${total} users`}
+        </span>
+        {pageCount > 1 && (
+          <Pagination
+            page={page}
+            pageCount={pageCount}
+            onChange={onPageChange}
+          />
+        )}
       </div>
     </>
   );

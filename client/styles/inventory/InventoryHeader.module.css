@@ -50,3 +50,40 @@
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
 }
+
+@media (max-width: 640px) {
+  .header {
+    align-items: flex-start;
+  }
+
+  .title {
+    font-size: 30px;
+  }
+
+  .subtitle {
+    max-width: 36ch;
+    line-height: 1.5;
+  }
+
+  .actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .button {
+    justify-content: center;
+    min-width: 0;
+    height: auto;
+    min-height: 40px;
+    padding: 8px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .actions {
+    grid-template-columns: 1fr;
+  }
+}

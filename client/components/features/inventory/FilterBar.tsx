@@ -63,7 +63,7 @@ export default function FilterBar({
           type="search"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search by product name or SKU"
+          placeholder="Search by product name, SKU, or variant"
           className={styles.searchInput}
         />
       </label>

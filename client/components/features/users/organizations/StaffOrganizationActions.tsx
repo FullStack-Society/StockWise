@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import LeaveOrganizationButton from "./LeaveOrganizationButton";
 import { leaveOrganizationAction } from "@/lib/organization/actions";
 import styles from "@/styles/users/UsersBrowser.module.css";
+import DestructiveConfirmationModal from "@/components/ui/DestructiveConfirmationModal";
 
 export default function StaffOrganizationActions({
   organizationName,
@@ -14,16 +15,12 @@ export default function StaffOrganizationActions({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [confirmLeave, setConfirmLeave] = useState(false);
 
   function leave() {
-    if (
-      !window.confirm(
-        `Leave ${organizationName}? You will lose access to its inventory.`,
-      )
-    )
-      return;
     startTransition(async () => {
       const result = await leaveOrganizationAction();
+      setConfirmLeave(false);
       if (!result.ok) setError(result.error);
       else router.refresh();
     });
@@ -31,11 +28,24 @@ export default function StaffOrganizationActions({
 
   return (
     <div>
-      <LeaveOrganizationButton onLeave={leave} disabled={pending} />
+      <LeaveOrganizationButton
+        onLeave={() => setConfirmLeave(true)}
+        disabled={pending}
+      />
       {error && (
         <p className={styles.errorBanner} role="alert">
           {error}
         </p>
+      )}
+      {confirmLeave && (
+        <DestructiveConfirmationModal
+          title="Leave organization?"
+          description={`Leave ${organizationName}? You will lose access to its inventory.`}
+          confirmLabel="Leave organization"
+          isPending={pending}
+          onCancel={() => setConfirmLeave(false)}
+          onConfirm={leave}
+        />
       )}
     </div>
   );

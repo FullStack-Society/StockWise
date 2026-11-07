@@ -17,6 +17,8 @@ type CachedCurrencyRates = {
 
 type PreferenceValues = Pick<
   AccountSettings,
+  | "timezone"
+  | "invitation_notifications"
   | "theme"
   | "date_format"
   | "currency"
@@ -31,7 +33,13 @@ type UserPreferences = PreferenceValues & {
   currencyRatesError: string | null;
 };
 
-const PreferencesContext = createContext<UserPreferences | null>(null);
+type PreferencesContextValue = UserPreferences & {
+  desktopStockAlertsEnabled: boolean;
+  setDesktopStockAlertsEnabled: (enabled: boolean) => void;
+  setAutoSyncReportsEnabled: (enabled: boolean) => void;
+};
+const DESKTOP_ALERTS_KEY = "stockwise-desktop-stock-alerts-v1";
+const PreferencesContext = createContext<PreferencesContextValue | null>(null);
 
 export function useUserPreferences() {
   const preferences = useContext(PreferencesContext);
@@ -59,16 +67,67 @@ export default function UserPreferencesProvider({
   const [currencyRatesError, setCurrencyRatesError] = useState<string | null>(
     null,
   );
+  const [desktopStockAlertsEnabled, setDesktopStockAlertsEnabledState] =
+    useState(false);
+  const [autoSyncReportsEnabled, setAutoSyncReportsEnabled] = useState(
+    preferences.auto_sync_reports,
+  );
+
+  useEffect(() => {
+    // Syncs the saved server preference after router.refresh().
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAutoSyncReportsEnabled(preferences.auto_sync_reports);
+  }, [preferences.auto_sync_reports]);
+
+  const setDesktopStockAlertsEnabled = (enabled: boolean) => {
+    setDesktopStockAlertsEnabledState(enabled);
+    try {
+      window.localStorage.setItem(DESKTOP_ALERTS_KEY, String(enabled));
+    } catch (error) {
+      console.error("[StockWise] Unable to save desktop alert preference:", error);
+    }
+  };
+
+  useEffect(() => {
+    try {
+      // Restores this browser's opt-in after hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDesktopStockAlertsEnabledState(
+        window.localStorage.getItem(DESKTOP_ALERTS_KEY) === "true",
+      );
+    } catch (error) {
+      console.error("[StockWise] Unable to read desktop alert preference:", error);
+    }
+    const syncFromAnotherTab = (event: StorageEvent) => {
+      if (event.key === DESKTOP_ALERTS_KEY) {
+        setDesktopStockAlertsEnabledState(event.newValue === "true");
+      }
+    };
+    window.addEventListener("storage", syncFromAnotherTab);
+    return () => window.removeEventListener("storage", syncFromAnotherTab);
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = preferences.theme;
   }, [preferences.theme]);
 
   useEffect(() => {
-    if (!preferences.auto_sync_reports || pathname !== "/pages/reports") return;
-    const timer = window.setInterval(() => router.refresh(), 15 * 60 * 1000);
-    return () => window.clearInterval(timer);
-  }, [preferences.auto_sync_reports, pathname, router]);
+    if (
+      !autoSyncReportsEnabled ||
+      !["/pages/reports", "/pages/dashboard"].some(
+        (route) => pathname === route || pathname.startsWith(`${route}/`),
+      )
+    ) return;
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    const timer = window.setInterval(refreshIfVisible, 15 * 60 * 1000);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [autoSyncReportsEnabled, pathname, router]);
 
   useEffect(() => {
     let active = true;
@@ -189,6 +248,10 @@ export default function UserPreferencesProvider({
         currencyRates,
         currencyRatesUpdatedAt,
         currencyRatesError,
+        desktopStockAlertsEnabled,
+        setDesktopStockAlertsEnabled,
+        auto_sync_reports: autoSyncReportsEnabled,
+        setAutoSyncReportsEnabled,
       }}
     >
       <div

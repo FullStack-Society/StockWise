@@ -4,7 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.security import require_internal_api_key
+from app.core.security import (
+    OrganizationContext,
+    require_internal_api_key,
+    require_organization_membership,
+)
 from app.db import organization_repository as repository
 from app.db.session import get_db
 from app.schemas.organizations import (
@@ -15,8 +19,11 @@ from app.schemas.organizations import (
     InvitationReply,
     InvitationReplyResult,
     MemberRoleChange,
+    OrganizationLeaveNotification,
+    OrganizationLoginNotification,
     OrganizationMember,
     OrganizationNameUpdate,
+    OwnershipTransfer,
     OrganizationSummary,
 )
 
@@ -24,15 +31,96 @@ router = APIRouter(dependencies=[Depends(require_internal_api_key)])
 logger = logging.getLogger(__name__)
 
 
+@router.post("/presence/heartbeat", status_code=status.HTTP_204_NO_CONTENT)
+def heartbeat_presence(
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    try:
+        repository.heartbeat_member_presence(
+            db, context.organization_id, context.email
+        )
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc)
+
+
+@router.post("/member-login", status_code=status.HTTP_204_NO_CONTENT)
+def notify_member_login(
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    try:
+        repository.create_member_login_notifications(
+            db, context.organization_id, context.email, context.role
+        )
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc)
+
+
+@router.get(
+    "/login-notifications",
+    response_model=list[OrganizationLoginNotification],
+)
+def get_login_notifications(
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    try:
+        return repository.list_member_login_notifications(
+            db, context.organization_id, context.email, context.role
+        )
+    except SQLAlchemyError as exc:
+        _raise_database_error(exc)
+
+
+@router.put(
+    "/login-notifications/{notification_id}/read",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def mark_login_notification_read(
+    notification_id: int,
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    if context.role not in {"owner", "manager"}:
+        raise HTTPException(status_code=403, detail="You cannot access this notification.")
+    try:
+        marked = repository.mark_member_login_notification_read(
+            db, context.organization_id, context.email, notification_id
+        )
+        if not marked:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="Notification not found.")
+        db.commit()
+    except HTTPException:
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc)
+
+
 def _raise_database_error(exc: SQLAlchemyError) -> None:
     original = getattr(exc, "orig", None)
     sqlstate = getattr(original, "sqlstate", None)
     if sqlstate == "42501":
-        status_code, detail = status.HTTP_403_FORBIDDEN, "You are not allowed to do that."
+        status_code, detail = (
+            status.HTTP_403_FORBIDDEN,
+            "You are not allowed to do that.",
+        )
     elif sqlstate == "P0002":
-        status_code, detail = status.HTTP_404_NOT_FOUND, "The account or invitation was not found."
+        status_code, detail = (
+            status.HTTP_404_NOT_FOUND,
+            "The account or invitation was not found.",
+        )
     elif sqlstate == "23505":
-        status_code, detail = status.HTTP_409_CONFLICT, "This invitation or membership already exists."
+        status_code, detail = (
+            status.HTTP_409_CONFLICT,
+            "This invitation or membership already exists.",
+        )
     elif sqlstate == "22023":
         status_code, detail = status.HTTP_422_UNPROCESSABLE_ENTITY, "The request is invalid."
     else:
@@ -43,7 +131,10 @@ def _raise_database_error(exc: SQLAlchemyError) -> None:
             getattr(diagnostics, "constraint_name", None) or "unknown",
             type(original).__name__ if original is not None else type(exc).__name__,
         )
-        status_code, detail = status.HTTP_500_INTERNAL_SERVER_ERROR, "Unable to complete the organization request."
+        status_code, detail = (
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Unable to complete the organization request.",
+        )
     raise HTTPException(status_code=status_code, detail=detail) from exc
 
 
@@ -73,6 +164,72 @@ def get_my_organizations(
         _raise_database_error(exc)
 
 
+@router.get(
+    "/notifications",
+    response_model=list[OrganizationLeaveNotification],
+)
+def get_my_notifications(
+    email: str = Query(min_length=3),
+    db: Session = Depends(get_db),
+):
+    try:
+        return repository.get_leave_notifications(db, email.strip().lower())
+    except SQLAlchemyError as exc:
+        _raise_database_error(exc)
+
+
+@router.put(
+    "/notifications/{notification_id}/read",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def mark_notification_read(
+    notification_id: int,
+    email: str = Query(min_length=3),
+    db: Session = Depends(get_db),
+):
+    try:
+        marked = repository.mark_leave_notification_read(
+            db, notification_id, email.strip().lower()
+        )
+        if not marked:
+            db.rollback()
+            raise HTTPException(
+                status_code=404, detail="Notification was not found."
+            )
+        db.commit()
+    except HTTPException:
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc)
+
+
+@router.delete(
+    "/notifications/{notification_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_notification(
+    notification_id: int,
+    email: str = Query(min_length=3),
+    db: Session = Depends(get_db),
+):
+    try:
+        deleted = repository.delete_leave_notification(
+            db, notification_id, email.strip().lower()
+        )
+        if not deleted:
+            db.rollback()
+            raise HTTPException(
+                status_code=404, detail="Notification was not found."
+            )
+        db.commit()
+    except HTTPException:
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc)
+
+
 @router.put("/{organization_id}", response_model=OrganizationSummary)
 def update_organization_name(
     organization_id: int,
@@ -93,6 +250,54 @@ def update_organization_name(
             raise HTTPException(status_code=404, detail="Organization not found.")
         db.commit()
         return row
+    except HTTPException:
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc)
+
+
+@router.post(
+    "/{organization_id}/transfer-ownership",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def transfer_organization_ownership(
+    organization_id: int,
+    request: OwnershipTransfer,
+    db: Session = Depends(get_db),
+):
+    try:
+        transferred = repository.transfer_ownership(
+            db,
+            organization_id,
+            str(request.actor_email),
+            str(request.target_email),
+        )
+        if not transferred:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="Organization member not found.")
+        db.commit()
+    except HTTPException:
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        _raise_database_error(exc)
+
+
+@router.delete("/{organization_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_organization(
+    organization_id: int,
+    actor_email: str = Query(min_length=3),
+    db: Session = Depends(get_db),
+):
+    try:
+        deleted = repository.delete_organization(
+            db, organization_id, actor_email.strip().lower()
+        )
+        if not deleted:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="Organization not found.")
+        db.commit()
     except HTTPException:
         raise
     except SQLAlchemyError as exc:

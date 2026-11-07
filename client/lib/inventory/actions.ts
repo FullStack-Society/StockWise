@@ -5,14 +5,18 @@ import { unstable_rethrow } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import {
   adjustProductStock,
+  createCategory,
   createInventoryLocation,
   createProduct,
+  deleteCategory,
   deleteProduct,
+  listStockAlerts,
   recordProductStocktake,
   transferProductStock,
   updateProduct,
 } from "@/lib/api/inventory";
 import { requireOrganizationSession } from "@/lib/auth/session";
+import { getOrganizationPageContext } from "@/lib/organization/page-context";
 import type { InventoryImportRow, ProductInput } from "./types";
 import { ROUTES } from "@/lib/routes";
 import { parseProductForm } from "./validation";
@@ -30,6 +34,24 @@ export type InventoryImportResult = {
   imported: number;
   failures: Array<{ row: number; error: string }>;
 };
+
+export async function getStockAlertSnapshot() {
+  const session = await requireOrganizationSession();
+  const products = await listStockAlerts();
+  return {
+    organizationId: session.organizationId!,
+    products: products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      quantity: product.quantity,
+      reorderPoint: product.reorderPoint,
+      locationId: product.locationId,
+      locationName: product.locationName,
+      status: product.status,
+    })),
+  };
+}
 
 function failure(error: unknown): ActionResult {
   if (error instanceof ApiError) {
@@ -183,6 +205,9 @@ export async function importProductsAction(
       typeof value.price !== "number" ||
       !Number.isFinite(value.price) ||
       value.price < 0 ||
+      typeof value.unitCost !== "number" ||
+      !Number.isFinite(value.unitCost) ||
+      value.unitCost < 0 ||
       !Number.isInteger(value.quantity) ||
       value.quantity < 0 ||
       value.quantity > maxInt ||
@@ -362,8 +387,11 @@ export async function transferProductStockAction(
 export async function createInventoryLocationAction(
   locationName: string,
 ): Promise<ActionResult> {
-  const session = await requireOrganizationSession();
-  if (!["owner", "manager"].includes(session.role.toLowerCase())) {
+  const { organization } = await getOrganizationPageContext();
+  if (!organization) {
+    return { ok: false, error: "Choose an organization first." };
+  }
+  if (organization.role !== "owner" && organization.role !== "manager") {
     return { ok: false, error: "Only owners and managers can add locations." };
   }
   const name = locationName.trim();
@@ -376,6 +404,57 @@ export async function createInventoryLocationAction(
   try {
     await createInventoryLocation(name);
     revalidatePath(ROUTES.inventory);
+    return { ok: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return failure(error);
+  }
+}
+
+export async function createInventoryCategoryAction(
+  categoryName: string,
+): Promise<ActionResult> {
+  const { organization } = await getOrganizationPageContext();
+  if (!organization) {
+    return { ok: false, error: "Choose an organization first." };
+  }
+  const name = categoryName.trim();
+  if (!name || name.length > 100) {
+    return {
+      ok: false,
+      error: "Enter a category name between 1 and 100 characters.",
+    };
+  }
+  try {
+    await createCategory(name);
+    revalidatePath(ROUTES.inventory);
+    revalidatePath(ROUTES.dashboard);
+    revalidatePath(ROUTES.reports);
+    return { ok: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return failure(error);
+  }
+}
+
+export async function deleteInventoryCategoryAction(
+  categoryId: number,
+): Promise<ActionResult> {
+  const { organization } = await getOrganizationPageContext();
+  if (!organization) {
+    return { ok: false, error: "Choose an organization first." };
+  }
+  if (organization.role !== "owner" && organization.role !== "manager") {
+    return { ok: false, error: "Only owners and managers can manage categories." };
+  }
+  if (!Number.isInteger(categoryId) || categoryId <= 0) {
+    return { ok: false, error: "Choose a valid category." };
+  }
+  try {
+    await deleteCategory(categoryId);
+    revalidatePath(ROUTES.inventory);
+    revalidatePath(ROUTES.dashboard);
+    revalidatePath(ROUTES.reports);
     return { ok: true };
   } catch (error) {
     unstable_rethrow(error);

@@ -11,6 +11,11 @@ import type { Product } from "@/lib/inventory/types";
 export function useInventorySelection() {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [deleteConfirmation, setDeleteConfirmation] = useState<
+    | { type: "single"; product: Product }
+    | { type: "selected"; ids: number[] }
+    | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -35,17 +40,14 @@ export function useInventorySelection() {
     });
   }
 
-  function deleteSelected() {
+  function requestDeleteSelected() {
     const ids = [...selected];
     if (ids.length === 0) return;
-    if (
-      !window.confirm(
-        `Mark ${ids.length} selected ${ids.length === 1 ? "product" : "products"} as deleted? They will be hidden from active inventory.`,
-      )
-    ) {
-      return;
-    }
+    setError(null);
+    setDeleteConfirmation({ type: "selected", ids });
+  }
 
+  function deleteSelected(ids: number[]) {
     setError(null);
     startTransition(async () => {
       let result: Awaited<ReturnType<typeof deleteProductsAction>>;
@@ -53,6 +55,7 @@ export function useInventorySelection() {
         result = await deleteProductsAction(ids);
       } catch {
         setError("Unable to delete the selected products. Please try again.");
+        setDeleteConfirmation(null);
         return;
       }
       setSelected((current) => {
@@ -72,29 +75,35 @@ export function useInventorySelection() {
       }
 
       if (result.deletedIds.length > 0) router.refresh();
+      setDeleteConfirmation(null);
     });
   }
 
-  function deleteProduct(product: Product) {
-    if (
-      !window.confirm(
-        `Mark "${product.name}" as deleted? It will be hidden from active inventory.`,
-      )
-    ) {
+  function requestDeleteProduct(product: Product) {
+    setError(null);
+    setDeleteConfirmation({ type: "single", product });
+  }
+
+  function confirmDelete() {
+    if (!deleteConfirmation) return;
+    if (deleteConfirmation.type === "selected") {
+      deleteSelected(deleteConfirmation.ids);
       return;
     }
 
-    setError(null);
+    const product = deleteConfirmation.product;
     startTransition(async () => {
       let result: Awaited<ReturnType<typeof deleteProductAction>>;
       try {
         result = await deleteProductAction(product.id);
       } catch {
         setError("Unable to delete this product. Please try again.");
+        setDeleteConfirmation(null);
         return;
       }
       if (!result.ok) {
         setError(result.error);
+        setDeleteConfirmation(null);
         return;
       }
       setSelected((current) => {
@@ -102,17 +111,22 @@ export function useInventorySelection() {
         next.delete(product.id);
         return next;
       });
+      setDeleteConfirmation(null);
+      router.refresh();
     });
   }
 
   return {
     selected,
+    deleteConfirmation,
     error,
     isPending,
     clearError: () => setError(null),
+    cancelDelete: () => setDeleteConfirmation(null),
     toggleOne,
     toggleAll,
-    deleteSelected,
-    deleteProduct,
+    requestDeleteSelected,
+    requestDeleteProduct,
+    confirmDelete,
   };
 }

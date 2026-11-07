@@ -6,6 +6,22 @@
   backdrop-filter: blur(12px);
 }
 
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+.ownerActions {
+  display: grid;
+  gap: 14px;
+}
+
+.deleteCard {
+  border-color: var(--color-danger);
+  display: grid;
+  gap: 14px;
+}
+
 .cardHead {
   display: flex;
   align-items: flex-start;
@@ -48,6 +64,28 @@
 }
 
 .saveBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  justify-self: start;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.deleteBtn:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }

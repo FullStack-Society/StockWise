@@ -39,7 +39,7 @@ export default function RecentInventory({
         </Link>
       </div>
 
-      <div className={styles.tableWrap}>
+      <div className={`${styles.tableWrap} mobileTableScroll`}>
         <table className={styles.table}>
           <thead>
             <tr>
@@ -55,7 +55,7 @@ export default function RecentInventory({
               <tr key={product.id}>
                 <td className={styles.itemName}>
                   <Link
-                    href={`${ROUTES.inventory}?search=${encodeURIComponent(product.sku)}`}
+                    href={`${ROUTES.inventory}?location=${product.locationId}&search=${encodeURIComponent(product.sku)}`}
                     className={styles.productLink}
                   >
                     {product.name}

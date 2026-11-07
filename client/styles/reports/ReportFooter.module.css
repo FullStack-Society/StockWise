@@ -1,29 +1,29 @@
 .footerGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 14px;
 }
 .footerCard {
-  background: var(--color-ink);
+  background: var(--color-panel, var(--color-header));
   border: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 20px;
+  padding: 16px 18px;
 }
 .footerIcon {
   color: var(--color-text-muted);
   flex: none;
 }
 .footerLabel {
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
 .footerValue {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--color-text);
 }

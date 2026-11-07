@@ -61,7 +61,7 @@ const SEARCH_ITEMS: SearchItem[] = [
     id: "reports",
     label: "Reports",
     detail: "Inventory reports and trends",
-    keywords: "analytics charts movement export sales",
+    keywords: "analytics charts movement export",
     href: ROUTES.reports,
     icon: BarChart3,
   },
@@ -138,7 +138,7 @@ const SEARCH_ITEMS: SearchItem[] = [
     label: "Inventory defaults",
     detail: "Stock thresholds and inventory display behavior",
     keywords:
-      "settings preferences inventory defaults low stock critical threshold reorder unit measure pieces warehouse auto sync reports prioritize",
+      "settings preferences inventory defaults low stock critical threshold reorder auto sync reports prioritize",
     href: `${ROUTES.settings}?section=preferences#inventory-defaults-title`,
     icon: Package,
   },

@@ -1,23 +1,30 @@
 import { redirect } from "next/navigation";
-import BrandPanel from "@/components/features/login/BrandPanel";
-import LoginForm from "@/components/features/login/LoginForm";
-import styles from "@/styles/login/LoginPage.module.css";
+import AuthPage from "@/components/features/login/AuthPage";
 import { getSession } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/routes";
 
 export const instant = false;
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    loggedOut?: string;
+    googleError?: string;
+    twoFactor?: string;
+  }>;
+}) {
   const session = await getSession();
   if (session)
     redirect(session.organizationId ? ROUTES.dashboard : ROUTES.users);
+  const params = await searchParams;
 
   return (
-    <main className={styles.page}>
-      <BrandPanel variant="login" />
-      <section className={styles.formPanel}>
-        <LoginForm />
-      </section>
-    </main>
+    <AuthPage
+      key={params.loggedOut === "1" ? "after-logout" : "login-entry"}
+      initialMode="login"
+      googleError={params.googleError === "1"}
+      twoFactorRequired={params.twoFactor === "1"}
+    />
   );
 }

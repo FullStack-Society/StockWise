@@ -4,26 +4,46 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import type { Product } from "@/lib/inventory/types";
-import { createPurchaseOrderAction } from "@/lib/orders/actions";
+import type { PurchaseOrder } from "@/lib/api/orders";
+import { formatPreferredCurrency } from "@/lib/utils/format";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
+import {
+  createPurchaseOrderAction,
+  updatePurchaseOrderAction,
+} from "@/lib/orders/actions";
 import styles from "@/styles/orders/CreateOrderDialog.module.css";
 
-type DraftItem = { productId: string; quantity: string };
+type DraftItem = { productId: string; quantity: string; unitPrice: string };
 
 export default function CreateOrderDialog({
   products,
+  order,
   onClose,
 }: {
   products: Product[];
+  order?: PurchaseOrder;
   onClose: () => void;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [items, setItems] = useState<DraftItem[]>([
-    { productId: "", quantity: "" },
-  ]);
-  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState<DraftItem[]>(
+    order
+      ? order.items.map((item) => ({
+          productId: String(item.productId),
+          quantity: String(item.quantityOrdered),
+          unitPrice: String(item.unitPrice),
+        }))
+      : [{ productId: "", quantity: "", unitPrice: "" }],
+  );
+  const [notes, setNotes] = useState(order?.notes ?? "");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const { currency, currencyRates } = useUserPreferences();
+  const orderTotal = items.reduce(
+    (total, item) =>
+      total + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
+    0,
+  );
 
   useEffect(() => {
     if (dialogRef.current && !dialogRef.current.open)
@@ -44,9 +64,12 @@ export default function CreateOrderDialog({
     const payload = items.map((item) => ({
       productId: Number(item.productId),
       quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
     }));
     startTransition(async () => {
-      const result = await createPurchaseOrderAction(payload, notes);
+      const result = order
+        ? await updatePurchaseOrderAction(order.id, payload, notes)
+        : await createPurchaseOrderAction(payload, notes);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -60,26 +83,21 @@ export default function CreateOrderDialog({
     <dialog
       ref={dialogRef}
       className={styles.dialog}
-      aria-labelledby="create-order-title"
+      aria-labelledby="purchase-order-title"
       onClose={onClose}
-      onClick={(event) =>
-        event.target === event.currentTarget && dialogRef.current?.close()
-      }
     >
       <form className={styles.body} onSubmit={submit}>
         <header className={styles.header}>
           <div>
-            <h2 id="create-order-title">Create purchase order</h2>
-            <p>Add the products and quantities you are ordering.</p>
+            <h2 id="purchase-order-title">
+              {order ? `Edit order #${order.orderNumber}` : "Create purchase order"}
+            </h2>
+            <p>
+              {order
+                ? "Update products, quantities, or notes before receiving."
+                : "Add the products and quantities you are ordering."}
+            </p>
           </div>
-          <button
-            type="button"
-            className={styles.close}
-            aria-label="Close"
-            onClick={() => dialogRef.current?.close()}
-          >
-            <X size={16} />
-          </button>
         </header>
 
         <div className={styles.lines}>
@@ -98,7 +116,14 @@ export default function CreateOrderDialog({
                     required
                     value={item.productId}
                     onChange={(event) =>
-                      updateItem(index, { productId: event.target.value })
+                      updateItem(index, {
+                        productId: event.target.value,
+                        unitPrice:
+                          products.find(
+                            (product) =>
+                              String(product.id) === event.target.value,
+                          )?.unitCost.toFixed(2) ?? "",
+                      })
                     }
                   >
                     <option value="">Choose a product</option>
@@ -116,7 +141,7 @@ export default function CreateOrderDialog({
                   </select>
                 </label>
                 <label>
-                  <span>Quantity ordered</span>
+                  <span>Quantity</span>
                   <input
                     required
                     type="number"
@@ -129,6 +154,28 @@ export default function CreateOrderDialog({
                     }
                   />
                 </label>
+                <label>
+                  <span>Unit value (USD)</span>
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    max="999999999999.99"
+                    step="0.01"
+                    value={item.unitPrice}
+                    onChange={(event) =>
+                      updateItem(index, { unitPrice: event.target.value })
+                    }
+                  />
+                </label>
+                <span className={styles.lineTotal}>
+                  {formatPreferredCurrency(
+                    (Number(item.quantity) || 0) *
+                      (Number(item.unitPrice) || 0),
+                    currency,
+                    currencyRates,
+                  )}
+                </span>
                 {items.length > 1 && (
                   <button
                     type="button"
@@ -153,13 +200,20 @@ export default function CreateOrderDialog({
             onClick={() =>
               setItems((current) => [
                 ...current,
-                { productId: "", quantity: "" },
+                { productId: "", quantity: "", unitPrice: "" },
               ])
             }
           >
             <Plus size={14} />
             Add another product
           </button>
+        </div>
+
+        <div className={styles.orderTotal}>
+          <span>Order value (totals converted from USD)</span>
+          <strong>
+            {formatPreferredCurrency(orderTotal, currency, currencyRates)}
+          </strong>
         </div>
 
         <label className={styles.notes}>
@@ -187,7 +241,13 @@ export default function CreateOrderDialog({
             Cancel
           </button>
           <button type="submit" className={styles.primary} disabled={isPending}>
-            {isPending ? "Creating…" : "Create order"}
+            {isPending
+              ? order
+                ? "Saving…"
+                : "Creating…"
+              : order
+                ? "Save changes"
+                : "Create order"}
           </button>
         </footer>
       </form>

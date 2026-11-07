@@ -61,7 +61,7 @@ export default function RolePermissions({
         ))}
       </div>
 
-      <div className={styles.tableWrap}>
+      <div className={`${styles.tableWrap} mobileTableScroll`}>
         <table className={styles.table}>
           <thead>
             <tr>

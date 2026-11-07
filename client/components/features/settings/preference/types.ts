@@ -33,15 +33,6 @@ export const TIMEZONES = [
   ["UTC", "UTC"],
 ] as const;
 
-export const NOTIFICATION_EVENTS = [
-  "Low stock alerts",
-  "New orders",
-  "Weekly reports",
-  "Team activity",
-  "Organization invitations",
-  "System updates",
-] as const;
-
 export const THEMES: {
   label: string;
   theme: EditablePreferences["theme"];

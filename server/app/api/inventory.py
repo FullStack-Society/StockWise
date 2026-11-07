@@ -10,6 +10,7 @@ from app.core.security import (
 from app.db.session import get_db
 from app.schemas.inventory import (
     CategoryResponse,
+    InventoryCategoryCreate,
     InventoryCreate,
     InventoryLocationCreate,
     InventoryLocationResponse,
@@ -169,6 +170,35 @@ def get_inventory(
         raise handle_service_error(exc) from exc
 
 
+@router.get("/alerts", response_model=list[InventoryResponse])
+def get_stock_alerts(
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    """Return only products that have crossed the low or critical stock level."""
+    try:
+        locations = service.get_inventory_locations(db, context.organization_id)
+        alerts: list[dict] = []
+        for location in locations:
+            location_id = int(location["location_id"])
+            for stock_status in ("Low stock", "Critical"):
+                alerts.extend(
+                    service.get_inventory_list(
+                        db=db,
+                        organization_id=context.organization_id,
+                        location_id=location_id,
+                        stock_status=stock_status,
+                    )
+                )
+        return alerts
+    except (
+        service.InventoryNotFoundError,
+        service.InventoryConflictError,
+        service.InventoryOperationError,
+    ) as exc:
+        raise handle_service_error(exc) from exc
+
+
 @router.get(
     "/categories/",
     response_model=list[CategoryResponse],
@@ -187,6 +217,56 @@ def get_categories(
         service.InventoryOperationError,
     ) as exc:
         raise handle_service_error(exc) from exc
+
+
+@router.post(
+    "/categories/",
+    response_model=CategoryResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_category(
+    request: InventoryCategoryCreate,
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    if context.role.lower() not in {"owner", "manager"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only owners and managers can manage inventory categories.",
+        )
+    try:
+        return service.create_category(
+            db, context.organization_id, request.category_name
+        )
+    except (
+        service.InventoryConflictError,
+        service.InventoryOperationError,
+    ) as exc:
+        raise handle_service_error(exc) from exc
+
+
+@router.delete(
+    "/categories/{category_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_category(
+    category_id: int,
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    if context.role.lower() not in {"owner", "manager"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only owners and managers can manage inventory categories.",
+        )
+    try:
+        service.delete_category(db, context.organization_id, category_id)
+    except (
+        service.InventoryNotFoundError,
+        service.InventoryOperationError,
+    ) as exc:
+        raise handle_service_error(exc) from exc
+    return None
 
 
 @router.get(
@@ -269,7 +349,10 @@ def update_inventory_item(
             db=db,
             organization_id=context.organization_id,
             product_id=product_id,
-            product_data=product.model_dump(exclude={"location_id"}),
+            product_data=product.model_dump(
+                exclude={"location_id"}, exclude_unset=True
+            ),
+            supplied_fields=product.model_fields_set,
             location_id=selected_location,
         )
     except (

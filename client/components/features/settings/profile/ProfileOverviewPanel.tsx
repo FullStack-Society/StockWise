@@ -1,47 +1,115 @@
-import { Bell, RefreshCw, ShieldCheck } from "lucide-react";
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Bell, RefreshCw } from "lucide-react";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
+import PreferenceToggle from "../preference/PreferenceToggle";
+import { savePreferences } from "@/lib/settings/actions";
 import styles from "@/styles/settings/profile/ProfileOverviewPanel.module.css";
 
-const ITEMS = [
-  {
-    title: "Two-factor authentication",
-    description: "An additional layer of security for your account.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Desktop notifications",
-    description: "Receive real-time alerts for low stock and new orders.",
-    icon: Bell,
-  },
-  {
-    title: "Auto-sync reports",
-    description: "Automatically refresh analytics every 15 minutes.",
-    icon: RefreshCw,
-  },
-];
-
 export default function ProfileOverviewPanel() {
+  const router = useRouter();
+  const preferences = useUserPreferences();
+  const [notificationPermission, setNotificationPermission] =
+    useState<NotificationPermission | "unsupported">("default");
+  const [message, setMessage] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    // Read the browser permission after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if ("Notification" in window) setNotificationPermission(Notification.permission);
+    else setNotificationPermission("unsupported");
+  }, []);
+
+  async function toggleDesktopNotifications() {
+    setMessage("");
+    if (preferences.desktopStockAlertsEnabled) {
+      preferences.setDesktopStockAlertsEnabled(false);
+      return;
+    }
+    if (!("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      setMessage("This browser does not support desktop notifications.");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+    preferences.setDesktopStockAlertsEnabled(permission === "granted");
+    if (permission !== "granted") {
+      setMessage("Allow notifications in your browser to turn on stock alerts.");
+    }
+  }
+
+  function toggleAutoSync() {
+    if (isPending) return;
+    setMessage("");
+    const nextEnabled = !preferences.auto_sync_reports;
+    startTransition(async () => {
+      const result = await savePreferences({
+        invitation_notifications: preferences.invitation_notifications,
+        theme: preferences.theme,
+        date_format: preferences.date_format,
+        currency: preferences.currency,
+        density: preferences.density,
+        auto_sync_reports: nextEnabled,
+        prioritize_low_stock: preferences.prioritize_low_stock,
+      });
+      if (!result.ok) {
+        setMessage(result.error);
+        return;
+      }
+      preferences.setAutoSyncReportsEnabled(nextEnabled);
+      setMessage("Auto-sync preference saved.");
+      router.refresh();
+    });
+  }
+
   return (
     <section className={styles.panel} aria-labelledby="profile-overview-title">
       <h2 id="profile-overview-title" className={styles.title}>
         Preferences &amp; Security
       </h2>
       <ul className={styles.list}>
-        {ITEMS.map(({ title, description, icon: Icon }) => (
-          <li key={title} className={styles.row}>
-            <span className={styles.icon} aria-hidden>
-              <Icon size={14} />
-            </span>
-            <div className={styles.copy}>
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </div>
-            <span className={styles.unavailable}>Unavailable</span>
-          </li>
-        ))}
+        <li className={styles.row}>
+          <span className={styles.icon} aria-hidden>
+            <Bell size={14} />
+          </span>
+          <div className={styles.copy}>
+            <h3>Desktop stock notifications</h3>
+            <p>
+              {notificationPermission === "unsupported"
+                ? "This browser does not support desktop notifications."
+                : preferences.desktopStockAlertsEnabled && notificationPermission === "granted"
+                  ? "Low and critical stock alerts are enabled."
+                  : "Get alerts for low and critical stock changes."}
+            </p>
+          </div>
+          <PreferenceToggle
+            label="Desktop low and critical stock notifications"
+            enabled={preferences.desktopStockAlertsEnabled && notificationPermission === "granted"}
+            disabled={notificationPermission === "unsupported" || notificationPermission === "denied"}
+            onChange={() => void toggleDesktopNotifications()}
+          />
+        </li>
+        <li className={styles.row}>
+          <span className={styles.icon} aria-hidden>
+            <RefreshCw size={14} />
+          </span>
+          <div className={styles.copy}>
+            <h3>Auto-sync Dashboard and Reports</h3>
+            <p>Refresh both pages every 15 minutes while open.</p>
+          </div>
+          <PreferenceToggle
+            label="Auto-sync Dashboard and Reports every 15 minutes"
+            enabled={preferences.auto_sync_reports}
+            disabled={isPending}
+            onChange={toggleAutoSync}
+          />
+        </li>
       </ul>
-      <p className={styles.note}>
-        These preview controls aren’t available in the current account service.
-      </p>
+      {message && <p className={styles.note} role="status">{message}</p>}
     </section>
   );
 }

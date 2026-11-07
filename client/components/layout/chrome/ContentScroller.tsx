@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import styles from "@/styles/layout/AppShell.module.css";
 
 export default function ContentScroller({
@@ -9,6 +10,13 @@ export default function ContentScroller({
   children: React.ReactNode;
 }) {
   const [isScrolling, setIsScrolling] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const settingsSection =
+    pathname === "/pages/settings" ? searchParams.toString() : "";
+  const animationKey = settingsSection
+    ? `${pathname}?${settingsSection}`
+    : pathname;
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollContainer = useRef<HTMLElement>(null);
 
@@ -34,7 +42,9 @@ export default function ContentScroller({
       ref={scrollContainer}
       className={`${styles.content} ${isScrolling ? styles.scrolling : ""}`}
     >
-      {children}
+      <div className={styles.pageEntrance} key={animationKey}>
+        {children}
+      </div>
     </main>
   );
 }

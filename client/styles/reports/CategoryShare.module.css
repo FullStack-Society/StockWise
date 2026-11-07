@@ -2,23 +2,26 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 16px;
+  min-height: 100%;
+  padding: 20px;
   background: none;
-  box-shadow: 0 8px 24px var(--color-shadow);
   border: 1px solid var(--color-border);
 }
 .panelHead {
   margin-bottom: 14px;
+  background: none;
 }
 .panelTitle {
   margin: 0;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 650;
 }
 .panelSub {
   margin: 6px 0 0;
   color: var(--color-text-muted);
-  font-size: 10px;
+  font-size: 12px;
+  line-height: 1.45;
 }
 .donut {
   width: 100%;
@@ -48,10 +51,22 @@
   flex-direction: column;
   gap: 10px;
 }
+.categoryListScrollable {
+  max-height: 132px;
+  gap: 6px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.categoryListScrollable::-webkit-scrollbar {
+  display: none;
+}
 .categoryRow {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 20px;
   font-size: 12px;
 }
 .dot {
@@ -61,6 +76,10 @@
 }
 .categoryName {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--color-text-muted);
 }
 .categoryPct {
@@ -80,4 +99,10 @@
   margin: 0;
   color: var(--color-text-muted);
   font-size: 12px;
+}
+.emptyCategoryValue {
+  margin: -4px 0 14px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  text-align: center;
 }

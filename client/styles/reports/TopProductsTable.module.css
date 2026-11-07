@@ -1,7 +1,7 @@
 .panelBox {
   background: none;
-  box-shadow: 0 8px 24px var(--color-shadow);
-  padding: 16px;
+  border: 1px solid var(--color-border);
+  padding: 20px;
 }
 .panelHead {
   display: flex;
@@ -12,7 +12,7 @@
 }
 .panelTitle {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text);
 }
@@ -41,7 +41,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.04);
+  background: none;
 }
 .table td {
   padding: 9px 12px;
@@ -82,4 +82,10 @@
   padding: 28px 16px !important;
   color: var(--color-text-muted);
   text-align: center;
+}
+
+@media (max-width: 700px) {
+  .table {
+    min-width: 650px;
+  }
 }

@@ -5,6 +5,14 @@
   color: var(--color-text);
 }
 
+.deleteError {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  font-size: 12px;
+}
+
 .dateFilters {
   display: flex;
   align-items: flex-end;

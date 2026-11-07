@@ -20,8 +20,11 @@
 
 /* ===== modal (native <dialog>) ===== */
 .modal {
+  box-sizing: border-box;
   width: min(560px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  margin: auto;
   padding: 0;
   border: 1px solid var(--color-border);
   background: var(--color-modal);
@@ -29,6 +32,7 @@
   color-scheme: inherit;
   box-shadow: 0 24px 70px var(--color-shadow);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .modal::backdrop {
   background: var(--color-overlay);
@@ -54,17 +58,13 @@
   font-size: 12px;
   color: var(--color-text-muted);
 }
-
-.closeButton {
-  display: flex;
-  padding: 6px;
-  border: 1px solid var(--color-border);
-  background: none;
+.modalError {
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-soft);
   color: var(--color-text);
-  cursor: pointer;
-}
-.closeButton:hover {
-  background: var(--color-hover);
+  font-size: 12px;
 }
 
 .form {
@@ -160,8 +160,41 @@
   margin-top: 4px;
 }
 
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+.confirmDeleteButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.confirmDeleteButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.confirmDeleteButton:focus-visible {
+  outline: 2px solid var(--color-danger);
+  outline-offset: 2px;
+}
+
 @media (max-width: 560px) {
   .row2 {
     grid-template-columns: 1fr;
+  }
+
+  .confirmActions {
+    flex-direction: column-reverse;
   }
 }

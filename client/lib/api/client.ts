@@ -3,8 +3,8 @@ import { createHmac } from "node:crypto";
 import { getSession } from "@/lib/auth/session";
 
 const BASE_URL = (
-  process.env.API_URL ??
   process.env.BACKEND_API_URL ??
+  process.env.API_URL ??
   "http://127.0.0.1:8000"
 ).replace(/\/+$/, "");
 const INTERNAL_API_KEY = process.env.BACKEND_API_KEY;
@@ -95,7 +95,13 @@ export async function apiRequest<T>(
       signal: AbortSignal.timeout(10_000),
     });
   } catch (error) {
+    console.error("[API CONNECTION ERROR]", {
+      endpoint: url.pathname,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     if (error instanceof ApiError) throw error;
+
     throw new ApiError(
       503,
       "Can't reach the API server. Check that it is running.",

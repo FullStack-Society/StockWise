@@ -1,6 +1,6 @@
 import { UserPlus } from "lucide-react";
 import { assignableRoles, type Role } from "@/lib/auth/roles";
-import LeaveOrganizationButton from "./LeaveOrganizationButton";
+import LeaveOrganizationButton from "./organizations/LeaveOrganizationButton";
 import styles from "@/styles/users/UsersHeader.module.css";
 
 type Props = {

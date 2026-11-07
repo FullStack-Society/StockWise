@@ -25,7 +25,9 @@ export default function BrandPanel({
   const features = isRegister ? REGISTER_FEATURES : LOGIN_FEATURES;
 
   return (
-    <section className={styles.brand}>
+    <section
+      className={`${styles.brand} ${isRegister ? styles.registerBrand : ""}`}
+    >
       <div className={styles.brandInner}>
         <Logo />
 

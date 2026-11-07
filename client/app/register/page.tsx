@@ -1,23 +1,24 @@
 import { redirect } from "next/navigation";
-import BrandPanel from "@/components/features/login/BrandPanel";
-import RegisterForm from "@/components/features/login/RegisterForm";
-import styles from "@/styles/login/LoginPage.module.css";
+import AuthPage from "@/components/features/login/AuthPage";
 import { getSession } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/routes";
 
 export const instant = false;
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ googleError?: string }>;
+}) {
   const session = await getSession();
   if (session)
     redirect(session.organizationId ? ROUTES.dashboard : ROUTES.users);
+  const params = await searchParams;
 
   return (
-    <main className={styles.page}>
-      <BrandPanel variant="register" />
-      <section className={styles.formPanel}>
-        <RegisterForm />
-      </section>
-    </main>
+    <AuthPage
+      initialMode="register"
+      googleError={params.googleError === "1"}
+    />
   );
 }

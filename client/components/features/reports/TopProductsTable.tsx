@@ -5,7 +5,7 @@ import type { InventoryReportData } from "@/lib/api/reports";
 import { formatPreferredCurrency } from "@/lib/utils/format";
 import { ROUTES } from "@/lib/routes";
 import styles from "@/styles/reports/TopProductsTable.module.css";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 
 export default function TopProductsTable({
   report,
@@ -26,7 +26,7 @@ export default function TopProductsTable({
         </Link>
       </div>
 
-      <div className={styles.tableWrap}>
+      <div className={`${styles.tableWrap} mobileTableScroll`}>
         <table className={styles.table}>
           <thead>
             <tr>

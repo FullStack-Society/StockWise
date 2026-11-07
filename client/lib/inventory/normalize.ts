@@ -47,6 +47,8 @@ export function toProduct(raw: unknown): Product {
     categoryName: toText(raw.category_name),
     description: toText(raw.description),
     price: toNumber(raw.price), // the API may send "100.00" (string) or 100 (number)
+    unitCost: toNumber(raw.unit_cost),
+    variant: toText(raw.variant),
     quantity,
     reorderPoint: toNumber(raw.reorder_point, 50),
     locationId: toNumber(raw.location_id),

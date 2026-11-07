@@ -57,6 +57,11 @@
 }
 .tableFooter {
   margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   font-size: 11px;
   color: var(--color-text-muted);
 }
@@ -102,6 +107,7 @@
   font-size: 11px;
 }
 .statusActive,
+.statusOffline,
 .statusInvited {
   display: inline-flex;
   align-items: center;
@@ -109,6 +115,7 @@
   font-size: 11px;
 }
 .statusActive::before,
+.statusOffline::before,
 .statusInvited::before {
   content: "";
   width: 6px;
@@ -119,6 +126,15 @@
   color: var(--color-text-muted);
 }
 .statusInvited::before {
+  background: var(--color-text-muted);
+}
+.statusOffline {
+  color: var(--color-text-muted);
+}
+.statusOffline::before {
+  background: #89919b;
+}
+.statusActive::before {
   background: var(--color-accent);
 }
 .iconBtn {
@@ -143,4 +159,10 @@
   height: 28px;
   color: var(--color-text-muted);
   opacity: 0.5;
+}
+
+@media (max-width: 700px) {
+  .table {
+    min-width: 680px;
+  }
 }

@@ -171,3 +171,10 @@
     gap: 8px;
   }
 }
+
+@media (max-width: 480px) {
+  .container {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}

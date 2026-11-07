@@ -3,21 +3,23 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { AccountSettings } from "@/lib/api/settings";
-import { savePreferences, saveProfileSettings } from "@/lib/settings/actions";
+import {
+  saveInventoryDefaults,
+  savePreferences,
+  saveProfileSettings,
+} from "@/lib/settings/actions";
 import AppearanceSection from "./AppearanceSection";
 import InventoryDefaultsSection from "./InventoryDefaultsSection";
 import NotificationsSection from "./NotificationsSection";
-import RegionalSection from "./RegionalSection";
-import {
-  DEFAULT_PREFERENCES,
-  type EditablePreferences,
-} from "./types";
+import { TIMEZONES, type EditablePreferences } from "./types";
 import styles from "@/styles/settings/preference/PreferencesPanel.module.css";
 
 export default function PreferencesPanel({
   settings,
+  defaultReorderPoint,
 }: {
   settings: AccountSettings;
+  defaultReorderPoint: number;
 }) {
   const router = useRouter();
   const [preferences, setPreferences] = useState<EditablePreferences>({
@@ -30,10 +32,11 @@ export default function PreferencesPanel({
     prioritize_low_stock: settings.prioritize_low_stock,
   });
   const [timezone, setTimezone] = useState(settings.timezone);
+  const [inventoryReorderPoint, setInventoryReorderPoint] = useState(
+    String(defaultReorderPoint),
+  );
   const [preferenceMessage, setPreferenceMessage] = useState("");
-  const [regionalMessage, setRegionalMessage] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [timezonePending, startTimezoneTransition] = useTransition();
 
   function updatePreferences(updates: Partial<EditablePreferences>) {
     setPreferences((current) => ({ ...current, ...updates }));
@@ -56,7 +59,41 @@ export default function PreferencesPanel({
   }
 
   function savePreferencesForm() {
-    savePreferenceValues(preferences);
+    setPreferenceMessage("");
+    if (!inventoryReorderPoint.trim()) {
+      setPreferenceMessage("Enter a default low-stock threshold.");
+      return;
+    }
+    const parsedReorderPoint = Number(inventoryReorderPoint);
+    if (
+      !Number.isInteger(parsedReorderPoint) ||
+      parsedReorderPoint < 0 ||
+      parsedReorderPoint > 2_147_483_647
+    ) {
+      setPreferenceMessage(
+        "Enter a valid non-negative whole number for the low-stock default.",
+      );
+      return;
+    }
+    startTransition(async () => {
+      const [preferenceResult, profileResult, inventoryResult] =
+        await Promise.all([
+          savePreferences(preferences),
+          saveProfileSettings({ name: settings.name, timezone }),
+          saveInventoryDefaults(parsedReorderPoint),
+        ]);
+      const errors = [
+        !preferenceResult.ok ? preferenceResult.error : "",
+        !profileResult.ok ? profileResult.error : "",
+        !inventoryResult.ok ? inventoryResult.error : "",
+      ].filter(Boolean);
+      setPreferenceMessage(
+        errors.length ? errors.join(" ") : "Preferences saved.",
+      );
+      if (preferenceResult.ok || profileResult.ok || inventoryResult.ok) {
+        router.refresh();
+      }
+    });
   }
 
   function toggleInvitations() {
@@ -68,44 +105,6 @@ export default function PreferencesPanel({
     savePreferenceValues(next);
   }
 
-  function saveTimezone() {
-    setRegionalMessage("");
-    startTimezoneTransition(async () => {
-      const result = await saveProfileSettings({
-        name: settings.name,
-        timezone,
-      });
-      setRegionalMessage(result.ok ? "Timezone saved." : result.error);
-      if (result.ok) router.refresh();
-    });
-  }
-
-  function resetPreferences() {
-    setRegionalMessage("");
-    setPreferenceMessage("");
-    startTransition(async () => {
-      const [preferenceResult, timezoneResult] = await Promise.all([
-        savePreferences(DEFAULT_PREFERENCES),
-        saveProfileSettings({
-          name: settings.name,
-          timezone: "Asia/Manila",
-        }),
-      ]);
-      if (preferenceResult.ok) setPreferences(DEFAULT_PREFERENCES);
-      if (timezoneResult.ok) setTimezone("Asia/Manila");
-      if (preferenceResult.ok && timezoneResult.ok) {
-        setRegionalMessage("Preferences reset to defaults.");
-      } else {
-        const errors = [
-          !preferenceResult.ok ? preferenceResult.error : "",
-          !timezoneResult.ok ? timezoneResult.error : "",
-        ].filter(Boolean);
-        setRegionalMessage(errors.join(" "));
-      }
-      if (preferenceResult.ok || timezoneResult.ok) router.refresh();
-    });
-  }
-
   return (
     <div className={styles.stack}>
       <AppearanceSection
@@ -113,6 +112,9 @@ export default function PreferencesPanel({
         onUpdate={updatePreferences}
         onSave={savePreferencesForm}
         pending={isPending}
+        timezone={timezone}
+        timezones={TIMEZONES}
+        onTimezoneChange={setTimezone}
       />
       <NotificationsSection
         preferences={preferences}
@@ -123,17 +125,10 @@ export default function PreferencesPanel({
       <InventoryDefaultsSection
         preferences={preferences}
         pending={isPending}
+        defaultReorderPoint={inventoryReorderPoint}
+        onDefaultReorderPointChange={setInventoryReorderPoint}
         onUpdate={updatePreferences}
         onSave={savePreferencesForm}
-      />
-      <RegionalSection
-        timezone={timezone}
-        message={regionalMessage}
-        pending={timezonePending}
-        resetting={isPending}
-        onTimezoneChange={setTimezone}
-        onSave={saveTimezone}
-        onReset={resetPreferences}
       />
     </div>
   );

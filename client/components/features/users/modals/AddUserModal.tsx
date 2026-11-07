@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import { assignableRoles, ROLE_INFO, type Role } from "@/lib/auth/roles";
 import styles from "@/styles/users/AddUserModal.module.css";
 
@@ -61,7 +60,6 @@ export default function AddUserModal({
   return (
     <div
       className={styles.backdrop}
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <form
         className={styles.modal}
@@ -80,14 +78,6 @@ export default function AddUserModal({
               the invitation in StockWise after registering with this email.
             </p>
           </div>
-          <button
-            type="button"
-            className={styles.iconBtn}
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <X size={14} aria-hidden />
-          </button>
         </div>
 
         <label className={styles.field}>

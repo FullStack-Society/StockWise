@@ -6,6 +6,8 @@ const HEADERS = [
   "Category",
   "Description",
   "Price",
+  "Unit Cost",
+  "Variant",
   "Quantity",
   "Reorder Point",
 ];
@@ -23,6 +25,8 @@ export function exportProductsCsv(products: Product[]): string {
       product.categoryName,
       product.description,
       product.price.toFixed(2),
+      product.unitCost.toFixed(2),
+      product.variant,
       product.quantity,
       product.reorderPoint,
     ]),

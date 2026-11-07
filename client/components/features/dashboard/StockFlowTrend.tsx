@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ROUTES } from "@/lib/routes";
 import type { PurchaseOrder } from "@/lib/api/orders";
 import type { DashboardStockFlow } from "@/lib/api/reports";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
-import { formatDate } from "@/lib/utils/format";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
+import { formatDate, formatDateTime } from "@/lib/utils/format";
 import styles from "@/styles/dashboard/StockFlowTrend.module.css";
 
 function chartCoordinates(values: number[], max: number) {
@@ -31,7 +31,8 @@ export default function StockFlowTrend({
   orders: PurchaseOrder[];
 }) {
   const router = useRouter();
-  const { date_format: dateFormat } = useUserPreferences();
+  const searchParams = useSearchParams();
+  const { date_format: dateFormat, timezone } = useUserPreferences();
   const received = stockFlow.days.map((day) => day.units_received);
   const max = Math.max(1, ...received);
   const points = chartCoordinates(received, max);
@@ -70,7 +71,9 @@ export default function StockFlowTrend({
           <h2 id="stock-flow-title" className={styles.title}>
             Stock Flow Trend
           </h2>
-          <p className={styles.subtitle}>Units received each day</p>
+          <p className={styles.subtitle}>
+            Organization-wide stock received each day · {timezone}
+          </p>
         </div>
         <label className={styles.rangeLabel}>
           <span className={styles.visuallyHidden}>Stock flow date range</span>
@@ -79,7 +82,9 @@ export default function StockFlowTrend({
             onChange={(event) => {
               const nextDays = Number(event.target.value);
               if (nextDays === 7 || nextDays === 14 || nextDays === 30) {
-                router.push(`${ROUTES.dashboard}?days=${nextDays}`);
+                const query = new URLSearchParams(searchParams.toString());
+                query.set("days", String(nextDays));
+                router.push(`${ROUTES.dashboard}?${query.toString()}`);
               }
             }}
           >
@@ -95,7 +100,7 @@ export default function StockFlowTrend({
           <svg
             className={styles.chart}
             viewBox="0 0 500 205"
-            role="img"
+            role="group"
             aria-label={`Units received into inventory each day over the last ${days} days`}
           >
             {[0, 1, 2, 3].map((step) => {
@@ -124,7 +129,15 @@ export default function StockFlowTrend({
             <path d={path} className={styles.trendLine} />
             {points.map(({ x, y }, index) => (
               <g key={stockFlow.days[index].day}>
-                <circle cx={x} cy={y} r="4" className={styles.point} />
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="4"
+                  className={styles.point}
+                  tabIndex={0}
+                  role="img"
+                  aria-label={`${formatDate(stockFlow.days[index].day, dateFormat)}: ${received[index]} units received`}
+                />
                 <title>
                   {`${formatDate(stockFlow.days[index].day, dateFormat)}: ${received[index]} units received`}
                 </title>
@@ -178,7 +191,11 @@ export default function StockFlowTrend({
                   <span>
                     {alert.receipt.quantity.toLocaleString()}{" "}
                     {alert.receipt.quantity === 1 ? "unit" : "units"} added ·{" "}
-                    {formatDate(alert.receipt.received_at, dateFormat)}
+                    {formatDateTime(
+                      alert.receipt.received_at,
+                      dateFormat,
+                      timezone,
+                    )}
                   </span>
                 </div>
                 <span className={styles.receivedTag}>Received</span>
@@ -190,12 +207,16 @@ export default function StockFlowTrend({
                 key={`order-${alert.order.id}-${index}`}
               >
                 <div className={styles.alertText}>
-                  <strong>Purchase order #{alert.order.id}</strong>
+                  <strong>Purchase order #{alert.order.orderNumber}</strong>
                   <span>
                     {alert.order.items.length.toLocaleString()}{" "}
                     {alert.order.items.length === 1 ? "item" : "items"} ·{" "}
                     {orderUnits(alert.order).toLocaleString()} units ordered ·{" "}
-                    {formatDate(alert.order.createdAt, dateFormat)}
+                    {formatDateTime(
+                      alert.order.createdAt,
+                      dateFormat,
+                      timezone,
+                    )}
                   </span>
                 </div>
                 <span className={styles.orderTag}>{alert.order.status}</span>

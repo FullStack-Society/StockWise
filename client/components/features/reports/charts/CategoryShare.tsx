@@ -3,7 +3,7 @@
 import type { InventoryReportData } from "@/lib/api/reports";
 import { formatPreferredCurrency } from "@/lib/utils/format";
 import styles from "@/styles/reports/CategoryShare.module.css";
-import { useUserPreferences } from "@/components/layout/UserPreferencesProvider";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 
 const COLORS = [
   "#e99540",
@@ -16,11 +16,15 @@ const COLORS = [
 
 export default function CategoryShare({
   report,
+  categoryNames,
 }: {
   report: InventoryReportData;
+  categoryNames: string[];
 }) {
   const { currency, currencyRates } = useUserPreferences();
-  const grouped = new Map<string, number>();
+  const grouped = new Map<string, number>(
+    categoryNames.map((categoryName) => [categoryName, 0]),
+  );
   for (const product of report.products) {
     grouped.set(
       product.category,
@@ -35,6 +39,7 @@ export default function CategoryShare({
   const useUnits = raw.reduce((sum, item) => sum + item.value, 0) === 0;
   if (useUnits) {
     grouped.clear();
+    categoryNames.forEach((categoryName) => grouped.set(categoryName, 0));
     for (const product of report.products) {
       grouped.set(
         product.category,
@@ -65,7 +70,7 @@ export default function CategoryShare({
           </p>
         </div>
       </div>
-      {entries.length > 0 && total > 0 ? (
+      {entries.length > 0 ? (
         <>
           <svg
             className={styles.donut}
@@ -74,7 +79,7 @@ export default function CategoryShare({
             aria-label="Inventory distribution by category"
           >
             <circle cx="80" cy="80" r="62" className={styles.donutTrack} />
-            {entries.map((item, index) => {
+            {total > 0 && entries.map((item, index) => {
               const fraction = item.value / total;
               const offset = accumulated;
               accumulated += fraction * circumference;
@@ -90,7 +95,9 @@ export default function CategoryShare({
                   strokeDasharray={`${fraction * circumference} ${circumference}`}
                   strokeDashoffset={-offset}
                   transform="rotate(-90 80 80)"
-                />
+                >
+                  <title>{`${item.label}: ${useUnits ? `${item.value.toLocaleString()} units` : formatPreferredCurrency(item.value, currency, currencyRates)} · ${((item.value / total) * 100).toFixed(1)}% of inventory`}</title>
+                </circle>
               );
             })}
             <text
@@ -107,10 +114,17 @@ export default function CategoryShare({
               textAnchor="middle"
               className={styles.donutLabel}
             >
-              categories
+              {total > 0 ? "categories" : "no stock"}
             </text>
           </svg>
-          <ul className={styles.categoryList}>
+          {total === 0 && (
+            <p className={styles.emptyCategoryValue}>
+              Categories appear here as stock is assigned to them.
+            </p>
+          )}
+          <ul
+            className={`${styles.categoryList}${entries.length > 5 ? ` ${styles.categoryListScrollable}` : ""}`}
+          >
             {entries.map((item, index) => (
               <li key={item.label} className={styles.categoryRow}>
                 <span

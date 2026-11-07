@@ -22,6 +22,8 @@ const toBody = (input: ProductInput, locationId: number) => ({
   category_id: input.categoryId,
   description: input.description,
   price: input.price,
+  unit_cost: input.unitCost,
+  variant: input.variant,
   quantity: input.quantity,
   location_id: locationId,
   reorder_point: input.reorderPoint,
@@ -48,19 +50,17 @@ function toLocation(raw: unknown): InventoryLocation {
 function toMovement(raw: unknown): InventoryMovement {
   const value = record(raw);
   const type = String(value.transaction_type);
-  if (
-    type !== "IN" &&
-    type !== "OUT" &&
-    type !== "STOCKTAKE" &&
-    type !== "TRANSFER_IN" &&
-    type !== "TRANSFER_OUT" &&
-    type !== "OTHER"
-  )
-    throw new Error("Unexpected inventory movement type from the API.");
+  const recognized =
+    type === "IN" ||
+    type === "OUT" ||
+    type === "STOCKTAKE" ||
+    type === "TRANSFER_IN" ||
+    type === "TRANSFER_OUT" ||
+    type === "OTHER";
   return {
     id: Number(value.movement_id),
     occurredAt: String(value.occurred_at ?? ""),
-    type,
+    type: recognized ? type : "OTHER",
     productId: Number(value.product_id),
     productName: String(value.product_name ?? ""),
     sku: String(value.sku ?? ""),
@@ -149,6 +149,10 @@ export async function listProducts(locationId?: number): Promise<Product[]> {
   return [...productsById.values()];
 }
 
+export async function listStockAlerts(): Promise<Product[]> {
+  return toProductList(await apiRequest<unknown>(ENDPOINTS.inventory.alerts));
+}
+
 /** GET categories -> get_categories(). Tries each known URL; an empty list never breaks the page. */
 export async function listCategories(): Promise<Category[]> {
   for (const path of ENDPOINTS.inventory.categories) {
@@ -164,6 +168,23 @@ export async function listCategories(): Promise<Category[]> {
     "[StockWise] No categories endpoint found. Check ENDPOINTS.inventory.categories in lib/api/endpoints.ts",
   );
   return [];
+}
+
+export function createCategory(categoryName: string) {
+  return apiRequest<{
+    category_id: number;
+    category_name: string;
+    description: string | null;
+  }>(ENDPOINTS.inventory.categories[0], {
+    method: "POST",
+    body: { category_name: categoryName },
+  });
+}
+
+export function deleteCategory(categoryId: number) {
+  return apiRequest<void>(ENDPOINTS.inventory.category(categoryId), {
+    method: "DELETE",
+  });
 }
 
 /** POST /api/inventory/ -> create_inventory() */
@@ -262,7 +283,7 @@ export async function listInventoryMovements(
   locationId: number,
 ): Promise<InventoryMovement[]> {
   const rows = await apiRequest<unknown[]>(ENDPOINTS.inventory.movements, {
-    query: { location_id: locationId, limit: 100 },
+    query: { location_id: locationId, limit: 200 },
   });
   if (!Array.isArray(rows))
     throw new Error("Unexpected inventory history format from the API.");

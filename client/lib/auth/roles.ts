@@ -5,21 +5,22 @@
 //            other Managers, billing, or account deletion.
 //  Staff : manages stock only (inventory), nothing else.
 
-export type Role = "owner" | "manager" | "staff";
+export type Role = "staff" | "manager" | "owner";
 
-export const ROLES: Role[] = ["owner", "manager", "staff"];
+export const ROLES: Role[] = ["staff", "manager", "owner"];
 
 export const ROLE_INFO: Record<Role, { summary: string }> = {
-  owner: {
+  staff: {
     summary:
-      "Owns this organization, manages every role, and must transfer ownership before leaving.",
+      "Manages stock and may leave the organization, but cannot manage users.",
   },
   manager: {
     summary:
       "Manages organization settings and Staff. Cannot manage the Owner or other Managers, and may leave the organization.",
   },
-  staff: {
-    summary: "Manages stock and may leave the organization, but cannot manage users.",
+  owner: {
+    summary:
+      "Owns this organization, manages every role, and must transfer ownership before leaving.",
   },
 };
 

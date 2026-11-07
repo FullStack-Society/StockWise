@@ -1,6 +1,132 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+SUPPORTED_TIMEZONES = {
+    "Asia/Manila",
+    "Asia/Singapore",
+    "America/Los_Angeles",
+    "America/Chicago",
+    "America/New_York",
+    "Europe/London",
+    "Europe/Berlin",
+    "UTC",
+}
+
+
+def get_user_timezone(db: Session, email: str) -> str:
+    result = db.execute(
+        text("SELECT timezone FROM public.user_settings WHERE lower(email) = lower(:email)"),
+        {"email": email.strip().lower()},
+    ).scalar_one_or_none()
+    return result if result in SUPPORTED_TIMEZONES else "Asia/Manila"
+
+
+def get_inventory_defaults(db: Session, email: str) -> dict:
+    normalized_email = email.strip().lower()
+    db.execute(
+        text("SELECT public.stockwise_settings_ensure(:email)"),
+        {"email": normalized_email},
+    )
+    value = db.execute(
+        text("SELECT default_reorder_point FROM public.user_settings WHERE lower(email) = lower(:email)"),
+        {"email": normalized_email},
+    ).scalar_one()
+    return {"default_reorder_point": value}
+
+
+def update_inventory_defaults(db: Session, email: str, default_reorder_point: int) -> dict:
+    normalized_email = email.strip().lower()
+    db.execute(
+        text("SELECT public.stockwise_settings_ensure(:email)"),
+        {"email": normalized_email},
+    )
+    value = db.execute(
+        text("""
+            UPDATE public.user_settings
+            SET default_reorder_point = :default_reorder_point,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE lower(email) = lower(:email)
+            RETURNING default_reorder_point
+        """),
+        {"email": normalized_email, "default_reorder_point": default_reorder_point},
+    ).scalar_one()
+    return {"default_reorder_point": value}
+
+
+def get_security_privacy_preferences(db: Session, email: str) -> dict:
+    normalized_email = email.strip().lower()
+    db.execute(
+        text("SELECT public.stockwise_settings_ensure(:email)"),
+        {"email": normalized_email},
+    )
+    row = db.execute(
+        text("""
+            SELECT login_alert_emails, auto_sign_out_idle
+            FROM public.user_settings WHERE lower(email) = lower(:email)
+        """),
+        {"email": normalized_email},
+    ).mappings().one()
+    return dict(row)
+
+
+def update_security_privacy_preferences(
+    db: Session, email: str, preferences: dict
+) -> dict:
+    normalized_email = email.strip().lower()
+    db.execute(
+        text("SELECT public.stockwise_settings_ensure(:email)"),
+        {"email": normalized_email},
+    )
+    row = db.execute(
+        text("""
+            UPDATE public.user_settings
+            SET login_alert_emails = :login_alert_emails,
+                auto_sign_out_idle = :auto_sign_out_idle,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE lower(email) = lower(:email)
+            RETURNING login_alert_emails, auto_sign_out_idle
+        """),
+        {"email": normalized_email, **preferences},
+    ).mappings().one()
+    if not preferences["login_alert_emails"]:
+        db.execute(
+            text("DELETE FROM public.auth_login_devices WHERE lower(email) = lower(:email)"),
+            {"email": normalized_email},
+        )
+    return dict(row)
+
+
+def login_alert_emails_enabled(db: Session, email: str) -> bool:
+    result = db.execute(
+        text("SELECT login_alert_emails FROM public.user_settings WHERE lower(email) = lower(:email)"),
+        {"email": email.strip().lower()},
+    ).scalar_one_or_none()
+    return bool(result)
+
+
+def register_login_device(db: Session, email: str, device_hash: str) -> bool:
+    normalized_email = email.strip().lower()
+    inserted = db.execute(
+        text("""
+            INSERT INTO public.auth_login_devices (email, device_hash)
+            VALUES (:email, :device_hash)
+            ON CONFLICT (email, device_hash) DO NOTHING
+            RETURNING device_hash
+        """),
+        {"email": normalized_email, "device_hash": device_hash},
+    ).scalar_one_or_none()
+    if inserted is not None:
+        return True
+    db.execute(
+        text("""
+            UPDATE public.auth_login_devices
+            SET last_seen_at = CURRENT_TIMESTAMP
+            WHERE email = :email AND device_hash = :device_hash
+        """),
+        {"email": normalized_email, "device_hash": device_hash},
+    )
+    return False
+
 
 def get_settings(db: Session, email: str) -> dict | None:
     result = db.execute(
@@ -42,6 +168,62 @@ def update_preferences(db: Session, email: str, preferences: dict) -> dict | Non
     )
     row = result.mappings().first()
     return dict(row) if row is not None else None
+
+
+def get_usage_analytics_consent(db: Session, email: str) -> bool:
+    db.execute(
+        text("SELECT public.stockwise_settings_ensure(:email)"),
+        {"email": email.strip().lower()},
+    )
+    result = db.execute(
+        text("SELECT usage_analytics FROM public.user_settings WHERE lower(email) = lower(:email)"),
+        {"email": email.strip().lower()},
+    ).scalar_one_or_none()
+    return bool(result)
+
+
+def update_usage_analytics_consent(db: Session, email: str, enabled: bool) -> bool:
+    db.execute(
+        text("SELECT public.stockwise_settings_ensure(:email)"),
+        {"email": email.strip().lower()},
+    )
+    result = db.execute(
+        text("""
+            UPDATE public.user_settings
+            SET usage_analytics = :enabled, updated_at = CURRENT_TIMESTAMP
+            WHERE lower(email) = lower(:email)
+            RETURNING usage_analytics
+        """),
+        {"email": email.strip().lower(), "enabled": enabled},
+    ).scalar_one()
+    return bool(result)
+
+
+def is_google_account_connected(db: Session, email: str) -> bool:
+    result = db.execute(
+        text("""
+            SELECT COALESCE(google_account_connected, false)
+            FROM public.user_settings WHERE lower(email) = lower(:email)
+        """),
+        {"email": email.strip().lower()},
+    ).scalar_one_or_none()
+    return bool(result)
+
+
+def mark_google_account_connected(db: Session, email: str) -> None:
+    normalized_email = email.strip().lower()
+    db.execute(
+        text("SELECT public.stockwise_settings_ensure(:email)"),
+        {"email": normalized_email},
+    )
+    db.execute(
+        text("""
+            UPDATE public.user_settings
+            SET google_account_connected = true, updated_at = CURRENT_TIMESTAMP
+            WHERE lower(email) = lower(:email)
+        """),
+        {"email": normalized_email},
+    )
 
 
 def get_password_account(db: Session, email: str) -> dict | None:

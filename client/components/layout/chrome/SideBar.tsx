@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
 import Logo from "@/components/ui/Logo";
+import LogoutButton from "@/components/layout/runtime/LogoutButton";
 import { NAV_ITEMS } from "@/app/navigation";
 import { logout } from "@/lib/auth/actions";
 import styles from "@/styles/layout/SideBar.module.css";
@@ -35,10 +35,7 @@ export default function Sidebar() {
       </nav>
 
       <form action={logout} className={styles.logoutForm}>
-        <button type="submit" className={styles.logout}>
-          <LogOut size={16} />
-          Logout
-        </button>
+        <LogoutButton className={styles.logout} />
       </form>
     </aside>
   );

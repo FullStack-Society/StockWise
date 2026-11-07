@@ -16,6 +16,8 @@ export type Product = {
   categoryName: string | null;
   description: string | null;
   price: number;
+  unitCost: number;
+  variant: string | null;
   quantity: number;
   reorderPoint: number;
   locationId: number;
@@ -34,6 +36,8 @@ export type ProductInput = {
   categoryId: number | null;
   description: string | null;
   price: number;
+  unitCost: number;
+  variant: string | null;
   quantity: number;
   reorderPoint: number;
 };
