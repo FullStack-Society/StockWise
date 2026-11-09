@@ -1,0 +1,75 @@
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+@media (max-width: 700px) {
+  .mobileTableScroll {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-color: var(--color-line) var(--color-ink);
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobileTableScroll::-webkit-scrollbar {
+    display: block;
+    height: 8px;
+  }
+
+  .mobileTableScroll::-webkit-scrollbar-track {
+    background: var(--color-ink);
+  }
+
+  .mobileTableScroll::-webkit-scrollbar-thumb {
+    border: 2px solid var(--color-ink);
+    border-radius: 999px;
+    background: var(--color-line);
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .stockwise-print-barcode,
+  .stockwise-print-barcode * {
+    visibility: visible !important;
+  }
+
+  .stockwise-print-barcode {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    border: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+
+  .stockwise-print-hide {
+    display: none !important;
+  }
+}

@@ -1,0 +1,113 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+  background: var(--color-sidebar);
+  border-right: 1px solid var(--color-border);
+}
+
+.logoWrap {
+  height: calc(var(--header-height) - 24px);
+}
+
+.nav {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.2s ease,
+    transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.link:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateX(3px);
+}
+.link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.active {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: scale(1.015);
+  animation: navSelection 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.active svg {
+  color: var(--color-accent);
+  transform: scale(1.16) rotate(-6deg);
+}
+
+@keyframes navSelection {
+  from { opacity: 0.55; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1.015); }
+}
+
+.link svg {
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.15s ease;
+}
+
+.logoutForm {
+  margin-top: auto;
+}
+
+.logout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.logout:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.logout {
+  transition: background 0.15s ease, transform 0.2s ease;
+}
+
+.logout:hover {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link,
+  .link svg,
+  .logout {
+    transition-duration: 0.01ms;
+  }
+
+  .active {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+}

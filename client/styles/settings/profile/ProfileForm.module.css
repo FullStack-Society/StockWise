@@ -1,0 +1,112 @@
+.card {
+  background: none;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  border: 1px solid var(--color-border);
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+  scroll-margin-top: calc(var(--header-height) + 16px);
+}
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.cardTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.cardSub {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.saveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: rgba(224, 122, 46, 0.1);
+  border: 1px solid var(--color-accent);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.saveBtn:hover {
+  background: var(--color-accent);
+  color: var(--color-text);
+}
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 14px;
+}
+.fullRow {
+  grid-column: 1 / -1;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fieldLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.inputWrap {
+  position: relative;
+  display: block;
+}
+.withIcon {
+  padding-right: 36px;
+}
+.input {
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-input);
+  border: 1px solid var(--color-border);
+  outline: none;
+}
+.input:focus {
+  border-color: var(--color-accent);
+}
+.input:read-only {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+.formMessage {
+  margin: 16px 0 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+select.input option {
+  background: var(--color-header);
+  color: var(--color-text);
+}
+.inputIcon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #3fb97a;
+  pointer-events: none;
+}
+@media (max-width: 700px) {
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+}

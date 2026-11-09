@@ -1,0 +1,472 @@
+.topbar {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  height: var(--header-height);
+  padding: 0 32px;
+  background: var(--color-header);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.organizationSelectWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+}
+.createOrgButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.createOrgButton:hover {
+  background: var(--color-accent);
+}
+.createOrgButton:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+.organizationSelect {
+  max-width: 180px;
+  height: 38px;
+  padding: 0 28px 0 10px;
+  appearance: none;
+  border: 1px solid var(--color-text);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.organizationSelect option {
+  background: var(--color-option);
+  color: var(--color-text);
+}
+.organizationSelectWrap > svg {
+  position: absolute;
+  right: 8px;
+  pointer-events: none;
+}
+.organizationSwitchError {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 1;
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-header);
+  color: #e5484d;
+  font-size: 12px;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.bell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+.bell:hover {
+  border-color: var(--color-accent);
+  background: var(--color-hover);
+  color: var(--color-accent);
+}
+.bell:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.bellDot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  background: #e5484d;
+}
+.notificationWrap {
+  position: relative;
+  z-index: 51;
+}
+.notificationCount {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #e5484d;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+}
+.notificationPanel {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(360px, calc(100vw - 28px));
+  max-height: min(70vh, 480px);
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  background: var(--color-header);
+  color: var(--color-text);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+.notificationHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.notificationHead h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.notificationBulkActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.selectAllNotifications,
+.notificationBulkActions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 5px 7px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 10px;
+}
+.selectAllNotifications {
+  border: 0;
+  padding-inline: 2px;
+  color: var(--color-text-muted);
+}
+.selectAllNotifications input,
+.notificationCheckbox input {
+  accent-color: var(--color-accent);
+}
+.notificationBulkActions button {
+  cursor: pointer;
+}
+.notificationBulkActions button:disabled,
+.deleteNotification:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.notificationBulkActions .deleteNotifications {
+  color: #e5484d;
+}
+.closeNotifications {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.noNotifications,
+.notificationError {
+  padding: 10px 16px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.notificationError {
+  color: #e5484d;
+}
+.invitationList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.invitationItem {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.invitationItem p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.notificationItemTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.notificationCheckbox {
+  display: flex;
+  padding-top: 2px;
+}
+.notificationItemCopy {
+  flex: 1;
+  min-width: 0;
+}
+.deleteNotification {
+  display: grid;
+  flex: 0 0 28px;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.deleteNotification:hover {
+  border-color: var(--color-border);
+  color: #e5484d;
+}
+.invitedBy {
+  display: block;
+  margin-top: 5px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+.invitationActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.invitationActions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.invitationActions button:first-child {
+  border-color: var(--color-line);
+  background: var(--color-line);
+  color: white;
+}
+.invitationActions button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.invitationActions .deleteInvitation {
+  width: 31px;
+  justify-content: center;
+  margin-left: auto;
+  padding-inline: 5px;
+  border-color: var(--color-border);
+  background: transparent;
+  color: #e5484d;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.user:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  overflow: hidden;
+  border-radius: 50%;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.userName {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.userRole {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .createOrgButton {
+    width: 38px;
+    padding: 0;
+  }
+  .createOrgButton span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .user {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .userText {
+    display: block;
+    min-width: 0;
+  }
+
+  .userName {
+    max-width: 24vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .userRole {
+    max-width: 24vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .right {
+    gap: 10px;
+  }
+  .organizationSelect {
+    max-width: 125px;
+  }
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    gap: 10px;
+    padding: 0 16px;
+  }
+
+  .right {
+    gap: 10px;
+  }
+
+  .organizationSelect {
+    max-width: min(180px, 25vw);
+  }
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    height: auto;
+    min-height: var(--header-height);
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .right {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .organizationSelect {
+    width: min(125px, 34vw);
+    max-width: none;
+  }
+
+  .userText {
+    max-width: 90px;
+  }
+
+  .userName,
+  .userRole {
+    max-width: 90px;
+  }
+
+  .notificationPanel {
+    position: fixed;
+    top: 50%;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: 360px;
+    max-height: 80vh;
+    margin-inline: auto;
+    transform: translateY(-50%);
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar {
+    padding-inline: 8px;
+  }
+
+  .right {
+    gap: 8px;
+  }
+
+  .userText {
+    display: none;
+  }
+}
