@@ -26,10 +26,14 @@ export default function AddUserModal({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      if (!saving) onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, saving]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,7 +118,12 @@ export default function AddUserModal({
         )}
 
         <div className={styles.modalActions}>
-          <button type="button" className={styles.ghostBtn} onClick={onClose}>
+          <button
+            type="button"
+            className={styles.ghostBtn}
+            onClick={onClose}
+            disabled={saving}
+          >
             Cancel
           </button>
           <button type="submit" className={styles.primaryBtn} disabled={saving}>

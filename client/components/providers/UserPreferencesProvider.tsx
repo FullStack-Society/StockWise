@@ -28,6 +28,7 @@ type PreferenceValues = Pick<
 >;
 
 type UserPreferences = PreferenceValues & {
+  avatarData: string | null;
   currencyRates: CurrencyRates | null;
   currencyRatesUpdatedAt: string | null;
   currencyRatesError: string | null;
@@ -37,6 +38,7 @@ type PreferencesContextValue = UserPreferences & {
   desktopStockAlertsEnabled: boolean;
   setDesktopStockAlertsEnabled: (enabled: boolean) => void;
   setAutoSyncReportsEnabled: (enabled: boolean) => void;
+  setAvatarData: (avatar: string | null) => void;
 };
 const DESKTOP_ALERTS_KEY = "stockwise-desktop-stock-alerts-v1";
 const PreferencesContext = createContext<PreferencesContextValue | null>(null);
@@ -51,9 +53,11 @@ export function useUserPreferences() {
 
 export default function UserPreferencesProvider({
   preferences,
+  initialAvatarData,
   children,
 }: {
   preferences: PreferenceValues;
+  initialAvatarData: string | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -61,6 +65,7 @@ export default function UserPreferencesProvider({
   const [currencyRates, setCurrencyRates] = useState<CurrencyRates | null>(
     null,
   );
+  const [avatarData, setAvatarData] = useState(initialAvatarData);
   const [currencyRatesUpdatedAt, setCurrencyRatesUpdatedAt] = useState<
     string | null
   >(null);
@@ -84,7 +89,10 @@ export default function UserPreferencesProvider({
     try {
       window.localStorage.setItem(DESKTOP_ALERTS_KEY, String(enabled));
     } catch (error) {
-      console.error("[StockWise] Unable to save desktop alert preference:", error);
+      console.error(
+        "[StockWise] Unable to save desktop alert preference:",
+        error,
+      );
     }
   };
 
@@ -96,7 +104,10 @@ export default function UserPreferencesProvider({
         window.localStorage.getItem(DESKTOP_ALERTS_KEY) === "true",
       );
     } catch (error) {
-      console.error("[StockWise] Unable to read desktop alert preference:", error);
+      console.error(
+        "[StockWise] Unable to read desktop alert preference:",
+        error,
+      );
     }
     const syncFromAnotherTab = (event: StorageEvent) => {
       if (event.key === DESKTOP_ALERTS_KEY) {
@@ -117,7 +128,8 @@ export default function UserPreferencesProvider({
       !["/pages/reports", "/pages/dashboard"].some(
         (route) => pathname === route || pathname.startsWith(`${route}/`),
       )
-    ) return;
+    )
+      return;
     const refreshIfVisible = () => {
       if (document.visibilityState === "visible") router.refresh();
     };
@@ -245,6 +257,7 @@ export default function UserPreferencesProvider({
     <PreferencesContext.Provider
       value={{
         ...preferences,
+        avatarData,
         currencyRates,
         currencyRatesUpdatedAt,
         currencyRatesError,
@@ -252,6 +265,7 @@ export default function UserPreferencesProvider({
         setDesktopStockAlertsEnabled,
         auto_sync_reports: autoSyncReportsEnabled,
         setAutoSyncReportsEnabled,
+        setAvatarData,
       }}
     >
       <div

@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { KeyRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, KeyRound } from "lucide-react";
 import { changeAccountPassword } from "@/lib/settings/actions";
 import styles from "@/styles/settings/security/SecurityPanel.module.css";
 
 export default function PasswordSection() {
+  const router = useRouter();
   const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
+  const [visible, setVisible] = useState({ current: false, next: false, confirm: false });
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -20,7 +23,10 @@ export default function PasswordSection() {
         confirm_password: passwords.confirm,
       });
       setMessage(result.ok ? "Password updated successfully." : result.error);
-      if (result.ok) setPasswords({ current: "", next: "", confirm: "" });
+      if (result.ok) {
+        setPasswords({ current: "", next: "", confirm: "" });
+        router.refresh();
+      }
     });
   }
 
@@ -32,22 +38,40 @@ export default function PasswordSection() {
           <p>Use a strong password you don’t use anywhere else.</p>
         </div>
       </header>
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>Current password</span>
-        <input type="password" className={styles.input} autoComplete="current-password" value={passwords.current}
-          onChange={(event) => setPasswords((value) => ({ ...value, current: event.target.value }))} required />
-      </label>
+      <div className={styles.field}>
+        <label className={styles.fieldLabel} htmlFor="current-password">Current password</label>
+        <div className={styles.passwordInputWrap}>
+          <input id="current-password" type={visible.current ? "text" : "password"} className={styles.input} autoComplete="current-password" value={passwords.current}
+            onChange={(event) => setPasswords((value) => ({ ...value, current: event.target.value }))} required />
+          <button type="button" className={styles.passwordToggle} aria-label={visible.current ? "Hide current password" : "Show current password"}
+            onClick={() => setVisible((value) => ({ ...value, current: !value.current }))}>
+            {visible.current ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
+          </button>
+        </div>
+      </div>
       <div className={styles.fieldGrid}>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>New password</span>
-          <input type="password" className={styles.input} autoComplete="new-password" minLength={12} maxLength={256}
-            value={passwords.next} onChange={(event) => setPasswords((value) => ({ ...value, next: event.target.value }))} required />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>Confirm new password</span>
-          <input type="password" className={styles.input} autoComplete="new-password" minLength={12} maxLength={256}
-            value={passwords.confirm} onChange={(event) => setPasswords((value) => ({ ...value, confirm: event.target.value }))} required />
-        </label>
+        <div className={styles.field}>
+          <label className={styles.fieldLabel} htmlFor="new-password">New password</label>
+          <div className={styles.passwordInputWrap}>
+            <input id="new-password" type={visible.next ? "text" : "password"} className={styles.input} autoComplete="new-password" minLength={12} maxLength={256}
+              value={passwords.next} onChange={(event) => setPasswords((value) => ({ ...value, next: event.target.value }))} required />
+            <button type="button" className={styles.passwordToggle} aria-label={visible.next ? "Hide new password" : "Show new password"}
+              onClick={() => setVisible((value) => ({ ...value, next: !value.next }))}>
+              {visible.next ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
+            </button>
+          </div>
+        </div>
+        <div className={styles.field}>
+          <label className={styles.fieldLabel} htmlFor="confirm-new-password">Confirm new password</label>
+          <div className={styles.passwordInputWrap}>
+            <input id="confirm-new-password" type={visible.confirm ? "text" : "password"} className={styles.input} autoComplete="new-password" minLength={12} maxLength={256}
+              value={passwords.confirm} onChange={(event) => setPasswords((value) => ({ ...value, confirm: event.target.value }))} required />
+            <button type="button" className={styles.passwordToggle} aria-label={visible.confirm ? "Hide password confirmation" : "Show password confirmation"}
+              onClick={() => setVisible((value) => ({ ...value, confirm: !value.confirm }))}>
+              {visible.confirm ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
+            </button>
+          </div>
+        </div>
       </div>
       <div className={styles.passwordFoot}>
         <p>Choose a password with at least 12 characters.</p>

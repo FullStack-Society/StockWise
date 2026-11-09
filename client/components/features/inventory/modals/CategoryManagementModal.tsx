@@ -69,6 +69,9 @@ export default function CategoryManagementModal({
       className={styles.modal}
       aria-labelledby="category-management-title"
       onClose={onClose}
+      onCancel={(event) => {
+        if (pending) event.preventDefault();
+      }}
     >
       <div className={styles.body}>
         <header className={styles.header}>

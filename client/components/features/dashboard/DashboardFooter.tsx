@@ -3,8 +3,9 @@
 import { Clock3, DollarSign, Package, ShoppingCart } from "lucide-react";
 import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 import type { PurchaseOrder } from "@/lib/api/orders";
-import { formatPreferredCurrency } from "@/lib/utils/format";
 import type { Product } from "@/lib/inventory/types";
+import { getPurchaseOrderValue } from "@/lib/orders/value";
+import { formatPreferredCurrency } from "@/lib/utils/format";
 import styles from "@/styles/dashboard/DashboardFooter.module.css";
 
 function relativeTime(timestamp: number | null, emptyLabel: string) {
@@ -36,10 +37,7 @@ export default function DashboardFooter({
       ? latest
       : timestamp;
   }, null);
-  const stockCost = products.reduce(
-    (total, product) => total + product.unitCost * product.quantity,
-    0,
-  );
+  const purchaseOrderValue = getPurchaseOrderValue(orders);
   const stats = [
     {
       label: "Products tracked",
@@ -57,8 +55,12 @@ export default function DashboardFooter({
       icon: Clock3,
     },
     {
-      label: `Stock cost value (${currency})`,
-      value: formatPreferredCurrency(stockCost, currency, currencyRates),
+      label: `Purchase order value (${currency})`,
+      value: formatPreferredCurrency(
+        purchaseOrderValue,
+        currency,
+        currencyRates,
+      ),
       icon: DollarSign,
     },
   ];

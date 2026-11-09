@@ -19,13 +19,17 @@ const ENTER_MS = 400;
 export default function AuthPage({
   initialMode,
   googleError = false,
+  accountExists = false,
   twoFactorRequired = false,
 }: {
   initialMode: Mode;
   googleError?: boolean;
+  accountExists?: boolean;
   twoFactorRequired?: boolean;
 }) {
   const [mode, setMode] = useState(initialMode);
+  const [visibleGoogleError] = useState(googleError);
+  const [visibleAccountExists] = useState(accountExists);
   const [transition, setTransition] = useState<Transition>("idle");
   const [pageEntering, setPageEntering] = useState(true);
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,6 +38,25 @@ export default function AuthPage({
     const finish = window.setTimeout(() => setPageEntering(false), 520);
     return () => window.clearTimeout(finish);
   }, []);
+
+  useEffect(() => {
+    if (!googleError && !accountExists) return;
+    const url = new URL(window.location.href);
+    if (
+      !url.searchParams.has("googleError") &&
+      !url.searchParams.has("accountExists")
+    ) {
+      return;
+    }
+    url.searchParams.delete("googleError");
+    url.searchParams.delete("accountExists");
+    const query = url.searchParams.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${query ? `?${query}` : ""}${url.hash}`,
+    );
+  }, [accountExists, googleError]);
 
   const switchMode = useCallback(
     (nextMode: Mode) => {
@@ -88,13 +111,14 @@ export default function AuthPage({
         {mode === "login" ? (
           <LoginForm
             onSwitch={() => switchMode("register")}
-            googleError={googleError}
+            googleError={visibleGoogleError}
+            accountExists={visibleAccountExists}
             twoFactorRequired={twoFactorRequired}
           />
         ) : (
           <RegisterForm
             onSwitch={() => switchMode("login")}
-            googleError={googleError}
+            googleError={visibleGoogleError}
           />
         )}
       </section>

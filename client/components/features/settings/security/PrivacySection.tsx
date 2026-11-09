@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { SecurityPrivacyPreferences } from "@/lib/api/settings";
 import {
   getUsageAnalyticsConsent,
@@ -13,6 +14,7 @@ import styles from "@/styles/settings/security/SecurityPanel.module.css";
 import { PRIVACY_OPTIONS } from "./types";
 
 export default function PrivacySection() {
+  const router = useRouter();
   const [usageAnalyticsEnabled, setUsageAnalyticsEnabled] = useState<boolean | null>(null);
   const [securityPrivacy, setSecurityPrivacy] = useState<SecurityPrivacyPreferences | null>(null);
   const [privacyMessage, setPrivacyMessage] = useState("");
@@ -45,6 +47,7 @@ export default function PrivacySection() {
       try {
         const saved = await setUsageAnalyticsConsent(!usageAnalyticsEnabled);
         setUsageAnalyticsEnabled(saved.enabled);
+        router.refresh();
         setPrivacyMessage(saved.enabled
           ? "Anonymous usage analytics enabled for this account."
           : "Usage analytics turned off. No new visits will be counted.");
@@ -62,6 +65,7 @@ export default function PrivacySection() {
       const result = await saveSecurityPrivacyPreferences(next);
       if (!result.ok) { setPrivacyMessage(result.error); return; }
       setSecurityPrivacy(result.preferences);
+      router.refresh();
       if (key === "auto_sign_out_idle") {
         window.dispatchEvent(new CustomEvent("stockwise:idle-sign-out-setting", {
           detail: { enabled: result.preferences.auto_sign_out_idle },

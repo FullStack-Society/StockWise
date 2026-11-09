@@ -60,6 +60,7 @@ export default function InventoryTable({
             </th>
             <th>Product</th>
             <th>SKU</th>
+            <th>UPC-A</th>
             <th>Category</th>
             <th>Quantity / reorder at</th>
             <th>Selling price ({currency})</th>
@@ -71,7 +72,7 @@ export default function InventoryTable({
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={8} className={styles.empty}>
+              <td colSpan={9} className={styles.empty}>
                 {emptyMessage}
               </td>
             </tr>
@@ -100,6 +101,7 @@ export default function InventoryTable({
                   </div>
                 </td>
                 <td>{p.sku}</td>
+                <td>{p.upc ?? "—"}</td>
                 <td>{p.categoryName ?? "Uncategorized"}</td>
                 <td>
                   <span className={`${styles.qty} ${QTY_CLASS[p.status]}`}>

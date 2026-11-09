@@ -12,16 +12,14 @@ export type Product = {
   id: number;
   name: string;
   sku: string;
+  upc: string | null;
   categoryId: number | null;
   categoryName: string | null;
   description: string | null;
   price: number;
-  unitCost: number;
   variant: string | null;
   quantity: number;
   reorderPoint: number;
-  locationId: number;
-  locationName: string;
   status: StockStatus;
   statusLabel: string;
   createdAt: string;
@@ -33,22 +31,16 @@ export type Category = { id: number; name: string };
 export type ProductInput = {
   name: string;
   sku: string;
+  upc: string | null;
   categoryId: number | null;
   description: string | null;
   price: number;
-  unitCost: number;
   variant: string | null;
   quantity: number;
   reorderPoint: number;
 };
 
 export type InventoryImportRow = { row: number; product: ProductInput };
-
-export type InventoryLocation = {
-  id: number;
-  name: string;
-  createdAt: string;
-};
 
 export type InventoryMovement = {
   id: number;
@@ -57,8 +49,6 @@ export type InventoryMovement = {
     | "IN"
     | "OUT"
     | "STOCKTAKE"
-    | "TRANSFER_IN"
-    | "TRANSFER_OUT"
     | "OTHER";
   productId: number;
   productName: string;

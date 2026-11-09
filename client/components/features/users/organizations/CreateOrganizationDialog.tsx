@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { createOrganizationAction } from "@/lib/organization/actions";
 import styles from "@/styles/users/CreateOrganizationDialog.module.css";
@@ -10,6 +11,7 @@ export default function CreateOrganizationDialog({
 }: {
   onClose: () => void;
 }) {
+  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -31,7 +33,8 @@ export default function CreateOrganizationDialog({
         return;
       }
       setDone(true);
-      window.location.reload();
+      dialogRef.current?.close();
+      router.refresh();
     });
   }
 
@@ -41,6 +44,9 @@ export default function CreateOrganizationDialog({
       className={styles.dialog}
       aria-labelledby="create-organization-title"
       onClose={onClose}
+      onCancel={(event) => {
+        if (pending || done) event.preventDefault();
+      }}
     >
       <div className={styles.content}>
         <header className={styles.header}>

@@ -68,12 +68,16 @@ export type InventoryReportData = {
   product_count: number;
   stock_units: number;
   inventory_value: number | string;
-  stock_cost_value: number | string;
   low_stock_count: number;
   critical_count: number;
   units_received: number;
   units_issued: number;
   transaction_count: number;
+  sales_count: number;
+  units_sold: number;
+  previous_sales_count: number;
+  sales_revenue: number | string;
+  sales_revenue_tracking_since: string;
   previous_units_received: number;
   previous_units_issued: number;
   previous_transaction_count: number;

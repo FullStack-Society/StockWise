@@ -1,4 +1,5 @@
 import type { ProductInput } from "./types";
+import { normalizeScannedUpc } from "./upc";
 
 const INT_MAX = 2_147_483_647; // PostgreSQL integer limit
 
@@ -6,7 +7,6 @@ export type ParsedProductForm =
   | {
       ok: true;
       id: number | null;
-      locationId: number;
       values: ProductInput;
     }
   | { ok: false; errors: Record<string, string> };
@@ -24,6 +24,13 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
   if (!sku) errors.sku = "SKU is required.";
   else if (sku.length > 100) errors.sku = "Use 100 characters or fewer.";
 
+  const enteredUpc = text("upc");
+  const normalizedUpc = enteredUpc ? normalizeScannedUpc(enteredUpc) : null;
+  const upc = normalizedUpc ?? enteredUpc;
+  if (enteredUpc && !normalizedUpc) {
+    errors.upc = "Enter a 12-digit UPC-A barcode, or a 13-digit EAN beginning with 0.";
+  }
+
   const description = text("description");
   if (description.length > 1000)
     errors.description = "Use 1,000 characters or fewer.";
@@ -32,10 +39,6 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
   if (!/^\d+(\.\d{1,2})?$/.test(priceText))
     errors.price = "Enter a price like 25 or 25.50.";
   const price = Number(priceText);
-  const costText = text("unitCost");
-  if (!/^\d+(\.\d{1,2})?$/.test(costText))
-    errors.unitCost = "Enter a unit cost like 10 or 10.50.";
-  const unitCost = Number(costText);
   const variant = text("variant");
   if (variant.length > 200) errors.variant = "Use 200 characters or fewer.";
 
@@ -49,16 +52,10 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
     return n;
   };
   const quantity = parseInt0("quantity", "Enter a whole number, 0 or more.");
-  const reorderPoint = parseInt0("reorderPoint", "Enter a whole number, 0 or more.");
-  const locationIdRaw = text("locationId");
-  const locationId = /^\d+$/.test(locationIdRaw) ? Number(locationIdRaw) : 0;
-  if (
-    !Number.isSafeInteger(locationId) ||
-    locationId <= 0 ||
-    locationId > INT_MAX
-  )
-    errors.locationId = "Choose a valid inventory location.";
-
+  const reorderPoint = parseInt0(
+    "reorderPoint",
+    "Enter a whole number, 0 or more.",
+  );
   const categoryRaw = text("categoryId");
   let categoryId: number | null = null;
   if (categoryRaw) {
@@ -74,14 +71,13 @@ export function parseProductForm(fd: FormData): ParsedProductForm {
   return {
     ok: true,
     id,
-    locationId,
     values: {
       name,
       sku,
+      upc: upc || null,
       categoryId,
       description: description || null,
       price,
-      unitCost,
       variant: variant || null,
       quantity,
       reorderPoint,

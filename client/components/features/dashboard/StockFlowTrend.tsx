@@ -57,8 +57,7 @@ export default function StockFlowTrend({
         order,
       }))
       .filter(
-        ({ timestamp }) =>
-          !Number.isNaN(timestamp) && timestamp >= cutoff,
+        ({ timestamp }) => !Number.isNaN(timestamp) && timestamp >= cutoff,
       ),
   ]
     .filter(({ timestamp }) => !Number.isNaN(timestamp))
@@ -72,7 +71,7 @@ export default function StockFlowTrend({
             Stock Flow Trend
           </h2>
           <p className={styles.subtitle}>
-            Organization-wide stock received each day · {timezone}
+            stock received each day · {timezone}
           </p>
         </div>
         <label className={styles.rangeLabel}>

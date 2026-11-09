@@ -54,19 +54,14 @@
 }
 
 .pageEntrance :global(.pageEnterBlock) > * {
-  animation: pageContentEnter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pageContentEnter 160ms ease-out both;
 }
 
-.pageEntrance :global(.pageEnterDelay1) > * { animation-delay: 105ms; }
-.pageEntrance :global(.pageEnterDelay2) > * { animation-delay: 210ms; }
-.pageEntrance :global(.pageEnterDelay3) > * { animation-delay: 315ms; }
-.pageEntrance :global(.pageEnterDelay4) > * { animation-delay: 420ms; }
-.pageEntrance :global(.pageEnterDelay5) > * { animation-delay: 525ms; }
-
-.pageEntrance :global(.pageEnterInventory) tbody tr,
-.pageEntrance :global(.pageEnterReports) tbody tr {
-  animation: tableRowEnter 240ms ease both;
-}
+.pageEntrance :global(.pageEnterDelay1) > * { animation-delay: 25ms; }
+.pageEntrance :global(.pageEnterDelay2) > * { animation-delay: 50ms; }
+.pageEntrance :global(.pageEnterDelay3) > * { animation-delay: 75ms; }
+.pageEntrance :global(.pageEnterDelay4) > * { animation-delay: 100ms; }
+.pageEntrance :global(.pageEnterDelay5) > * { animation-delay: 125ms; }
 
 @keyframes pageContentEnter {
   from {
@@ -79,15 +74,8 @@
   }
 }
 
-@keyframes tableRowEnter {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .pageEntrance :global(.pageEnterBlock) > *,
-  .pageEntrance :global(.pageEnterInventory) tbody tr,
-  .pageEntrance :global(.pageEnterReports) tbody tr {
+  .pageEntrance :global(.pageEnterBlock) > * {
     animation: none;
   }
 }

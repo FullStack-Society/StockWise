@@ -4,7 +4,7 @@ StockWise is a web-based retail inventory management system. It helps retail
 teams organize products, monitor stock, manage purchase orders, and review
 inventory activity across an organization.
 
-> **Project status:** Active development. Features, interfaces, and database
+> **Project status:** Active development. Features and interfaces may change.
 
 ## Contents
 
@@ -22,7 +22,9 @@ inventory activity across an organization.
 
 ### Accounts and organizations
 
-- Register and sign in to a StockWise account.
+- Register manually with a Gmail address verified by an emailed code, then sign
+  in with a StockWise-specific password. Google sign-in uses Google OAuth and
+  does not use the StockWise password.
 - Sign in or register with Google, and reset a password through a time-limited email link.
 - Optionally require an authenticator-app code at sign-in, with one-use recovery codes.
 - Registration requires a password with at least 12 characters, including an
@@ -48,8 +50,7 @@ inventory activity across an organization.
   without a category.
 - Import products from CSV and export inventory data.
 - Track on-hand quantities, reorder points, stock status, and inventory value.
-- Store unit cost separately from selling price, and optionally record product
-  variants.
+- Optionally record product variants.
 - Record opening stock, stock issues, stock adjustments, physical counts, and
   stock movement history.
 - Confirm product deletion in a centered in-app dialog. Deleted products are
@@ -72,7 +73,9 @@ inventory activity across an organization.
 - View dashboard inventory summaries and recent inventory activity.
 - Review inventory reports and export report data.
 - Review report footer totals for the current calendar month.
-- Review current selling value and stock cost value in reports.
+- Review current inventory selling value and stock movement in reports.
+- Record sales from an inventory-backed checkout and review recorded sales
+  revenue in reports. Payment confirmation is handled outside StockWise.
 - Review stock received and issued by day, week, month, or year; chart value is
   an estimate based on current selling prices, not historical sales.
 - Optionally collect anonymous daily page-view totals from opted-in members;
@@ -118,34 +121,35 @@ be exposed through `NEXT_PUBLIC_` variables.
 ```text
 StockWise/
 ├── client/                         # Next.js frontend
-│   ├── app/                        # Routes, layouts, global styles
+│   ├── app/                        # Routes, layouts, API callbacks, global styles
 │   ├── components/
-│   │   ├── features/               # Feature UI: inventory, orders, reports, etc.
-│   │   ├── layout/                 # Navigation, top bar, preferences provider
+│   │   ├── features/               # Dashboard, inventory, sales, orders, reports, settings, users
+│   │   ├── layout/                 # App shell, navigation, runtime components
+│   │   ├── providers/              # User preference context
 │   │   └── ui/                     # Shared UI components
 │   ├── lib/
 │   │   ├── api/                    # Typed server-side API clients
-│   │   ├── auth/                   # Login, registration, and session helpers
-│   │   ├── inventory/              # Inventory validation, filtering, CSV, stats
-│   │   ├── orders/                 # Order utilities and statistics
+│   │   ├── auth/                   # Authentication actions and sessions
+│   │   ├── inventory/              # Inventory actions, types, and utilities
+│   │   ├── orders/                 # Purchase order actions and utilities
+│   │   ├── sales/                  # Sales actions
+│   │   ├── dashboard/              # Dashboard data and types
 │   │   ├── organization/           # Active organization context and actions
-│   │   ├── reports/                # Report utilities
-│   │   ├── settings/               # Preference and settings helpers
-│   │   ├── users/                  # User-management helpers
-│   │   └── utils/                  # Shared client utilities
-│   └── styles/                     # CSS Modules grouped by feature
+│   │   ├── settings/, users/       # Settings and user helpers
+│   │   ├── utils/                  # Shared helpers
+│   │   └── routes.ts               # Application route definitions
+│   └── styles/                     # Feature and layout CSS Modules
 ├── server/
 │   ├── app/
 │   │   ├── api/                    # FastAPI route handlers
 │   │   ├── core/                   # Configuration and security
-│   │   ├── db/                     # SQLAlchemy session and repositories
+│   │   ├── db/                     # Database sessions and repositories
 │   │   ├── schemas/                # Request and response models
 │   │   └── services/               # Application and business logic
 │   ├── .env.example                # Backend environment template
 │   └── requirements.txt            # Python dependencies
-├── docs/                           # QA checklist and implementation references
-├── README.md
-└── LOGIN_DATA_EXAMPLES.txt          # Local/demo login reference; handle privately
+├── docs/                           # User-management implementation guide
+└── README.md
 ```
 
 ## Main application routes
@@ -159,50 +163,52 @@ StockWise/
 | `/pages/dashboard` | Dashboard                                           |
 | `/pages/inventory` | Products, categories, stock operations, and history |
 | `/pages/orders`    | Purchase orders and receiving                       |
+| `/pages/sales`     | Inventory-backed sales checkout                     |
 | `/pages/reports`   | Inventory reports and exports                       |
 | `/pages/users`     | Organization setup and member management            |
 | `/pages/settings`  | Account and organization settings                   |
 
 The API is mounted under `/api`. Its main route groups are `/api/auth`,
 `/api/health`, `/api/inventory`, `/api/orders`, `/api/organizations`,
-`/api/settings`, and `/api/reports`. During local development, FastAPI's
-interactive API documentation is available at `/docs`.
+`/api/sales`, `/api/settings`, and `/api/reports`. During local development,
+FastAPI's interactive API documentation is available at `/docs`.
 
 ## Important files
 
 ### Frontend
 
-| Path                                                                             | Responsibility                                       |
-| -------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `client/app/`                                                                    | Next.js route entry points                           |
-| `client/components/features/inventory/`                                          | Inventory browser, table, filters, and dialogs       |
-| `client/components/features/inventory/modals/DeleteProductConfirmationModal.tsx` | Centered product-delete confirmation                 |
-| `client/components/features/orders/`                                             | Order list, filters, and create/edit/receive dialogs |
-| `client/components/features/reports/`                                            | Report tables and summary UI                         |
-| `client/components/features/login/`                                              | Login, registration, and brand panels                |
-| `client/lib/api/`                                                                | Backend API clients used by the app                  |
-| `client/lib/inventory/actions.ts`                                                | Inventory server actions                             |
-| `client/lib/inventory/validation.ts`                                             | Product form validation                              |
-| `client/lib/organization/page-context.ts`                                        | Active organization and membership context           |
-| `client/styles/`                                                                 | Feature-specific CSS Modules                         |
+| Path                                                                             | Responsibility                                        |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `client/app/`                                                                    | Next.js route entry points                            |
+| `client/components/features/sales/`                                              | Sales checkout, barcode scanning, and payment prompts |
+| `client/components/features/inventory/`                                          | Inventory browser, table, filters, and dialogs        |
+| `client/components/features/inventory/modals/DeleteProductConfirmationModal.tsx` | Centered product-delete confirmation                  |
+| `client/components/features/orders/`                                             | Order list, filters, and create/edit/receive dialogs  |
+| `client/components/features/reports/`                                            | Report tables and summary UI                          |
+| `client/components/features/login/`                                              | Login, registration, and brand panels                 |
+| `client/lib/api/`                                                                | Backend API clients used by the app                   |
+| `client/lib/sales/`                                                              | Sales server actions                                  |
+| `client/lib/inventory/actions.ts`                                                | Inventory server actions                              |
+| `client/lib/inventory/validation.ts`                                             | Product form validation                               |
+| `client/lib/organization/page-context.ts`                                        | Active organization and membership context            |
+| `client/styles/`                                                                 | Feature-specific CSS Modules                          |
 
 ### Backend
 
-| Path                          | Responsibility                                   |
-| ----------------------------- | ------------------------------------------------ |
-| `server/app/main.py`          | FastAPI application setup and route registration |
-| `server/app/core/config.py`   | Environment-based backend settings               |
-| `server/app/core/security.py` | API request and organization security helpers    |
-| `server/app/api/`             | HTTP endpoints                                   |
-| `server/app/schemas/`         | Pydantic input/output schemas                    |
-| `server/app/services/`        | Validation and business rules                    |
-| `server/app/db/`              | Database sessions and PostgreSQL operations      |
+| Path                          | Responsibility                                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `server/app/main.py`          | FastAPI application setup and route registration                                                     |
+| `server/app/core/config.py`   | Environment-based backend settings                                                                   |
+| `server/app/core/security.py` | API request and organization security helpers                                                        |
+| `server/app/api/`             | FastAPI endpoints for authentication, inventory, orders, sales, reports, organizations, and settings |
+| `server/app/schemas/`         | Pydantic input/output schemas                                                                        |
+| `server/app/services/`        | Validation and business rules                                                                        |
+| `server/app/db/`              | Database sessions and PostgreSQL operations                                                          |
 
-### Database and documentation
+### Documentation
 
 | Path                                           | Responsibility                       |
 | ---------------------------------------------- | ------------------------------------ |
-| `docs/qa-checklist.md`                         | Manual QA scenarios                  |
 | `docs/user-management-implementation-guide.md` | User-management implementation notes |
 
 ## Local development
@@ -228,8 +234,13 @@ Edit `server/.env` and configure at least:
 - `INTERNAL_API_KEY` — private key shared with the Next.js server.
 - `CLIENT_URL` — frontend origin, usually `http://localhost:3000`.
 
-Optional owner-seed settings are `OWNER_NAME`, `OWNER_EMAIL`, and
-`OWNER_PASSWORD`. Use a unique password and do not commit `.env` files.
+Before starting the application, provision a PostgreSQL database configured for
+StockWise. Keep database credentials and private database setup details out of
+public documentation.
+
+Optional initial-owner settings are `OWNER_NAME`, `OWNER_EMAIL`, and
+`OWNER_PASSWORD`. Set the email and a unique password when creating the initial
+owner. Do not commit `.env` files.
 
 For authenticator-based two-factor authentication, set `TOTP_ENCRYPTION_KEYS`
 to a comma-separated Fernet key ring. Generate a URL-safe key with:
@@ -238,15 +249,8 @@ to a comma-separated Fernet key ring. Generate a URL-safe key with:
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 
-The first key encrypts new authenticator secrets; later keys are retained for
-decrypting secrets made with older keys. Existing secrets created before this
-setting was introduced remain decryptable through a compatibility key derived
-from the current `INTERNAL_API_KEY`. Before rotating that API key, derive the
-old compatibility key and add it to the key ring:
-
-```powershell
-python -c "import base64,hashlib,getpass; old=getpass.getpass('Old INTERNAL_API_KEY: '); print(base64.urlsafe_b64encode(hashlib.sha256((old+'|stockwise-totp-secret-v1').encode()).digest()).decode())"
-```
+Keep prior keys in the key ring when rotating keys so existing authenticator
+secrets remain decryptable. Keep all keys private.
 
 Install dependencies and start FastAPI:
 
@@ -275,6 +279,12 @@ BACKEND_API_KEY=the-same-private-value-as-server-INTERNAL_API_KEY
 SESSION_SECRET=your-unique-random-secret-at-least-32-characters
 ```
 
+Google sign-in is optional. To enable it, configure `GOOGLE_CLIENT_ID`,
+`GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` in the frontend environment,
+and `GOOGLE_CLIENT_ID` in `server/.env`. The redirect URI must match the one
+registered with Google. Manual registration email verification, password-reset
+email, and new-device alerts require SMTP settings in `server/.env`.
+
 Install the locked frontend dependencies and start Next.js:
 
 ```powershell
@@ -293,16 +303,6 @@ Run these commands from `client/`:
 npm run lint
 npx tsc --noEmit
 npm run build
-```
-
-### Automated backend checks
-
-From `server/`, install the development requirements and run the contract
-checks without connecting to a database:
-
-```powershell
-python -m pip install -r requirements-dev.txt
-python -m unittest discover -s tests -v
 ```
 
 ## Roles and organization behavior
@@ -325,19 +325,18 @@ are controlled by the app's role and permission checks.
 - Password reset and new-device login alerts depend on a correctly configured
   SMTP sender. Google sign-in depends on OAuth credentials and an authorized
   redirect URI.
-- StockWise does not include POS checkout, receipt generation, or payment
-  processing.
+- Sales checkout records the selected payment method and updates inventory.
+  Payment processing, payment verification, and receipt generation are not
+  included. Sales reports cover recorded sales only.
 - Supplier management and automatic supplier ordering are not implemented.
 - Advanced demand forecasting is not implemented.
 - Inventory requires an internet connection and a live backend/database.
 - Purchase orders track products and quantities; they are not synchronized
   with an external supplier system.
-- Stock cost value uses each product's current unit cost and on-hand quantity.
   The stock movement chart estimates received value using current selling
-  prices; it does not report sales revenue, COGS, or historical prices.
+  prices; it does not report COGS or historical prices.
 
 ## Project documentation
 
-- [QA checklist](./docs/qa-checklist.md)
 - [User-management implementation guide](./docs/user-management-implementation-guide.md)
 - [Frontend-specific setup notes](./client/README.md)

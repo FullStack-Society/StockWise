@@ -1,41 +1,59 @@
 # StockWise client
 
-The Next.js frontend uses server-side API modules to communicate with the FastAPI backend. Keep API credentials and the session secret on the server; do not expose them with a `NEXT_PUBLIC_` prefix.
+The client is a Next.js application. It calls the FastAPI backend from
+server-side modules. Keep backend credentials and the session secret on the
+server; never expose them with a `NEXT_PUBLIC_` prefix.
 
-## Run locally
+## Requirements
 
-1. Start PostgreSQL and configure `DATABASE_URL` and `INTERNAL_API_KEY` in `server/.env`. Set `OWNER_EMAIL` and a unique `OWNER_PASSWORD` of at least 12 characters only if the database does not already have an owner.
-2. Prepare the database as described in the root [README](../README.md): run migrations `001` through `023` in order on a new database. For an existing database on the former `019` schema, run `migrations/rebaseline_existing.sql` once, then migrations `007` through `023`. Do not run the archived scripts.
-3. From `server`, install backend dependencies and start FastAPI:
+- Node.js 20.9 or later
+- A running StockWise API and PostgreSQL database
 
-   ```powershell
-   pip install -r requirements.txt
-   python -m uvicorn app.main:app --reload --port 8000
-   ```
+See the [repository README](../README.md#local-development) for the full local
+setup, including backend configuration and database prerequisites. Database
+changes are managed separately and are not applied by the client.
 
-4. Copy `client/.env.local.example` to `client/.env.local` and set:
+## Run the client
 
-   ```env
-   BACKEND_API_URL=http://127.0.0.1:8000
-   BACKEND_API_KEY=the-same-value-as-server-INTERNAL_API_KEY
-   SESSION_SECRET=your-unique-random-secret-at-least-32-characters
-   GOOGLE_CLIENT_ID=your-google-oauth-client-id
-   GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
-   GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
-   ```
+From the repository root, copy the example environment file and install the
+locked dependencies:
 
-   Set `BACKEND_API_KEY` to the same unique value as `INTERNAL_API_KEY` in `server/.env`.
-   Also set `GOOGLE_CLIENT_ID` in `server/.env`. To enable password-reset messages and new-device login alerts, set `SMTP_USERNAME` and `SMTP_APP_PASSWORD` in `server/.env` for a dedicated Gmail sender. Keep all credential values local and private.
+```powershell
+Copy-Item client/.env.local.example client/.env.local
+Set-Location client
+npm ci
+npm run dev
+```
 
-5. From `client`, install the locked frontend dependencies and start Next.js:
+Configure `client/.env.local` with values for:
 
-   ```powershell
-   npm ci
-   npm run dev
-   ```
+```env
+BACKEND_API_URL=http://127.0.0.1:8000
+BACKEND_API_KEY=the-same-private-value-as-server-INTERNAL_API_KEY
+SESSION_SECRET=your-unique-random-secret-at-least-32-characters
+```
 
-   Run `npm run lint` and `npx tsc --noEmit` to check the frontend with ESLint and TypeScript.
+Google sign-in is optional. To enable it, configure the Google client ID,
+client secret, and redirect URI shown in `client/.env.local.example`; the
+client ID must also be configured in `server/.env`. The redirect URI must match
+the one registered with Google.
 
-The frontend runs at `http://localhost:3000`; API documentation is at `http://localhost:8000/docs`.
+The client runs at [http://localhost:3000](http://localhost:3000). The API
+documentation is at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
-The app includes password and Google authentication, optional authenticator-based two-factor authentication, organization membership, inventory management and CSV import, purchase orders, dashboard summaries, reports, user/role management, and account/organization settings. Email-based password reset and new-device alerts require SMTP configuration. Available actions depend on the signed-in user's role and active organization.
+## Frontend checks
+
+Run these from `client/`:
+
+```powershell
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+The app includes authentication, organization membership, inventory and CSV
+import, purchase orders, dashboard summaries, reports, role management, and
+account and organization settings. Manual registration verifies the Gmail
+address before creating a StockWise account; its password is separate from the
+Gmail password. Email verification, password reset, and new-device login alerts
+require SMTP configuration in `server/.env`.

@@ -47,3 +47,29 @@ a {
     background: var(--color-line);
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .stockwise-print-barcode,
+  .stockwise-print-barcode * {
+    visibility: visible !important;
+  }
+
+  .stockwise-print-barcode {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    border: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+
+  .stockwise-print-hide {
+    display: none !important;
+  }
+}

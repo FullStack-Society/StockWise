@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Camera,
   User,
   ShieldCheck,
   SlidersHorizontal,
@@ -8,7 +9,12 @@ import {
   ChevronRight,
   Activity,
 } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 import type { AccountSecurityStatus, AccountSettings } from "@/lib/api/settings";
+import { saveProfileAvatar } from "@/lib/settings/actions";
 import styles from "@/styles/settings/profile/ProfileCard.module.css";
 import type { SettingsSection } from "@/lib/settings/types";
 
@@ -34,6 +40,66 @@ export default function ProfileCard({
   securityStatus: AccountSecurityStatus | null;
   onSelect: (section: SettingsSection) => void;
 }) {
+  const router = useRouter();
+  const { avatarData, setAvatarData } = useUserPreferences();
+  const avatarInput = useRef<HTMLInputElement>(null);
+  const [avatarMessage, setAvatarMessage] = useState("");
+  const [isSavingAvatar, startAvatarSave] = useTransition();
+
+  async function onAvatarSelected(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setAvatarMessage("Choose a JPEG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setAvatarMessage("Choose an image smaller than 10 MB.");
+      return;
+    }
+
+    setAvatarMessage("");
+    try {
+      const bitmap = await createImageBitmap(file);
+      const side = Math.min(bitmap.width, bitmap.height);
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 320;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        bitmap.close();
+        throw new Error("Could not prepare this image.");
+      }
+      context.drawImage(
+        bitmap,
+        (bitmap.width - side) / 2,
+        (bitmap.height - side) / 2,
+        side,
+        side,
+        0,
+        0,
+        320,
+        320,
+      );
+      bitmap.close();
+      const resizedAvatar = canvas.toDataURL("image/jpeg", 0.82);
+      setAvatarMessage("Saving picture…");
+      startAvatarSave(async () => {
+        const result = await saveProfileAvatar(resizedAvatar);
+        if (!result.ok) {
+          setAvatarMessage(result.error);
+          return;
+        }
+        setAvatarData(resizedAvatar);
+        setAvatarMessage("Profile picture updated.");
+        router.refresh();
+      });
+    } catch {
+      setAvatarMessage("Could not read that image. Choose a different file.");
+    }
+  }
+
   const visibleItems = ITEMS.filter((item) => {
     if (item.id === "billing") return isOwner;
     return true;
@@ -47,7 +113,51 @@ export default function ProfileCard({
   return (
     <div className={styles.sidebarStack}>
       <section className={styles.profileCard}>
-        <div className={styles.avatar} aria-hidden />
+        <input
+          ref={avatarInput}
+          className={styles.avatarInput}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={onAvatarSelected}
+          aria-label="Choose a profile picture"
+        />
+        <button
+          className={styles.avatarButton}
+          type="button"
+          onClick={() => avatarInput.current?.click()}
+          disabled={isSavingAvatar}
+          aria-label="Change profile picture"
+          title="Change profile picture"
+        >
+          <span className={styles.avatarImage}>
+            {avatarData ? (
+              <Image
+                src={avatarData}
+                alt=""
+                width={320}
+                height={320}
+                unoptimized
+              />
+            ) : (
+              <User size={24} aria-hidden />
+            )}
+          </span>
+          <span className={styles.avatarCamera} aria-hidden>
+            <Camera size={12} />
+          </span>
+        </button>
+        {avatarMessage && (
+          <p
+            className={styles.avatarMessage}
+            role={
+              isSavingAvatar || avatarMessage === "Profile picture updated."
+                ? "status"
+                : "alert"
+            }
+          >
+            {isSavingAvatar ? "Saving picture…" : avatarMessage}
+          </p>
+        )}
         <div className={styles.profileName}>{settings.name}</div>
         <div className={styles.profileRole}>{roleLabel}</div>
 

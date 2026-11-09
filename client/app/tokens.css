@@ -30,18 +30,18 @@
 
 [data-theme="light"] {
   color-scheme: light;
-  --color-ink: #e9eff3;
-  --color-sidebar: #f5f7f8;
-  --color-header: #f7f8f8;
+  --color-ink: #e9f0f1;
+  --color-sidebar: #edf4f4;
+  --color-header: #f5f8f7;
   --color-text: #1b2934;
   --color-text-muted: rgba(27, 41, 52, 0.68);
   --color-line: rgba(27, 41, 52, 0.68);
   --color-line-soft: rgba(27, 41, 52, 0.24);
   --color-border: rgba(49, 74, 91, 0.2);
-  --color-surface-glass: rgba(255, 255, 255, 0.72);
-  --color-panel: rgba(255, 255, 255, 0.82);
+  --color-surface-glass: rgba(255, 255, 255, 0.76);
+  --color-panel: rgba(255, 254, 250, 0.86);
   --color-modal: #fffefa;
-  --color-input: rgba(226, 235, 239, 0.72);
+  --color-input: rgba(222, 235, 236, 0.78);
   --color-option: #fffefa;
   --color-hover: rgba(39, 75, 96, 0.08);
   --color-overlay: rgba(27, 41, 52, 0.38);
@@ -57,18 +57,18 @@
 @media (prefers-color-scheme: light) {
   [data-theme="system"] {
     color-scheme: light;
-    --color-ink: #e9eff3;
-    --color-sidebar: #f5f7f8;
-    --color-header: #f7f8f8;
+    --color-ink: #e9f0f1;
+    --color-sidebar: #edf4f4;
+    --color-header: #f5f8f7;
     --color-text: #1b2934;
     --color-text-muted: rgba(27, 41, 52, 0.68);
     --color-line: rgba(27, 41, 52, 0.68);
     --color-line-soft: rgba(27, 41, 52, 0.24);
     --color-border: rgba(49, 74, 91, 0.2);
-    --color-surface-glass: rgba(255, 255, 255, 0.72);
-    --color-panel: rgba(255, 255, 255, 0.82);
+    --color-surface-glass: rgba(255, 255, 255, 0.76);
+    --color-panel: rgba(255, 254, 250, 0.86);
     --color-modal: #fffefa;
-    --color-input: rgba(226, 235, 239, 0.72);
+    --color-input: rgba(222, 235, 236, 0.78);
     --color-option: #fffefa;
     --color-hover: rgba(39, 75, 96, 0.08);
     --color-overlay: rgba(27, 41, 52, 0.38);

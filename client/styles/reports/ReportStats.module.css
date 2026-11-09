@@ -38,7 +38,8 @@
   color: var(--color-text);
 }
 .changeUp,
-.changeDown {
+.changeDown,
+.changeNeutral {
   margin-top: 7px;
   min-height: 16px;
   font-size: 12px;
@@ -48,6 +49,9 @@
 }
 .changeDown {
   color: var(--color-danger);
+}
+.changeNeutral {
+  color: var(--color-text-muted);
 }
 @media (max-width: 1000px) {
   .statGrid {

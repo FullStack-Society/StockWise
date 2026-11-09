@@ -21,6 +21,11 @@ export default function ContentScroller({
   const scrollContainer = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    scrollContainer.current?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
+  }, [pathname, settingsSection]);
+
+  useEffect(() => {
     const element = scrollContainer.current;
     if (!element) return;
 

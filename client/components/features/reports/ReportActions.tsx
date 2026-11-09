@@ -8,9 +8,11 @@ import styles from "@/styles/reports/ReportActions.module.css";
 export default function ReportActions({
   days,
   report,
+  purchaseOrderValue,
 }: {
   days: ReportPeriod;
   report?: InventoryReportData;
+  purchaseOrderValue?: number;
 }) {
   const { currency, currencyRates, timezone } = useUserPreferences();
   const conversionRate =
@@ -30,16 +32,22 @@ export default function ReportActions({
         Number(report.inventory_value) * conversionRate,
       ],
       [
-        `Stock cost value (${currency})`,
-        Number(report.stock_cost_value) * conversionRate,
+        `Purchase order value across all tracked orders (${currency})`,
+        (purchaseOrderValue ?? 0) * conversionRate,
+      ],
+      ["Sales", report.sales_count],
+      ["Units sold", report.units_sold],
+      [
+        `Sales revenue (${currency}, tracked since ${report.sales_revenue_tracking_since})`,
+        Number(report.sales_revenue) * conversionRate,
       ],
       ["Units received", report.units_received],
       ["Units issued", report.units_issued],
-      ["Transactions", report.transaction_count],
+      ["Stock transactions", report.transaction_count],
       [],
       [
         "Daily stock movement",
-        "Received value uses current unit costs",
+        "Received value uses current selling prices",
       ],
       [
         "Date",

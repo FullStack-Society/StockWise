@@ -5,7 +5,6 @@ export type InventoryFilters = {
   query: string;
   category: string;
   status: string;
-  locationId: string;
 };
 export type InventoryView = { filters: InventoryFilters; page: number };
 
@@ -25,12 +24,9 @@ export function parseSearchParams(sp: SearchParams): InventoryView {
     ? statusRaw
     : "";
 
-  const locationRaw = first(sp.location) ?? "";
-  const locationId = /^\d+$/.test(locationRaw) ? locationRaw : "";
-
   const page = Number.parseInt(first(sp.page) ?? "1", 10);
   return {
-    filters: { query, category, status, locationId },
+    filters: { query, category, status },
     page: Number.isFinite(page) && page > 0 ? page : 1,
   };
 }

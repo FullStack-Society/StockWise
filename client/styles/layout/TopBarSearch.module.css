@@ -172,6 +172,13 @@
   }
 }
 
+@media (max-width: 700px) {
+  .container {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
+}
+
 @media (max-width: 480px) {
   .container {
     flex: 1 1 0;

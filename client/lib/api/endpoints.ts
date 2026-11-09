@@ -3,6 +3,8 @@ export const ENDPOINTS = {
   auth: {
     login: "/api/auth/login",
     register: "/api/auth/register",
+    verifyRegistration: "/api/auth/register/verify",
+    resendRegistrationCode: "/api/auth/register/resend",
     google: "/api/auth/google",
     forgotPassword: "/api/auth/forgot-password",
     resetPassword: "/api/auth/reset-password",
@@ -12,10 +14,8 @@ export const ENDPOINTS = {
     root: "/api/inventory/",
     alerts: "/api/inventory/alerts",
     item: (id: number) => `/api/inventory/${id}`,
-    locations: "/api/inventory/locations",
     movements: "/api/inventory/movements",
     productMovements: (id: number) => `/api/inventory/${id}/movements`,
-    productTransfer: (id: number) => `/api/inventory/${id}/transfers`,
     stocktake: (id: number) => `/api/inventory/${id}/stocktake`,
     categories: ["/api/inventory/categories/", "/api/categories/"],
     category: (id: number) => `/api/inventory/categories/${id}`,
@@ -28,6 +28,7 @@ export const ENDPOINTS = {
     receive: (orderId: number, itemId: number) =>
       `/api/orders/${orderId}/items/${itemId}/receive`,
   },
+  sales: { checkout: "/api/sales/" },
   organizations: {
     create: "/api/organizations/",
     mine: "/api/organizations/mine",
@@ -67,6 +68,7 @@ export const ENDPOINTS = {
   settings: {
     root: "/api/settings/",
     profile: "/api/settings/profile",
+    avatar: "/api/settings/avatar",
     preferences: "/api/settings/preferences",
     inventoryDefaults: "/api/settings/inventory-defaults",
     securityPrivacyPreferences: "/api/settings/security-privacy-preferences",

@@ -1,4 +1,5 @@
 import type { Category, InventoryImportRow, ProductInput } from "./types";
+import { isUpcA } from "./upc";
 
 export type ParseResult = {
   rows: InventoryImportRow[];
@@ -65,10 +66,10 @@ export function parseProducts(
   const columns = {
     name: find("name", "productname"),
     sku: find("sku", "itemcode"),
+    upc: find("upc", "upca", "barcode", "gtin12"),
     category: find("category", "categoryname", "categoryid"),
     description: find("description", "details"),
     price: find("price", "unitprice"),
-    unitCost: find("unitcost", "cost"),
     variant: find("variant", "option"),
     quantity: find("quantity", "stock", "currentstock"),
     reorderPoint: find("reorderpoint", "reorderlevel", "minimumstock"),
@@ -82,16 +83,17 @@ export function parseProducts(
   const rows: InventoryImportRow[] = [];
   const issues: ParseResult["issues"] = [];
   const seenSkus = new Set<string>();
+  const seenUpcs = new Set<string>();
 
   for (let index = 1; index < records.length; index++) {
     const record = records[index];
     const rowNumber = index + 1;
     const name = get(record, columns.name);
     const sku = get(record, columns.sku);
+    const upc = get(record, columns.upc);
     const categoryRaw = get(record, columns.category);
     const description = get(record, columns.description);
     const priceRaw = get(record, columns.price) || "0";
-    const costRaw = get(record, columns.unitCost) || "0";
     const quantityRaw = get(record, columns.quantity) || "0";
     const reorderPointRaw =
       get(record, columns.reorderPoint) || String(defaultReorderPoint);
@@ -102,12 +104,12 @@ export function parseProducts(
       errors.push("product name exceeds 200 characters");
     if (!sku) errors.push("SKU is required");
     else if (sku.length > 100) errors.push("SKU exceeds 100 characters");
+    if (upc && !isUpcA(upc))
+      errors.push("UPC-A must contain exactly 12 digits");
     if (description.length > 1000)
       errors.push("description exceeds 1,000 characters");
     if (!/^\d+(\.\d{1,2})?$/.test(priceRaw))
       errors.push("price must be a non-negative number with up to 2 decimals");
-    if (!/^\d+(\.\d{1,2})?$/.test(costRaw))
-      errors.push("unit cost must be a non-negative number with up to 2 decimals");
     if (!/^\d+$/.test(quantityRaw))
       errors.push("quantity must be a whole number of 0 or more");
     if (!/^\d+$/.test(reorderPointRaw))
@@ -132,6 +134,8 @@ export function parseProducts(
     if (sku && seenSkus.has(skuKey))
       errors.push("SKU is duplicated in this file");
     if (sku) seenSkus.add(skuKey);
+    if (upc && seenUpcs.has(upc)) errors.push("UPC is duplicated in this file");
+    if (upc) seenUpcs.add(upc);
 
     const price = Number(priceRaw);
     const quantity = Number(quantityRaw);
@@ -149,10 +153,10 @@ export function parseProducts(
     const product: ProductInput = {
       name,
       sku,
+      upc: upc || null,
       categoryId,
       description: description || null,
       price,
-      unitCost: Number(costRaw),
       variant: get(record, columns.variant) || null,
       quantity,
       reorderPoint,

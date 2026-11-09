@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { submitPasswordReset, type ResetPasswordState } from "@/lib/auth/actions";
 import styles from "@/styles/login/LoginForm.module.css";
 
@@ -17,6 +17,7 @@ function SubmitButton() {
 }
 
 export default function ResetPasswordForm({ token }: { token: string }) {
+  const [passwordVisible, setPasswordVisible] = useState({ new: false, confirm: false });
   const [state, formAction] = useActionState<ResetPasswordState, FormData>(
     submitPasswordReset,
     {},
@@ -45,7 +46,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
             <input
               id="new-password"
               name="password"
-              type="password"
+              type={passwordVisible.new ? "text" : "password"}
               autoComplete="new-password"
               minLength={12}
               maxLength={128}
@@ -54,6 +55,14 @@ export default function ResetPasswordForm({ token }: { token: string }) {
               required
               className={styles.input}
             />
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label={passwordVisible.new ? "Hide new password" : "Show new password"}
+              onClick={() => setPasswordVisible((value) => ({ ...value, new: !value.new }))}
+            >
+              {passwordVisible.new ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
+            </button>
           </div>
           <label htmlFor="confirm-new-password" className={styles.labelSpaced}>Confirm new password</label>
           <div className={styles.field}>
@@ -61,13 +70,21 @@ export default function ResetPasswordForm({ token }: { token: string }) {
             <input
               id="confirm-new-password"
               name="confirm_password"
-              type="password"
+              type={passwordVisible.confirm ? "text" : "password"}
               autoComplete="new-password"
               minLength={12}
               maxLength={128}
               required
               className={styles.input}
             />
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label={passwordVisible.confirm ? "Hide password confirmation" : "Show password confirmation"}
+              onClick={() => setPasswordVisible((value) => ({ ...value, confirm: !value.confirm }))}
+            >
+              {passwordVisible.confirm ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
+            </button>
           </div>
           <p className={styles.fieldHint}>Use at least 12 characters, including a capital letter and a special character.</p>
           {state.error && <p role="alert" className={styles.error}>{state.error}</p>}

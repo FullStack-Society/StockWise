@@ -85,6 +85,9 @@ export default function CreateOrderDialog({
       className={styles.dialog}
       aria-labelledby="purchase-order-title"
       onClose={onClose}
+      onCancel={(event) => {
+        if (isPending) event.preventDefault();
+      }}
     >
       <form className={styles.body} onSubmit={submit}>
         <header className={styles.header}>
@@ -118,11 +121,7 @@ export default function CreateOrderDialog({
                     onChange={(event) =>
                       updateItem(index, {
                         productId: event.target.value,
-                        unitPrice:
-                          products.find(
-                            (product) =>
-                              String(product.id) === event.target.value,
-                          )?.unitCost.toFixed(2) ?? "",
+                        unitPrice: "",
                       })
                     }
                   >

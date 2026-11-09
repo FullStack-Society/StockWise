@@ -32,7 +32,10 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
 }
 .googleButton:hover {
   border-color: #d2d5da;
@@ -66,6 +69,24 @@
   margin: 7px 0 0;
   color: var(--color-text-muted);
   font-size: 12px;
+}
+.resendForm {
+  margin-top: 10px;
+  text-align: center;
+}
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 9px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.linkButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 .form {
   margin-top: 14px;
@@ -126,6 +147,15 @@
   gap: 8px;
   cursor: pointer;
 }
+.remember span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.remember small {
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
 .checkbox {
   appearance: none;
   width: 15px;
@@ -136,7 +166,8 @@
   cursor: pointer;
 }
 .checkbox:checked {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(14, 13, 13, 0.5);
+  border-color: rgba(14, 13, 13, 0.5);
 }
 .link {
   text-decoration: underline;
@@ -208,6 +239,14 @@
 .registerCard .form {
   margin-top: 10px;
 }
+.nameFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.nameField {
+  min-width: 0;
+}
 .registerCard .labelSpaced {
   margin-top: 12px;
 }
@@ -249,5 +288,15 @@
 
   .registerCard {
     padding: 20px 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .nameFields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .nameField + .nameField {
+    margin-top: 12px;
   }
 }

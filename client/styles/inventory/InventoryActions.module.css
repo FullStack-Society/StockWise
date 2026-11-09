@@ -69,13 +69,32 @@
 
 .form {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   margin-top: 20px;
 }
-.row2 {
+.formSection {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
+}
+.sectionTitle {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  min-width: 0;
+}
+.fieldFull {
+  grid-column: 1 / -1;
 }
 .field {
   display: grid;
@@ -123,6 +142,94 @@
 .invalid {
   border-color: var(--color-danger);
 }
+
+.upcFieldControl {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.upcScanButton,
+.upcScannerCancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.upcScanButton:hover,
+.upcScannerCancel:hover {
+  border-color: var(--color-accent);
+}
+
+.upcScannerOverlay {
+  position: fixed;
+  z-index: 2147483647;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--color-overlay);
+  overflow-y: auto;
+}
+
+.upcScannerModal {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 440px);
+  max-height: calc(100dvh - 32px);
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-modal);
+  color: var(--color-text);
+  box-shadow: 0 24px 70px var(--color-shadow);
+}
+
+.upcScannerModal header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.upcScannerModal h3,
+.upcScannerModal p {
+  margin: 0;
+}
+
+.upcScannerModal h3 { font-size: 14px; }
+.upcScannerModal p { color: var(--color-text-muted); font-size: 11px; line-height: 1.5; }
+
+.upcScannerModal header button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.upcScannerModal video {
+  width: 100%;
+  min-height: 180px;
+  max-height: 55dvh;
+  background: #090c10;
+  object-fit: cover;
+}
+
+.upcScannerCancel { width: 100%; }
 
 .fieldError {
   margin: 0;
@@ -190,8 +297,12 @@
 }
 
 @media (max-width: 560px) {
-  .row2 {
+  .fieldGrid {
     grid-template-columns: 1fr;
+  }
+
+  .fieldFull {
+    grid-column: auto;
   }
 
   .confirmActions {

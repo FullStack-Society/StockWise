@@ -7,7 +7,6 @@ import { getOrganizationPageContext } from "@/lib/organization/page-context";
 import { getAccountSettings, getInventoryDefaults } from "@/lib/api/settings";
 import {
   listCategories,
-  listInventoryLocations,
   listInventoryMovements,
   listProducts,
 } from "@/lib/api/inventory";
@@ -25,30 +24,16 @@ type PageProps = {
 export default async function InventoryPage({ searchParams }: PageProps) {
   const { organization } = await getOrganizationPageContext();
   if (!organization) return <OrganizationSetup />;
-  const [locations, categories, params, settings, inventoryDefaults] = await Promise.all([
-    listInventoryLocations(),
+  const [categories, params, settings, inventoryDefaults, products, history] = await Promise.all([
     listCategories(),
     searchParams,
     getAccountSettings(),
     getInventoryDefaults(),
+    listProducts(),
+    listInventoryMovements(),
   ]);
-  if (locations.length === 0)
-    throw new Error(
-      "No inventory locations are configured for this organization.",
-    );
   const view = parseSearchParams(params);
-  const selectedLocation =
-    locations.find(
-      (location) => String(location.id) === view.filters.locationId,
-    ) ?? locations[0];
-  const filters = {
-    ...view.filters,
-    locationId: String(selectedLocation.id),
-  };
-  const [products, history] = await Promise.all([
-    listProducts(selectedLocation.id),
-    listInventoryMovements(selectedLocation.id),
-  ]);
+  const filters = view.filters;
   const inventory = applyView(
     products,
     { ...view, filters },
@@ -61,7 +46,6 @@ export default async function InventoryPage({ searchParams }: PageProps) {
         {...inventory}
         exportProducts={products}
         categories={categories}
-        locationId={selectedLocation.id}
         defaultReorderPoint={inventoryDefaults.default_reorder_point}
         history={history}
         filters={filters}

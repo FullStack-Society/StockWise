@@ -10,7 +10,6 @@ import ProductFormFields from "./ProductFormFields";
 type Props = {
   product: Product | null;
   categories: Category[];
-  locationId: number;
   defaultReorderPoint: number;
   onClose: () => void;
 };
@@ -18,7 +17,6 @@ type Props = {
 export default function ProductModal({
   product,
   categories,
-  locationId,
   defaultReorderPoint,
   onClose,
 }: Props) {
@@ -56,6 +54,9 @@ export default function ProductModal({
       className={styles.modal}
       aria-labelledby="product-modal-title"
       onClose={onClose}
+      onCancel={(event) => {
+        if (isPending) event.preventDefault();
+      }}
     >
       <div className={styles.modalBody}>
         <header className={styles.modalHeader}>
@@ -75,7 +76,6 @@ export default function ProductModal({
           <ProductFormFields
             product={product}
             categories={categories}
-            locationId={locationId}
             defaultReorderPoint={defaultReorderPoint}
             errors={errors}
           />

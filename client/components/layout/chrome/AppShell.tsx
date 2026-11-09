@@ -19,7 +19,10 @@ export default function AppShell({
   organizationId: number | null;
 }) {
   return (
-    <UserPreferencesProvider preferences={settings}>
+    <UserPreferencesProvider
+      preferences={settings}
+      initialAvatarData={settings.avatar_data}
+    >
       <StockAlertMonitor organizationId={organizationId} />
       <UsageAnalyticsTracker organizationId={organizationId} />
       <PresenceHeartbeat organizationId={organizationId} />

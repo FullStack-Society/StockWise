@@ -14,7 +14,10 @@ export type AccountSettings = {
   density: "comfortable" | "compact";
   auto_sync_reports: boolean;
   prioritize_low_stock: boolean;
+  avatar_data: string | null;
 };
+
+export type AccountAvatar = { avatar_data: string | null };
 
 export type TwoFactorStatus = { enabled: boolean };
 export type InventoryDefaults = { default_reorder_point: number };
@@ -91,6 +94,14 @@ export function updateAccountProfile(
   return apiRequest<AccountSettings>(ENDPOINTS.settings.profile, {
     method: "PUT",
     body: input,
+    signActor: true,
+  });
+}
+
+export function updateAccountAvatar(avatarData: string) {
+  return apiRequest<AccountAvatar>(ENDPOINTS.settings.avatar, {
+    method: "PUT",
+    body: { avatar_data: avatarData },
     signActor: true,
   });
 }

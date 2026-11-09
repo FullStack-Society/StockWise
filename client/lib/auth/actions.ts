@@ -14,7 +14,13 @@ import {
   getOrCreateLoginDeviceId,
   rememberLastOrganization,
 } from "./session";
-import { registerAccount, verifyCredentials, verifyTwoFactorCredential } from "./users";
+import {
+  requestRegistrationCode,
+  resendRegistrationCode as resendRegistrationCodeRequest,
+  verifyCredentials,
+  verifyRegistrationCode,
+  verifyTwoFactorCredential,
+} from "./users";
 import { listOrganizations, publishMemberLogin } from "@/lib/api/organizations";
 
 export type LoginState = {
@@ -24,8 +30,19 @@ export type LoginState = {
   challengeToken?: string;
   remember?: boolean;
 };
-export type RegisterState = { error?: string; name?: string; email?: string };
-export type ForgotPasswordState = { error?: string; message?: string; email?: string };
+export type RegisterState = {
+  error?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  verificationRequired?: boolean;
+};
+export type ResendRegistrationState = { error?: string; message?: string };
+export type ForgotPasswordState = {
+  error?: string;
+  message?: string;
+  email?: string;
+};
 export type ResetPasswordState = { error?: string; success?: boolean };
 export type TwoFactorLoginState = { error?: string };
 
@@ -35,7 +52,10 @@ async function notifyOrganizationOfLogin() {
   try {
     await publishMemberLogin();
   } catch (error) {
-    console.error("[StockWise] Unable to create the organization login alert:", error);
+    console.error(
+      "[StockWise] Unable to create the organization login alert:",
+      error,
+    );
   }
 }
 
@@ -43,7 +63,9 @@ export async function requestPasswordReset(
   _prev: ForgotPasswordState,
   formData: FormData,
 ): Promise<ForgotPasswordState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   if (!email) return { error: "Enter your email address.", email };
   try {
     await apiRequest(ENDPOINTS.auth.forgotPassword, {
@@ -52,7 +74,10 @@ export async function requestPasswordReset(
     });
   } catch (error) {
     return {
-      error: error instanceof ApiError ? error.message : "Unable to send the request right now.",
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "Unable to send the request right now.",
       email,
     };
   }
@@ -69,7 +94,8 @@ export async function submitPasswordReset(
   const token = String(formData.get("token") ?? "");
   const password = String(formData.get("password") ?? "");
   const confirmation = String(formData.get("confirm_password") ?? "");
-  if (password !== confirmation) return { error: "The passwords do not match." };
+  if (password !== confirmation)
+    return { error: "The passwords do not match." };
   try {
     await apiRequest(ENDPOINTS.auth.resetPassword, {
       method: "POST",
@@ -78,7 +104,10 @@ export async function submitPasswordReset(
     return { success: true };
   } catch (error) {
     return {
-      error: error instanceof ApiError ? error.message : "Unable to reset your password right now.",
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "Unable to reset your password right now.",
     };
   }
 }
@@ -87,67 +116,159 @@ export async function register(
   _prev: RegisterState,
   formData: FormData,
 ): Promise<RegisterState> {
-  const name = String(formData.get("name") ?? "").trim();
+  const firstName = String(formData.get("first_name") ?? "").trim();
+  const lastName = String(formData.get("last_name") ?? "").trim();
+  const name = [firstName, lastName].filter(Boolean).join(" ");
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
   const confirmation = String(formData.get("confirm_password") ?? "");
 
-  if (!name || name.length > 160) {
-    return { error: "Enter your name (up to 160 characters).", name, email };
+  if (
+    !firstName ||
+    !lastName ||
+    firstName.length + lastName.length + 1 > 160
+  ) {
+    return {
+      error: "Enter a first and last name (up to 160 characters total).",
+      firstName,
+      lastName,
+      email,
+    };
   }
   if (!email || !password) {
-    return { error: "Enter your email and password.", name, email };
+    return {
+      error: "Enter your email and password.",
+      firstName,
+      lastName,
+      email,
+    };
+  }
+  if (!/^[^@]+@(gmail\.com|googlemail\.com)$/.test(email)) {
+    return {
+      error: "Use a Gmail address to register manually.",
+      firstName,
+      lastName,
+      email,
+    };
   }
   if (password.length < 12 || password.length > 128) {
     return {
       error: "Use a password between 12 and 128 characters.",
-      name,
+      firstName,
+      lastName,
       email,
     };
   }
   if (!/[A-Z]/.test(password)) {
     return {
       error: "Your password must include at least one capital letter.",
-      name,
+      firstName,
+      lastName,
       email,
     };
   }
   if (!/[^A-Za-z0-9]/.test(password)) {
     return {
       error: "Your password must include at least one special character.",
-      name,
+      firstName,
+      lastName,
       email,
     };
   }
   if (password !== confirmation) {
-    return { error: "The passwords do not match.", name, email };
+    return {
+      error: "The passwords do not match.",
+      firstName,
+      lastName,
+      email,
+    };
   }
   try {
-    const user = await registerAccount(name, email, password);
-    await createSession({ ...user, organizationId: null }, false);
+    await requestRegistrationCode(name, email, password);
+    return { verificationRequired: true, firstName, lastName, email };
   } catch (error) {
     unstable_rethrow(error);
     if (error instanceof ApiError && error.status === 409) {
-      return {
-        error: "An account with this email already exists. Sign in instead.",
-        name,
-        email,
-      };
+      redirect("/login?accountExists=1");
     }
     console.error("[StockWise] Registration failed:", error);
     return {
       error:
         error instanceof ApiError
           ? error.message
-          : "Unable to create your account right now.",
-      name,
+          : "Unable to begin registration right now.",
+      firstName,
+      lastName,
       email,
+    };
+  }
+}
+
+export async function verifyRegistration(
+  _prev: RegisterState,
+  formData: FormData,
+): Promise<RegisterState> {
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const code = String(formData.get("code") ?? "")
+    .replace(/\D/g, "")
+    .slice(0, 8);
+  if (!email || !code) {
+    return {
+      error: "Enter the 8-digit code sent to your Gmail inbox.",
+      email,
+      verificationRequired: true,
+    };
+  }
+
+  try {
+    const user = await verifyRegistrationCode(email, code);
+    await createSession({ ...user, organizationId: null }, false);
+  } catch (error) {
+    unstable_rethrow(error);
+    if (error instanceof ApiError && error.status === 409) {
+      return {
+        error: "An account with this email already exists. Sign in instead.",
+        email,
+        verificationRequired: true,
+      };
+    }
+    return {
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "Unable to verify your Gmail address right now.",
+      email,
+      verificationRequired: true,
     };
   }
 
   redirect(ROUTES.users);
+}
+
+export async function resendRegistrationVerification(
+  _prev: ResendRegistrationState,
+  formData: FormData,
+): Promise<ResendRegistrationState> {
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  if (!email) return { error: "Enter your Gmail address first." };
+  try {
+    const result = await resendRegistrationCodeRequest(email);
+    return { message: result.message };
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "Unable to resend the verification code right now.",
+    };
+  }
 }
 
 export async function login(
@@ -161,7 +282,14 @@ export async function login(
   const remember = formData.get("remember") === "on";
 
   if (!email || !password) {
-    return { error: "Enter your email and password.", email };
+    return { error: "Enter your email and password.", email, remember };
+  }
+  if (!/^[^@]+@(gmail\.com|googlemail\.com)$/.test(email)) {
+    return {
+      error: "Sign in manually with your Gmail address.",
+      email,
+      remember,
+    };
   }
 
   let authResult: Awaited<ReturnType<typeof verifyCredentials>>;
@@ -174,7 +302,7 @@ export async function login(
   } catch (error) {
     unstable_rethrow(error);
     if (error instanceof ApiError && error.status === 401) {
-      return { error: "Invalid email or password.", email };
+      return { error: "Invalid email or password.", email, remember };
     }
     console.error("[StockWise] Login failed:", error);
     return {
@@ -183,6 +311,7 @@ export async function login(
           ? error.message
           : "Unable to sign in right now. Please try again.",
       email,
+      remember,
     };
   }
 
@@ -208,6 +337,7 @@ export async function login(
           ? error.message
           : "Unable to load your organizations. Please try again.",
       email,
+      remember,
     };
   }
 
@@ -245,7 +375,8 @@ export async function verifySecondFactor(
     String(formData.get("challenge_token") ?? "") ||
     jar.get(MFA_CHALLENGE_COOKIE)?.value ||
     "";
-  if (!challengeToken || !code) return { error: "Enter the current authenticator code." };
+  if (!challengeToken || !code)
+    return { error: "Enter the current authenticator code." };
 
   try {
     const user = await verifyTwoFactorCredential(

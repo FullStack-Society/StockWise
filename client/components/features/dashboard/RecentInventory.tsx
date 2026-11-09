@@ -55,7 +55,7 @@ export default function RecentInventory({
               <tr key={product.id}>
                 <td className={styles.itemName}>
                   <Link
-                    href={`${ROUTES.inventory}?location=${product.locationId}&search=${encodeURIComponent(product.sku)}`}
+                    href={`${ROUTES.inventory}?search=${encodeURIComponent(product.sku)}`}
                     className={styles.productLink}
                   >
                     {product.name}

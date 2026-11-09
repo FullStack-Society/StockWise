@@ -33,4 +33,4 @@ npm-debug.log*
 Thumbs.db
 
 migrations/
-
+supabase/

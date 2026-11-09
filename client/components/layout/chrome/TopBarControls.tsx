@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Bell, Check, ChevronDown, Plus, Trash2, UserRound, X } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
@@ -11,6 +13,7 @@ import type {
   OrganizationSummary,
 } from "@/lib/api/organizations";
 import type { SessionUser } from "@/lib/auth/session";
+import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 import {
   deleteOrganizationLeaveNotificationAction,
   listOrganizationLoginNotificationsAction,
@@ -39,6 +42,8 @@ export default function TopBarControls({
   loginNotifications: initialLoginNotifications,
   invitationsEnabled,
 }: Props) {
+  const { avatarData } = useUserPreferences();
+  const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCreateOrganization, setShowCreateOrganization] = useState(false);
   const [message, setMessage] = useState("");
@@ -252,7 +257,7 @@ export default function TopBarControls({
         return;
       }
       if (accept) {
-        window.location.reload();
+        router.refresh();
       } else {
         setPendingInvitations((current) =>
           current.filter((invitation) => invitation.invitation_id !== invitationId),
@@ -271,7 +276,7 @@ export default function TopBarControls({
     startTransition(async () => {
       const result = await switchOrganizationAction(organizationId);
       if (!result.ok) setOrganizationError(result.error);
-      else window.location.reload();
+      else router.refresh();
     });
   }
 
@@ -538,7 +543,17 @@ export default function TopBarControls({
         aria-label="Open profile settings"
       >
         <div className={styles.avatar}>
-          <UserRound size={18} />
+          {avatarData ? (
+            <Image
+              src={avatarData}
+              alt=""
+              width={40}
+              height={40}
+              unoptimized
+            />
+          ) : (
+            <UserRound size={18} />
+          )}
         </div>
         <div className={styles.userText}>
           <p className={styles.userName}>{user?.name}</p>

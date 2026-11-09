@@ -66,6 +66,13 @@ export default function SettingsPage({
     router.replace(`/pages/settings?section=${section}`, { scroll: false });
   }
 
+  function updateTwoFactorHealth(enabled: boolean) {
+    setSecurityStatus((current) => ({
+      two_factor_enabled: enabled,
+      google_account_connected: current?.google_account_connected ?? false,
+    }));
+  }
+
   return (
     <div className={styles.layout}>
       <aside className={styles.sidebarCol}>
@@ -92,7 +99,10 @@ export default function SettingsPage({
         )}
         {active === "security" && (
           <>
-            <SecurityPanel securityStatus={securityStatus} />
+            <SecurityPanel
+              securityStatus={securityStatus}
+              onTwoFactorChange={updateTwoFactorHealth}
+            />
             {isOwner &&
               organizationId !== null &&
               organizationName !== null && (

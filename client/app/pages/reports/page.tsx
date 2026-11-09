@@ -22,6 +22,8 @@ import {
 } from "@/lib/api/reports";
 import UsageAnalyticsCard from "@/components/features/reports/UsageAnalyticsCard";
 import { getUsageAnalyticsConsent } from "@/lib/api/settings";
+import { listPurchaseOrders } from "@/lib/api/orders";
+import { getPurchaseOrderValue } from "@/lib/orders/value";
 
 export const instant = false;
 
@@ -64,14 +66,44 @@ export default async function ReportsPage({
   let report: InventoryReportData;
   let categoryNames: string[] = [];
   let usageSummary: UsageAnalyticsSummary | null = null;
+  let purchaseOrderValue = 0;
   try {
-    // Yearly reports stay anchored on the latest years even if an old URL
-    // still contains the removed year_offset navigation parameter.
-    report = await getInventoryReport(days, offset);
-    try {
-      categoryNames = (await listCategories()).map((category) => category.name);
-    } catch (error) {
-      console.error("[StockWise] Unable to load report categories:", error);
+    // These requests are independent, so start them together instead of
+    // making the report wait for categories and the optional consent check.
+    const [loadedReport, categories, analyticsConsent, orders] =
+      await Promise.all([
+        // Yearly reports stay anchored on the latest years even if an old URL
+        // still contains the removed year_offset navigation parameter.
+        getInventoryReport(days, offset),
+        listCategories().catch((error: unknown) => {
+          console.error("[StockWise] Unable to load report categories:", error);
+          return [];
+        }),
+        getUsageAnalyticsConsent().catch((error: unknown) => {
+          console.error("[StockWise] Unable to load analytics consent:", error);
+          return null;
+        }),
+        listPurchaseOrders().catch((error: unknown) => {
+          console.error(
+            "[StockWise] Unable to load purchase order totals:",
+            error,
+          );
+          return [];
+        }),
+      ]);
+    report = loadedReport;
+    categoryNames = categories.map((category) => category.name);
+    purchaseOrderValue = getPurchaseOrderValue(orders);
+
+    if (analyticsConsent?.enabled) {
+      try {
+        usageSummary = await getUsageAnalyticsSummary(30);
+      } catch (error) {
+        console.error(
+          "[StockWise] Unable to load anonymous usage analytics:",
+          error,
+        );
+      }
     }
   } catch (error) {
     const message =
@@ -90,19 +122,21 @@ export default async function ReportsPage({
     );
   }
 
-  try {
-    const analyticsConsent = await getUsageAnalyticsConsent();
-    if (analyticsConsent.enabled) {
-      usageSummary = await getUsageAnalyticsSummary(30);
-    }
-  } catch (error) {
-    console.error("[StockWise] Unable to load anonymous usage analytics:", error);
-  }
-
   return (
     <div className={`${styles.page} pageEnterReports`}>
-      <div className="pageEnterBlock"><ReportsHeader days={days} report={report} /></div>
-      <div className="pageEnterBlock pageEnterDelay1"><ReportStats report={report} /></div>
+      <div className="pageEnterBlock">
+        <ReportsHeader
+          days={days}
+          report={report}
+          purchaseOrderValue={purchaseOrderValue}
+        />
+      </div>
+      <div className="pageEnterBlock pageEnterDelay1">
+        <ReportStats
+          report={report}
+          purchaseOrderValue={purchaseOrderValue}
+        />
+      </div>
       {usageSummary && <div className="pageEnterBlock pageEnterDelay2"><UsageAnalyticsCard summary={usageSummary} /></div>}
       <div className="pageEnterBlock pageEnterDelay3"><div className={styles.chartsRow}>
         <StockMovementChart report={report} />

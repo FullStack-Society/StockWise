@@ -5,10 +5,8 @@ import styles from "@/styles/dashboard/LowStockItems.module.css";
 
 export default function LowStockItems({
   products,
-  locationId,
 }: {
   products: Product[];
-  locationId: number;
 }) {
   const items = products
     .filter((product) => product.status !== "in-stock")
@@ -26,13 +24,17 @@ export default function LowStockItems({
           <h2 id="low-stock-title">Needs attention</h2>
           <p>Products at or below their reorder point.</p>
         </div>
-        <Link href={`${ROUTES.inventory}?location=${locationId}`}>View location inventory</Link>
+        <Link href={ROUTES.inventory}>
+          View inventory
+        </Link>
       </header>
       {items.length ? (
         <ul className={styles.list}>
           {items.map((product) => (
             <li key={product.id}>
-              <Link href={`${ROUTES.inventory}?location=${locationId}&search=${encodeURIComponent(product.sku)}`}>
+              <Link
+                href={`${ROUTES.inventory}?search=${encodeURIComponent(product.sku)}`}
+              >
                 <span className={styles.product}>
                   <strong>{product.name}</strong>
                   <small>{product.sku}</small>
@@ -41,7 +43,11 @@ export default function LowStockItems({
                   <strong>{product.quantity}</strong>
                   <small>of {product.reorderPoint} reorder point</small>
                 </span>
-                <span className={product.quantity === 0 ? styles.critical : styles.low}>
+                <span
+                  className={
+                    product.quantity === 0 ? styles.critical : styles.low
+                  }
+                >
                   {product.quantity === 0 ? "Out of stock" : "Low stock"}
                 </span>
               </Link>
@@ -49,7 +55,7 @@ export default function LowStockItems({
           ))}
         </ul>
       ) : (
-        <p className={styles.empty}>No products need attention at this location.</p>
+        <p className={styles.empty}>No products need attention.</p>
       )}
     </section>
   );

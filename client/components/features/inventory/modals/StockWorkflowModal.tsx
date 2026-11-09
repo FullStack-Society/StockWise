@@ -13,7 +13,6 @@ export type StockMode = "OUT" | "ADJUST" | "STOCKTAKE";
 
 type Props = {
   product: Product;
-  locationId: number;
   mode: StockMode;
   onClose: () => void;
   onSuccess: () => void;
@@ -21,7 +20,6 @@ type Props = {
 
 export default function StockWorkflowModal({
   product,
-  locationId,
   mode,
   onClose,
   onSuccess,
@@ -56,13 +54,11 @@ export default function StockWorkflowModal({
         mode === "STOCKTAKE"
           ? await recordProductStocktakeAction(
               product.id,
-              locationId,
               amount,
               reason,
             )
           : await adjustProductStockAction(
               product.id,
-              locationId,
               mode,
               amount,
               reason,
@@ -82,6 +78,9 @@ export default function StockWorkflowModal({
       className={styles.modal}
       aria-labelledby="stock-workflow-title"
       onClose={onClose}
+      onCancel={(event) => {
+        if (isPending) event.preventDefault();
+      }}
     >
       <div className={styles.body}>
         <header className={styles.header}>

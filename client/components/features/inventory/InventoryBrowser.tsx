@@ -34,7 +34,6 @@ type Props = {
   start: number;
   exportProducts: Product[];
   categories: Category[];
-  locationId: number;
   defaultReorderPoint: number;
   history: InventoryMovement[];
   filters: InventoryFilters;
@@ -59,7 +58,6 @@ export default function InventoryBrowser({
   start,
   exportProducts,
   categories,
-  locationId,
   defaultReorderPoint,
   history,
   filters,
@@ -109,7 +107,6 @@ export default function InventoryBrowser({
     query: urlQuery,
     category,
     status,
-    locationId: urlLocationId,
   } = filters;
 
   if (urlQuery !== previousUrlQuery) {
@@ -118,12 +115,11 @@ export default function InventoryBrowser({
   }
 
   const navigate = useCallback(
-    (patch: Patch & { locationId?: string }) => {
+    (patch: Patch) => {
       const next = {
         search: urlQuery,
         category,
         status,
-        locationId: urlLocationId || String(locationId),
         page: 1,
         ...patch,
       };
@@ -131,12 +127,11 @@ export default function InventoryBrowser({
       if (next.search) qs.set("search", next.search);
       if (next.category) qs.set("category", next.category);
       if (next.status) qs.set("status", next.status);
-      if (next.locationId) qs.set("location", next.locationId);
       if (next.page > 1) qs.set("page", String(next.page));
       const url = qs.toString() ? `${pathname}?${qs}` : pathname;
       startTransition(() => router.replace(url, { scroll: false }));
     },
-    [urlQuery, category, status, urlLocationId, locationId, pathname, router],
+    [urlQuery, category, status, pathname, router],
   );
 
   useEffect(() => {
@@ -247,7 +242,6 @@ export default function InventoryBrowser({
           key={modal.mode === "edit" ? modal.product.id : "new"}
           product={modal.mode === "edit" ? modal.product : null}
           categories={categories}
-          locationId={locationId}
           defaultReorderPoint={defaultReorderPoint}
           onClose={() => setModal(null)}
         />
@@ -256,7 +250,6 @@ export default function InventoryBrowser({
         <ImportModal
           categories={categories}
           defaultReorderPoint={defaultReorderPoint}
-          locationId={locationId}
           onClose={() => setShowImport(false)}
           onImported={() => router.refresh()}
         />
@@ -264,7 +257,6 @@ export default function InventoryBrowser({
       {stockWorkflow && (
         <StockWorkflowModal
           product={stockWorkflow.product}
-          locationId={locationId}
           mode={stockWorkflow.mode}
           onClose={() => setStockWorkflow(null)}
           onSuccess={() => router.refresh()}

@@ -6,13 +6,11 @@ import { ApiError } from "@/lib/api/client";
 import {
   adjustProductStock,
   createCategory,
-  createInventoryLocation,
   createProduct,
   deleteCategory,
   deleteProduct,
   listStockAlerts,
   recordProductStocktake,
-  transferProductStock,
   updateProduct,
 } from "@/lib/api/inventory";
 import { requireOrganizationSession } from "@/lib/auth/session";
@@ -20,6 +18,7 @@ import { getOrganizationPageContext } from "@/lib/organization/page-context";
 import type { InventoryImportRow, ProductInput } from "./types";
 import { ROUTES } from "@/lib/routes";
 import { parseProductForm } from "./validation";
+import { isUpcA } from "./upc";
 
 export type ActionResult =
   | { ok: true }
@@ -46,8 +45,6 @@ export async function getStockAlertSnapshot() {
       sku: product.sku,
       quantity: product.quantity,
       reorderPoint: product.reorderPoint,
-      locationId: product.locationId,
-      locationName: product.locationName,
       status: product.status,
     })),
   };
@@ -55,12 +52,19 @@ export async function getStockAlertSnapshot() {
 
 function failure(error: unknown): ActionResult {
   if (error instanceof ApiError) {
-    // Duplicate SKU: show it next to the SKU field.
+    // Duplicate SKU / UPC: show the issue beside the matching field.
     if (error.status === 409 && /sku/i.test(error.message)) {
       return {
         ok: false,
         error: error.message,
         fieldErrors: { sku: error.message },
+      };
+    }
+    if (error.status === 409 && /upc/i.test(error.message)) {
+      return {
+        ok: false,
+        error: error.message,
+        fieldErrors: { upc: error.message },
       };
     }
     return { ok: false, error: error.message };
@@ -83,8 +87,8 @@ export async function saveProduct(formData: FormData): Promise<ActionResult> {
 
   try {
     if (parsed.id)
-      await updateProduct(parsed.id, parsed.values, parsed.locationId);
-    else await createProduct(parsed.values, parsed.locationId);
+      await updateProduct(parsed.id, parsed.values);
+    else await createProduct(parsed.values);
   } catch (error) {
     unstable_rethrow(error);
     return failure(error);
@@ -164,12 +168,9 @@ export async function deleteProductsAction(
 
 export async function importProductsAction(
   rows: InventoryImportRow[],
-  locationId: number,
 ): Promise<InventoryImportResult> {
   await requireOrganizationSession();
   if (
-    !Number.isInteger(locationId) ||
-    locationId <= 0 ||
     !Array.isArray(rows) ||
     rows.length === 0 ||
     rows.length > 500
@@ -199,15 +200,16 @@ export async function importProductsAction(
       typeof value.sku !== "string" ||
       !value.sku.trim() ||
       value.sku.length > 100 ||
+      (value.upc !== null && typeof value.upc !== "string") ||
+      (typeof value.upc === "string" &&
+        value.upc.length > 0 &&
+        !isUpcA(value.upc)) ||
       (value.description !== null && typeof value.description !== "string") ||
       (typeof value.description === "string" &&
         value.description.length > 1000) ||
       typeof value.price !== "number" ||
       !Number.isFinite(value.price) ||
       value.price < 0 ||
-      typeof value.unitCost !== "number" ||
-      !Number.isFinite(value.unitCost) ||
-      value.unitCost < 0 ||
       !Number.isInteger(value.quantity) ||
       value.quantity < 0 ||
       value.quantity > maxInt ||
@@ -228,6 +230,7 @@ export async function importProductsAction(
           ...value,
           name: value.name.trim(),
           sku: value.sku.trim(),
+          upc: value.upc?.trim() || null,
           description: value.description?.trim() || null,
         },
       });
@@ -241,7 +244,7 @@ export async function importProductsAction(
       const index = cursor++;
       const entry = validRows[index];
       try {
-        await createProduct(entry.product, locationId);
+        await createProduct(entry.product);
         imported++;
       } catch (error) {
         failures.push({
@@ -267,7 +270,6 @@ export async function importProductsAction(
 
 export async function adjustProductStockAction(
   productId: number,
-  locationId: number,
   transactionType: "OUT" | "ADJUST",
   quantity: number,
   remarks: string,
@@ -276,8 +278,6 @@ export async function adjustProductStockAction(
   if (
     !Number.isInteger(productId) ||
     productId <= 0 ||
-    !Number.isInteger(locationId) ||
-    locationId <= 0 ||
     !Number.isInteger(quantity) ||
     quantity === 0 ||
     Math.abs(quantity) > 2_147_483_647 ||
@@ -291,7 +291,6 @@ export async function adjustProductStockAction(
   try {
     await adjustProductStock(
       productId,
-      locationId,
       transactionType,
       quantity,
       remarks.trim(),
@@ -308,7 +307,6 @@ export async function adjustProductStockAction(
 
 export async function recordProductStocktakeAction(
   productId: number,
-  locationId: number,
   countedQuantity: number,
   remarks: string,
 ): Promise<ActionResult> {
@@ -316,8 +314,6 @@ export async function recordProductStocktakeAction(
   if (
     !Number.isInteger(productId) ||
     productId <= 0 ||
-    !Number.isInteger(locationId) ||
-    locationId <= 0 ||
     !Number.isInteger(countedQuantity) ||
     countedQuantity < 0 ||
     !remarks.trim() ||
@@ -328,82 +324,12 @@ export async function recordProductStocktakeAction(
   try {
     await recordProductStocktake(
       productId,
-      locationId,
       countedQuantity,
       remarks.trim(),
     );
     revalidatePath(ROUTES.inventory);
     revalidatePath(ROUTES.dashboard);
     revalidatePath(ROUTES.reports);
-    return { ok: true };
-  } catch (error) {
-    unstable_rethrow(error);
-    return failure(error);
-  }
-}
-
-export async function transferProductStockAction(
-  productId: number,
-  sourceLocationId: number,
-  destinationLocationId: number,
-  quantity: number,
-  remarks: string,
-): Promise<ActionResult> {
-  await requireOrganizationSession();
-  if (
-    !Number.isInteger(productId) ||
-    productId <= 0 ||
-    !Number.isInteger(sourceLocationId) ||
-    sourceLocationId <= 0 ||
-    !Number.isInteger(destinationLocationId) ||
-    destinationLocationId <= 0 ||
-    sourceLocationId === destinationLocationId ||
-    !Number.isInteger(quantity) ||
-    quantity <= 0 ||
-    quantity > 2_147_483_647 ||
-    !remarks.trim() ||
-    remarks.trim().length > 500
-  ) {
-    return { ok: false, error: "Enter a valid transfer and reason." };
-  }
-  try {
-    await transferProductStock(
-      productId,
-      sourceLocationId,
-      destinationLocationId,
-      quantity,
-      remarks.trim(),
-    );
-    revalidatePath(ROUTES.inventory);
-    revalidatePath(ROUTES.dashboard);
-    revalidatePath(ROUTES.reports);
-    return { ok: true };
-  } catch (error) {
-    unstable_rethrow(error);
-    return failure(error);
-  }
-}
-
-export async function createInventoryLocationAction(
-  locationName: string,
-): Promise<ActionResult> {
-  const { organization } = await getOrganizationPageContext();
-  if (!organization) {
-    return { ok: false, error: "Choose an organization first." };
-  }
-  if (organization.role !== "owner" && organization.role !== "manager") {
-    return { ok: false, error: "Only owners and managers can add locations." };
-  }
-  const name = locationName.trim();
-  if (!name || name.length > 120) {
-    return {
-      ok: false,
-      error: "Enter a location name of up to 120 characters.",
-    };
-  }
-  try {
-    await createInventoryLocation(name);
-    revalidatePath(ROUTES.inventory);
     return { ok: true };
   } catch (error) {
     unstable_rethrow(error);

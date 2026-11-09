@@ -11,6 +11,7 @@ export default async function LoginPage({
   searchParams: Promise<{
     loggedOut?: string;
     googleError?: string;
+    accountExists?: string;
     twoFactor?: string;
   }>;
 }) {
@@ -21,9 +22,10 @@ export default async function LoginPage({
 
   return (
     <AuthPage
-      key={params.loggedOut === "1" ? "after-logout" : "login-entry"}
+      key={`${params.loggedOut === "1" ? "after-logout" : "login-entry"}-${params.accountExists === "1" ? "account-exists" : ""}`}
       initialMode="login"
       googleError={params.googleError === "1"}
+      accountExists={params.accountExists === "1"}
       twoFactorRequired={params.twoFactor === "1"}
     />
   );

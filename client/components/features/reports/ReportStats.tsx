@@ -2,30 +2,29 @@
 
 import {
   DollarSign,
-  Package,
-  ArrowUpFromLine,
-  ArrowDownToLine,
+  Boxes,
+  ShoppingCart,
   TriangleAlert,
 } from "lucide-react";
 import type { InventoryReportData } from "@/lib/api/reports";
-import { formatPreferredCurrency } from "@/lib/utils/format";
+import { formatDate, formatPreferredCurrency } from "@/lib/utils/format";
 import styles from "@/styles/reports/ReportStats.module.css";
 import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 
 const ICONS = {
   value: DollarSign,
-  products: Package,
-  issued: ArrowUpFromLine,
-  received: ArrowDownToLine,
+  stockUnits: Boxes,
   alerts: TriangleAlert,
-  cost: Package,
+  purchaseOrders: DollarSign,
+  sales: ShoppingCart,
+  salesRevenue: DollarSign,
 };
 
-function comparison(current: number, previous: number) {
+function comparison(current: number, previous: number, subject = "activity") {
   if (previous === 0)
     return current === 0
-      ? "No movement in either period"
-      : "New movement in this period";
+      ? `No ${subject} in either period`
+      : `New ${subject} in this period`;
   const percent = ((current - previous) / previous) * 100;
   const rounded = Math.abs(percent).toFixed(1);
   return `${percent >= 0 ? "+" : "−"}${rounded}% vs previous period`;
@@ -33,10 +32,12 @@ function comparison(current: number, previous: number) {
 
 export default function ReportStats({
   report,
+  purchaseOrderValue,
 }: {
   report: InventoryReportData;
+  purchaseOrderValue: number;
 }) {
-  const { currency, currencyRates } = useUserPreferences();
+  const { currency, currencyRates, date_format } = useUserPreferences();
   const stats = [
     {
       id: "value",
@@ -51,43 +52,51 @@ export default function ReportStats({
       trend: "up" as const,
     },
     {
-      id: "cost",
-      label: "Stock Cost Value",
+      id: "purchaseOrders",
+      label: "Purchase Order Value",
       value: formatPreferredCurrency(
-        Number(report.stock_cost_value),
+        purchaseOrderValue,
         currency,
         currencyRates,
       ),
-      change: "On-hand units × unit cost",
-      icon: "cost" as const,
+      change: "Across all recorded orders",
+      icon: "purchaseOrders" as const,
       trend: "up" as const,
     },
     {
-      id: "products",
-      label: "Active Products",
-      value: report.product_count.toLocaleString(),
-      change: `${report.stock_units.toLocaleString()} units in stock`,
-      icon: "products" as const,
+      id: "stockUnits",
+      label: "Units in Stock",
+      value: report.stock_units.toLocaleString(),
+      change: "Across all active products",
+      icon: "stockUnits" as const,
       trend: "up" as const,
     },
     {
-      id: "received",
-      label: "Units Received",
-      value: report.units_received.toLocaleString(),
-      change: `${report.previous_units_received.toLocaleString()} units in previous period`,
-      icon: "received" as const,
-      trend: "up" as const,
+      id: "salesRevenue",
+      label: "Recorded Sales Revenue",
+      value: formatPreferredCurrency(
+        Number(report.sales_revenue),
+        currency,
+        currencyRates,
+      ),
+      change: `Earlier sales aren’t included · tracking since ${formatDate(
+        report.sales_revenue_tracking_since,
+        date_format,
+      )}`,
+      icon: "salesRevenue" as const,
+      trend: "neutral" as const,
     },
     {
-      id: "issued",
-      label: "Units Issued",
-      value: report.units_issued.toLocaleString(),
-      change: comparison(report.units_issued, report.previous_units_issued),
-      icon: "issued" as const,
-      trend:
-        report.units_issued >= report.previous_units_issued
-          ? ("up" as const)
-          : ("down" as const),
+      id: "sales",
+      label: "Sales",
+      value: report.sales_count.toLocaleString(),
+      change: `${report.units_sold.toLocaleString()} units sold · ${comparison(
+        report.sales_count,
+        report.previous_sales_count,
+        "sales",
+      )}`,
+      icon: "sales" as const,
+      trend: "neutral" as const,
     },
     {
       id: "alerts",
@@ -116,7 +125,13 @@ export default function ReportStats({
             </div>
             <div className={styles.statValue}>{s.value}</div>
             <div
-              className={s.trend === "up" ? styles.changeUp : styles.changeDown}
+              className={
+                s.trend === "neutral"
+                  ? styles.changeNeutral
+                  : s.trend === "up"
+                    ? styles.changeUp
+                    : styles.changeDown
+              }
             >
               {s.change}
             </div>

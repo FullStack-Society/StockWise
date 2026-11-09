@@ -13,6 +13,7 @@ import {
   softDeleteCurrentAccount,
   updateAccountPreferences,
   updateAccountProfile,
+  updateAccountAvatar,
   getTwoFactorStatus as loadTwoFactorStatus,
   beginTwoFactorEnrollment as beginTwoFactorEnrollmentRequest,
   confirmTwoFactorEnrollment as confirmTwoFactorEnrollmentRequest,
@@ -154,6 +155,34 @@ export async function saveProfileSettings(input: {
         error instanceof ApiError
           ? error.message
           : "Could not save your profile settings. Try again.",
+    };
+  }
+}
+
+export async function saveProfileAvatar(
+  avatarData: string,
+): Promise<SettingsActionResult> {
+  await requireSession();
+  if (
+    typeof avatarData !== "string" ||
+    avatarData.length > 900_000 ||
+    !/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(
+      avatarData,
+    )
+  ) {
+    return { ok: false, error: "Choose a valid JPEG, PNG, or WebP image." };
+  }
+  try {
+    await updateAccountAvatar(avatarData);
+    return { ok: true };
+  } catch (error) {
+    console.error("[StockWise] Unable to save profile image:", error);
+    return {
+      ok: false,
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "Could not save your profile image. Try again.",
     };
   }
 }

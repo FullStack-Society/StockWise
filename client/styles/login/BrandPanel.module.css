@@ -5,6 +5,7 @@
   justify-content: center;
   padding: 64px 70px;
   background: var(--color-ink);
+  color: var(--color-text);
 }
 .brandInner {
   width: 100%;

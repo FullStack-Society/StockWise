@@ -59,7 +59,12 @@ export async function createSession(user: SessionUser, remember: boolean) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    ...(remember ? { maxAge: seconds } : {}),
+    ...(remember
+      ? {
+          maxAge: seconds,
+          expires: new Date(Date.now() + seconds * 1000),
+        }
+      : {}),
   });
 }
 
@@ -82,17 +87,25 @@ export async function rememberLastOrganization(
   organizationId: number | null,
 ) {
   const jar = await cookies();
-  if (!organizationId || !Number.isSafeInteger(organizationId) || organizationId <= 0) {
+  if (
+    !organizationId ||
+    !Number.isSafeInteger(organizationId) ||
+    organizationId <= 0
+  ) {
     jar.delete(LAST_ORGANIZATION_COOKIE);
     return;
   }
-  jar.set(LAST_ORGANIZATION_COOKIE, `${email.trim().toLowerCase()}|${organizationId}`, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: LONG_SESSION,
-  });
+  jar.set(
+    LAST_ORGANIZATION_COOKIE,
+    `${email.trim().toLowerCase()}|${organizationId}`,
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: LONG_SESSION,
+    },
+  );
 }
 
 /** Returns the logged-in user, or null. Verified on the server every time. */

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Link2, ShieldCheck, Smartphone } from "lucide-react";
 import type { AccountSecurityStatus } from "@/lib/api/settings";
+import { QRCodeSVG } from "qrcode.react";
 import {
   beginTwoFactorEnrollment,
   confirmTwoFactorEnrollment,
@@ -15,9 +17,12 @@ import PrivacySection from "./PrivacySection";
 
 export default function SecurityPanel({
   securityStatus,
+  onTwoFactorChange,
 }: {
   securityStatus: AccountSecurityStatus | null;
+  onTwoFactorChange: (enabled: boolean) => void;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [mfaEnabled, setMfaEnabled] = useState<boolean | null>(null);
   const [enrollment, setEnrollment] = useState<{
@@ -28,6 +33,8 @@ export default function SecurityPanel({
   const [disableCode, setDisableCode] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [mfaMessage, setMfaMessage] = useState("");
+  const [enrollmentError, setEnrollmentError] = useState("");
+  const enrollmentDialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -43,12 +50,19 @@ export default function SecurityPanel({
     };
   }, []);
 
+  useEffect(() => {
+    const dialog = enrollmentDialog.current;
+    if (enrollment && dialog && !dialog.open) dialog.showModal();
+    if (!enrollment && dialog?.open) dialog.close();
+  }, [enrollment]);
+
   function startEnrollment() {
     setMfaMessage("");
     startTransition(async () => {
       try {
         setEnrollment(await beginTwoFactorEnrollment());
         setEnrollmentCode("");
+        setEnrollmentError("");
       } catch {
         setMfaMessage("Could not start authenticator setup. Try again.");
       }
@@ -57,16 +71,21 @@ export default function SecurityPanel({
 
   function confirmEnrollment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMfaMessage("");
+    setEnrollmentError("");
     startTransition(async () => {
       try {
         const result = await confirmTwoFactorEnrollment(enrollmentCode);
         setMfaEnabled(true);
+        onTwoFactorChange(true);
         setEnrollment(null);
+        setEnrollmentError("");
         setRecoveryCodes(result.recovery_codes);
         setMfaMessage("Two-factor authentication is enabled. Save your recovery codes now.");
+        router.refresh();
       } catch {
-        setMfaMessage("That code was not accepted. Enter the current code from your authenticator app.");
+        setEnrollmentError(
+          "That code did not match. Use a fresh code from the authenticator entry made from this QR; codes change every 30 seconds. If it still fails, sync your phone’s date and time, cancel setup, and scan a newly generated QR.",
+        );
       }
     });
   }
@@ -78,9 +97,11 @@ export default function SecurityPanel({
       try {
         await disableTwoFactor(disableCode);
         setMfaEnabled(false);
+        onTwoFactorChange(false);
         setDisableCode("");
         setRecoveryCodes([]);
         setMfaMessage("Two-factor authentication is disabled.");
+        router.refresh();
       } catch {
         setMfaMessage("Enter a valid authenticator code or unused recovery code.");
       }
@@ -125,40 +146,6 @@ export default function SecurityPanel({
               {isPending ? "Updating…" : "Turn off two-factor authentication"}
             </button>
           </form>
-        ) : enrollment ? (
-          <div className={styles.mfaSetup}>
-            <p className={styles.mfaDescription}>
-              In your authenticator app, add an account using the setup key below. Choose time-based codes (TOTP).
-            </p>
-            <div className={styles.secretKey}>
-              <span>Setup key</span>
-              <code>{enrollment.secret}</code>
-            </div>
-            <form className={styles.mfaCodeForm} onSubmit={confirmEnrollment}>
-              <label className={styles.field}>
-                <span className={styles.fieldLabel}>Enter the 6-digit app code to confirm</span>
-                <input
-                  className={styles.input}
-                  value={enrollmentCode}
-                  onChange={(event) => setEnrollmentCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  minLength={6}
-                  maxLength={6}
-                  required
-                />
-              </label>
-              <div className={styles.mfaActions}>
-                <button type="submit" className={styles.button} disabled={isPending}>
-                  <ShieldCheck size={12} aria-hidden />
-                  {isPending ? "Verifying…" : "Verify and enable"}
-                </button>
-                <button type="button" className={styles.secondaryButton} onClick={() => setEnrollment(null)}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
         ) : (
           <div className={styles.backup}>
             <div className={styles.backupIcon}>
@@ -213,6 +200,91 @@ export default function SecurityPanel({
           </span>
         </div>
       </section>
+
+      <dialog
+        ref={enrollmentDialog}
+        className={styles.enrollmentDialog}
+        aria-labelledby="authenticator-setup-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          if (isPending) return;
+          setEnrollment(null);
+          setEnrollmentCode("");
+        }}
+        onClose={() => {
+          setEnrollment(null);
+          setEnrollmentCode("");
+          setEnrollmentError("");
+        }}
+        onClick={(event) => {
+          if (!isPending && event.target === event.currentTarget) {
+            setEnrollment(null);
+            setEnrollmentCode("");
+          }
+        }}
+      >
+        {enrollment && (
+          <div className={styles.modalCard}>
+            <header className={styles.modalHeader}>
+              <div>
+                <h2 id="authenticator-setup-title">Set up authenticator</h2>
+                <p>Scan the QR code with your authenticator app.</p>
+              </div>
+            </header>
+            <div className={styles.qrCode}>
+              <QRCodeSVG
+                value={enrollment.otpauth_uri}
+                size={200}
+                level="M"
+                marginSize={4}
+                title="Authenticator setup QR code"
+              />
+            </div>
+            <p className={styles.mfaDescription}>
+              In your app, choose to add an account, then enter the current 6-digit code below to confirm setup.
+            </p>
+            <details className={styles.secretDetails}>
+              <summary>Can’t scan? Enter the setup key manually</summary>
+              <div className={styles.secretKey}>
+                <span>Setup key</span>
+                <code>{enrollment.secret}</code>
+              </div>
+            </details>
+            <form className={styles.mfaCodeForm} onSubmit={confirmEnrollment}>
+              {enrollmentError && (
+                <p className={styles.enrollmentError} role="alert">
+                  {enrollmentError}
+                </p>
+              )}
+              <label className={styles.field}>
+                <span className={styles.fieldLabel}>6-digit authenticator code</span>
+                <input
+                  className={styles.input}
+                  value={enrollmentCode}
+                  onChange={(event) => {
+                    setEnrollmentCode(event.target.value.replace(/\D/g, "").slice(0, 6));
+                    setEnrollmentError("");
+                  }}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  minLength={6}
+                  maxLength={6}
+                  required
+                />
+              </label>
+              <div className={styles.mfaActions}>
+                <button type="submit" className={styles.button} disabled={isPending}>
+                  <ShieldCheck size={12} aria-hidden />
+                  {isPending ? "Verifying…" : "Verify and enable"}
+                </button>
+                <button type="button" className={styles.secondaryButton} onClick={() => setEnrollment(null)} disabled={isPending}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </dialog>
 
       <PrivacySection />
     </div>

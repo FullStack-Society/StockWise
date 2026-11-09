@@ -21,22 +21,6 @@
   color: var(--color-text-muted);
   font-size: 12px;
 }
-.locationSelect {
-  display: grid;
-  gap: 5px;
-  min-width: 180px;
-  color: var(--color-text-muted);
-  font-size: 10px;
-}
-.locationSelect select {
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid var(--color-border);
-  background: var(--color-input);
-  color: var(--color-text);
-  font: inherit;
-  font-size: 12px;
-}
 .stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -57,9 +41,6 @@
   .header {
     align-items: stretch;
     flex-direction: column;
-  }
-  .locationSelect {
-    width: 100%;
   }
   .stats {
     grid-template-columns: 1fr;

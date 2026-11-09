@@ -3,10 +3,10 @@ import type { Product } from "./types";
 const HEADERS = [
   "Product Name",
   "SKU",
+  "UPC-A",
   "Category",
   "Description",
   "Price",
-  "Unit Cost",
   "Variant",
   "Quantity",
   "Reorder Point",
@@ -22,10 +22,10 @@ export function exportProductsCsv(products: Product[]): string {
     ...products.map((product) => [
       product.name,
       product.sku,
+      product.upc,
       product.categoryName,
       product.description,
       product.price.toFixed(2),
-      product.unitCost.toFixed(2),
       product.variant,
       product.quantity,
       product.reorderPoint,

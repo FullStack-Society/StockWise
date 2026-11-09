@@ -55,6 +55,37 @@
   font: inherit;
   font-size: 10px;
 }
+.passwordInputWrap {
+  display: flex;
+  align-items: center;
+  min-height: 35px;
+  border: 1px solid var(--color-border);
+  background: var(--color-input);
+}
+.passwordInputWrap .input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+.passwordInputWrap:focus-within {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+.passwordToggle {
+  display: grid;
+  flex: none;
+  width: 34px;
+  min-height: 33px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.passwordToggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -3px;
+}
 .input:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -175,17 +206,86 @@
   background: rgba(46, 160, 112, 0.12);
   color: var(--color-text);
 }
-.mfaSetup,
 .mfaCodeForm {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+.enrollmentDialog {
+  width: min(100% - 24px, 460px);
+  max-width: 460px;
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+.enrollmentDialog::backdrop {
+  background: rgba(5, 12, 20, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+/* modal */
+.modalCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.3);
+}
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.modalHeader h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+}
+.modalHeader p {
+  margin: 5px 0 0;
+  color: var(--color-text-muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.qrCode {
+  align-self: center;
+  padding: 10px;
+  background: #fff;
+}
+.qrCode svg {
+  display: block;
+  width: min(200px, 60vw);
+  height: auto;
+}
+.secretDetails summary {
+  color: var(--color-text-muted);
+  font-size: 9px;
+  cursor: pointer;
+}
+.secretDetails .secretKey {
+  margin-top: 8px;
 }
 .mfaDescription {
   margin: 0;
   color: var(--color-text-muted);
   font-size: 9px;
   line-height: 1.6;
+}
+.enrollmentError {
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(220, 80, 80, 0.45);
+  background: rgba(220, 80, 80, 0.1);
+  color: var(--color-text);
+  font-size: 9px;
+  line-height: 1.5;
 }
 .secretKey {
   display: flex;

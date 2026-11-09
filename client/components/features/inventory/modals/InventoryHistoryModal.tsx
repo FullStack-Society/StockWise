@@ -13,10 +13,6 @@ function monthForTimezone(timezone: string) {
 
 function activityLabel(movement: InventoryMovement): string {
   switch (movement.type) {
-    case "TRANSFER_IN":
-      return "Transfer in";
-    case "TRANSFER_OUT":
-      return "Transfer out";
     case "IN":
       return movement.remarks?.startsWith("Adjustment:")
         ? "Adjusted in"

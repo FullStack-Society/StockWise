@@ -62,21 +62,34 @@ export async function verifyTwoFactorCredential(
   };
 }
 
-export async function registerAccount(
+export async function requestRegistrationCode(
   name: string,
   email: string,
   password: string,
 ) {
-  const response = await apiRequest<LoginResponse>(ENDPOINTS.auth.register, {
+  return apiRequest<{ message: string }>(ENDPOINTS.auth.register, {
     method: "POST",
     body: { name, email, password },
   });
+}
 
-  if (!response.user) throw new Error("The registration response was incomplete.");
+export async function verifyRegistrationCode(email: string, code: string) {
+  const response = await apiRequest<LoginResponse>(ENDPOINTS.auth.verifyRegistration, {
+    method: "POST",
+    body: { email, code },
+  });
+  if (!response.user) throw new Error("The verified registration response was incomplete.");
   return {
     id: String(response.user.id),
     name: response.user.name,
     email: response.user.email,
     role: response.user.role,
   };
+}
+
+export function resendRegistrationCode(email: string) {
+  return apiRequest<{ message: string }>(ENDPOINTS.auth.resendRegistrationCode, {
+    method: "POST",
+    body: { email },
+  });
 }

@@ -36,6 +36,9 @@ export default function DestructiveConfirmationModal({
       className={styles.modal}
       aria-labelledby={titleId}
       onClose={onCancel}
+      onCancel={(event) => {
+        if (isPending) event.preventDefault();
+      }}
     >
       <div className={styles.modalBody}>
         <header className={styles.modalHeader}>

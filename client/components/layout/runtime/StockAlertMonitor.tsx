@@ -8,7 +8,7 @@ import { useUserPreferences } from "@/components/providers/UserPreferencesProvid
 type AlertProduct = Awaited<ReturnType<typeof getStockAlertSnapshot>>["products"][number];
 
 function alertKey(product: AlertProduct) {
-  return `${product.locationId}:${product.id}`;
+  return String(product.id);
 }
 
 export default function StockAlertMonitor({
@@ -57,7 +57,7 @@ export default function StockAlertMonitor({
             const notification = new Notification(
               critical ? "Critical stock" : "Low stock",
               {
-                body: `${product.name}${product.sku ? ` (${product.sku})` : ""} at ${product.locationName}: ${product.quantity} remaining${critical ? "." : ` (reorder at ${product.reorderPoint}).`}`,
+                body: `${product.name}${product.sku ? ` (${product.sku})` : ""}: ${product.quantity} remaining${critical ? "." : ` (reorder at ${product.reorderPoint}).`}`,
                 tag: `stockwise:${organizationId}:${key}:${product.status}`,
               },
             );
