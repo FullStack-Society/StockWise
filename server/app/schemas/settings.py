@@ -1,6 +1,9 @@
+import base64
+import binascii
+import re
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class ProfileSettings(BaseModel):
@@ -15,6 +18,46 @@ class ProfileSettings(BaseModel):
     density: Literal["comfortable", "compact"]
     auto_sync_reports: bool
     prioritize_low_stock: bool
+    avatar_data: str | None = None
+
+
+class AvatarUpdate(BaseModel):
+    avatar_data: str | None = Field(max_length=900_000)
+
+    @field_validator("avatar_data")
+    @classmethod
+    def validate_avatar_data(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        match = re.fullmatch(
+            r"data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})",
+            value,
+        )
+        if not match:
+            raise ValueError("Use a JPEG, PNG, or WebP image.")
+        try:
+            image_bytes = base64.b64decode(match.group(2), validate=True)
+        except (binascii.Error, ValueError) as exc:
+            raise ValueError("The image data is invalid.") from exc
+        if len(image_bytes) > 650_000:
+            raise ValueError("The resized image must be 650 KB or smaller.")
+        mime_type = match.group(1)
+        valid_signature = (
+            image_bytes.startswith(b"\xff\xd8\xff")
+            if mime_type == "image/jpeg"
+            else image_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+            if mime_type == "image/png"
+            else len(image_bytes) >= 12
+            and image_bytes.startswith(b"RIFF")
+            and image_bytes[8:12] == b"WEBP"
+        )
+        if not valid_signature:
+            raise ValueError("The image data does not match its file type.")
+        return value
+
+
+class AvatarResponse(BaseModel):
+    avatar_data: str | None
 
 
 class ProfileSettingsUpdate(BaseModel):

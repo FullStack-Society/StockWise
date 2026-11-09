@@ -9,6 +9,8 @@ from app.db import settings_repository as repository
 from app.db.session import get_db
 from app.services.auth_service import hash_password, verify_password
 from app.schemas.settings import (
+    AvatarResponse,
+    AvatarUpdate,
     PasswordUpdate,
     PreferencesUpdate,
     ProfileSettings,
@@ -260,6 +262,22 @@ def update_profile(
         raise HTTPException(
             status_code=503, detail="Unable to save profile settings."
         ) from exc
+
+
+@router.put("/avatar", response_model=AvatarResponse)
+def update_avatar(
+    request: AvatarUpdate,
+    email: str = Depends(require_signed_actor),
+    db: Session = Depends(get_db),
+):
+    try:
+        result = repository.update_avatar(db, email, request.avatar_data)
+        db.commit()
+        return result
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.error("Unable to save profile avatar (%s)", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Unable to save profile image.") from exc
 
 
 @router.put("/preferences", response_model=ProfileSettings)

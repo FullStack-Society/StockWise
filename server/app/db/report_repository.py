@@ -75,14 +75,83 @@ def get_inventory_report(
         {"organization_id": organization_id, "days": days, "timezone": timezone},
     )
     report = result.scalar_one()
-    retail_totals = db.execute(text("""
-        SELECT
-          COALESCE((SELECT SUM(s.quantity * p.unit_cost)
-            FROM public.inventory_location_stock s
-            JOIN public.products p ON p.organization_id=s.organization_id AND p.product_id=s.product_id
-            WHERE s.organization_id=:org AND p.is_deleted=false), 0)::text AS stock_cost_value
-    """), {"org": organization_id}).mappings().one()
-    report.update(dict(retail_totals))
+    sales_totals = db.execute(
+        text("""
+            WITH bounds AS (
+                SELECT ((CURRENT_TIMESTAMP AT TIME ZONE :timezone)::date
+                            - (:days - 1))::timestamp
+                           AT TIME ZONE :timezone AS period_start,
+                       ((CURRENT_TIMESTAMP AT TIME ZONE :timezone)::date
+                            + 1)::timestamp
+                           AT TIME ZONE :timezone AS period_end
+            ), sales AS (
+                SELECT substring(
+                           t.remarks
+                           FROM '^Sale ([0-9a-fA-F-]+) \\| payment:(cash|card|qr)$'
+                       ) AS sale_id,
+                       public.stockwise_transaction_timestamp(t) AS occurred_at,
+                       t.quantity
+                FROM public.inventory_transactions AS t
+                WHERE t.organization_id = :organization_id
+                  AND upper(t.transaction_type) IN ('OUT', 'STOCK_OUT')
+                  AND t.remarks ~ '^Sale [0-9a-fA-F-]+ \\| payment:(cash|card|qr)$'
+            )
+            SELECT
+                COUNT(DISTINCT sales.sale_id) FILTER (
+                    WHERE sales.occurred_at >= bounds.period_start
+                      AND sales.occurred_at < bounds.period_end
+                )::integer AS sales_count,
+                COALESCE(SUM(sales.quantity) FILTER (
+                    WHERE sales.occurred_at >= bounds.period_start
+                      AND sales.occurred_at < bounds.period_end
+                ), 0)::integer AS units_sold,
+                COUNT(DISTINCT sales.sale_id) FILTER (
+                    WHERE sales.occurred_at >=
+                          bounds.period_start - (:days * interval '1 day')
+                      AND sales.occurred_at < bounds.period_start
+                )::integer AS previous_sales_count
+            FROM bounds
+            LEFT JOIN sales ON true
+        """),
+        {"organization_id": organization_id, "days": days, "timezone": timezone},
+    ).mappings().one()
+    report["sales_count"] = sales_totals["sales_count"]
+    report["units_sold"] = sales_totals["units_sold"]
+    report["previous_sales_count"] = sales_totals["previous_sales_count"]
+    revenue_totals = db.execute(
+        text("""
+            WITH bounds AS (
+                SELECT ((CURRENT_TIMESTAMP AT TIME ZONE :timezone)::date
+                            - (:days - 1))::timestamp
+                           AT TIME ZONE :timezone AS period_start,
+                       ((CURRENT_TIMESTAMP AT TIME ZONE :timezone)::date
+                            + 1)::timestamp
+                           AT TIME ZONE :timezone AS period_end
+            )
+            SELECT COALESCE((
+                       SELECT SUM(item.quantity * item.unit_price)
+                       FROM public.sales AS sale
+                       JOIN public.sale_items AS item
+                         USING (organization_id, sale_id)
+                       CROSS JOIN bounds
+                       WHERE sale.organization_id = :organization_id
+                         AND sale.sold_at >= bounds.period_start
+                         AND sale.sold_at < bounds.period_end
+                   ), 0)::text AS sales_revenue,
+                   COALESCE((
+                       SELECT (migration.applied_at AT TIME ZONE :timezone)::date
+                       FROM public.schema_migrations AS migration
+                       WHERE migration.version = '031'
+                   ), (CURRENT_TIMESTAMP AT TIME ZONE :timezone)::date)
+                       AS sales_revenue_tracking_since
+        """),
+        {"organization_id": organization_id, "days": days, "timezone": timezone},
+    ).mappings().one()
+    report["sales_revenue"] = revenue_totals["sales_revenue"]
+    report["sales_revenue_tracking_since"] = revenue_totals[
+        "sales_revenue_tracking_since"
+    ]
+
     daily_movement = db.execute(
         text("""
             WITH bounds AS (

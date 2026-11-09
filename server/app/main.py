@@ -8,6 +8,7 @@ from app.api.auth import router as auth_router
 from app.api.health import router as health_router
 from app.api.inventory import router as inventory_router
 from app.api.purchase_orders import router as purchase_orders_router
+from app.api.sales import router as sales_router
 from app.api.organizations import router as organizations_router
 from app.api.reports import router as reports_router
 from app.api.settings import router as settings_router
@@ -63,6 +64,12 @@ app.include_router(
     purchase_orders_router,
     prefix="/api/orders",
     tags=["Purchase Orders"],
+)
+
+app.include_router(
+    sales_router,
+    prefix="/api/sales",
+    tags=["Sales"],
 )
 
 app.include_router(

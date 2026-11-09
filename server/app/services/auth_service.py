@@ -41,6 +41,10 @@ class AccountAlreadyExistsError(Exception):
     pass
 
 
+class InvalidRegistrationCodeError(Exception):
+    pass
+
+
 class AuthenticationSetupError(Exception):
     pass
 
@@ -187,6 +191,121 @@ def register_account(
         raise AuthenticationSetupError(
             "Unable to create the account right now. Please try again."
         ) from exc
+
+
+def _registration_code_hash(email: str, code: str) -> str:
+    key = settings.internal_api_key
+    if not key or len(key) < 32:
+        raise AuthenticationSetupError(
+            "Email verification requires a configured internal API key."
+        )
+    message = f"stockwise-registration:{email.strip().lower()}:{code}".encode("utf-8")
+    return hmac.new(key.encode("utf-8"), message, hashlib.sha256).hexdigest()
+
+
+def _require_registration_email() -> None:
+    if not settings.smtp_username or not settings.smtp_app_password:
+        raise AuthenticationSetupError(
+            "Email verification is not configured. Contact the StockWise administrator."
+        )
+
+
+def request_registration_verification(
+    db: Session, name: str, email: str, password: str
+) -> None:
+    normalized_email = email.strip().lower()
+    _require_registration_email()
+    try:
+        if (
+            repository.get_user_by_email(db, normalized_email)
+            or user_repository.get_user_by_email(db, normalized_email)
+        ):
+            raise AccountAlreadyExistsError
+
+        code = f"{secrets.randbelow(100_000_000):08d}"
+        repository.save_registration_verification(
+            db,
+            name.strip(),
+            normalized_email,
+            hash_password(password),
+            _registration_code_hash(normalized_email, code),
+        )
+        send_registration_verification_email(normalized_email, code)
+        db.commit()
+    except (AccountAlreadyExistsError, AuthenticationSetupError):
+        db.rollback()
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Database error while beginning email-verified registration")
+        raise AuthenticationSetupError(
+            "Unable to start registration right now. Please try again."
+        ) from exc
+
+
+def resend_registration_verification(db: Session, email: str) -> None:
+    normalized_email = email.strip().lower()
+    _require_registration_email()
+    code = f"{secrets.randbelow(100_000_000):08d}"
+    try:
+        pending = repository.resend_registration_verification(
+            db, normalized_email, _registration_code_hash(normalized_email, code)
+        )
+        if pending:
+            send_registration_verification_email(normalized_email, code)
+        db.commit()
+    except AuthenticationSetupError:
+        db.rollback()
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Database error while resending registration verification")
+        raise AuthenticationSetupError(
+            "Unable to resend the verification code right now."
+        ) from exc
+
+
+def verify_registration(db: Session, email: str, code: str) -> dict:
+    normalized_email = email.strip().lower()
+    try:
+        pending = repository.consume_registration_verification(
+            db, normalized_email, _registration_code_hash(normalized_email, code)
+        )
+        if pending["result"] != "verified":
+            db.commit()  # Persist the failed-attempt counter.
+            raise InvalidRegistrationCodeError
+
+        if (
+            repository.get_user_by_email(db, normalized_email)
+            or user_repository.get_user_by_email(db, normalized_email)
+        ):
+            db.commit()
+            raise AccountAlreadyExistsError
+
+        account = repository.create_account(
+            db,
+            pending["full_name"],
+            normalized_email,
+            pending["password_hash"],
+        )
+        db.commit()
+        return account
+    except (InvalidRegistrationCodeError, AccountAlreadyExistsError):
+        raise
+    except IntegrityError as exc:
+        db.rollback()
+        raise AccountAlreadyExistsError from exc
+    except AuthenticationSetupError:
+        db.rollback()
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Database error while verifying registration email")
+        raise AuthenticationSetupError(
+            "Unable to verify your email right now. Please try again."
+        ) from exc
+
+
 def authenticate_user(
     db: Session,
     email: str,
@@ -334,6 +453,23 @@ def send_password_reset_email(email: str, token: str) -> None:
     )
 
 
+def send_registration_verification_email(email: str, code: str) -> None:
+    message = EmailMessage()
+    message["Subject"] = "Verify your StockWise email"
+    message["To"] = email.strip().lower()
+    message.set_content(
+        "Use this 8-digit code to verify your email and create your StockWise account:\n\n"
+        f"{code}\n\n"
+        "This code expires in 10 minutes. Your StockWise password is separate from your Gmail password."
+    )
+    _send_email(
+        message,
+        "Unable to send a StockWise registration verification email.",
+        "Email verification is not configured.",
+        required=True,
+    )
+
+
 def send_login_alert_email(email: str) -> None:
     message = EmailMessage()
     message["Subject"] = "New device signed in to StockWise"
@@ -352,13 +488,18 @@ def send_login_alert_email(email: str) -> None:
 
 
 def _send_email(
-    message: EmailMessage, failure_message: str, unavailable_message: str
+    message: EmailMessage,
+    failure_message: str,
+    unavailable_message: str,
+    required: bool = False,
 ) -> None:
     if not settings.smtp_username or not settings.smtp_app_password:
+        if required:
+            raise AuthenticationSetupError(unavailable_message)
         logger.warning(unavailable_message)
         return
     message["From"] = settings.smtp_username
-    message["To"] = str(message["To"]).strip().lower()
+    message.replace_header("To", str(message["To"]).strip().lower())
     smtp_password = settings.smtp_app_password.replace(" ", "")
     try:
         with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as smtp:
@@ -367,6 +508,8 @@ def _send_email(
             smtp.send_message(message)
     except (OSError, smtplib.SMTPException):
         logger.exception(failure_message)
+        if required:
+            raise AuthenticationSetupError(failure_message)
 
 
 def reset_password(db: Session, token: str, new_password: str) -> bool:

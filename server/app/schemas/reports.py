@@ -62,12 +62,16 @@ class InventoryReport(BaseModel):
     product_count: int
     stock_units: int
     inventory_value: Decimal
-    stock_cost_value: Decimal
     low_stock_count: int
     critical_count: int
     units_received: int
     units_issued: int
     transaction_count: int
+    sales_count: int
+    units_sold: int
+    previous_sales_count: int
+    sales_revenue: Decimal
+    sales_revenue_tracking_since: date
     previous_units_received: int
     previous_units_issued: int
     previous_transaction_count: int

@@ -1,57 +1,72 @@
 import hashlib
 import logging
-import threading
-import time
-from collections import defaultdict, deque
+from datetime import datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.db import settings_repository
+from app.db import auth_repository
 from app.schemas.auth import (
     AuthenticatedUser,
     ForgotPasswordRequest,
     GoogleCredentialRequest,
     LoginRequest,
     LoginResponse,
+    RegistrationPendingResponse,
     RegistrationRequest,
+    RegistrationResendRequest,
+    RegistrationVerifyRequest,
     ResetPasswordRequest,
     TwoFactorLoginRequest,
 )
 from app.services.auth_service import (
     AccountAlreadyExistsError,
     AuthenticationSetupError,
+    InvalidRegistrationCodeError,
     InvalidCredentialsError,
     InvalidGoogleCredentialError,
     authenticate_google_user,
     authenticate_user,
     request_password_reset,
-    register_account,
     reset_password,
     send_login_alert_email,
     send_password_reset_email,
 )
-from app.services import two_factor_service
+from app.services import auth_service, two_factor_service
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-_RESET_LIMIT = 5
-_RESET_WINDOW_SECONDS = 15 * 60
-_reset_requests: dict[str, deque[float]] = defaultdict(deque)
-_reset_requests_lock = threading.Lock()
 
 
-def _allow_password_reset_request(client_key: str) -> bool:
-    now = time.monotonic()
-    with _reset_requests_lock:
-        requests = _reset_requests[client_key]
-        while requests and now - requests[0] >= _RESET_WINDOW_SECONDS:
-            requests.popleft()
-        if len(requests) >= _RESET_LIMIT:
-            return False
-        requests.append(now)
-        return True
+def _enforce_auth_rate_limit(
+    db: Session, request: Request, scope: str, limit: int, window_seconds: int
+) -> None:
+    client_ip = request.client.host if request.client else "unknown"
+    subject_hash = hashlib.sha256(f"{scope}\0{client_ip}".encode("utf-8")).hexdigest()
+    try:
+        attempts, window_started_at = auth_repository.consume_auth_rate_limit(
+            db, scope, subject_hash, limit, window_seconds
+        )
+        # Commit each attempt independently so failed credentials and rejected
+        # requests still count, including when the app has multiple workers.
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Unable to record authentication rate limit.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication is temporarily unavailable.",
+        ) from exc
+    if attempts > limit:
+        expires_at = window_started_at.timestamp() + window_seconds
+        retry_after = max(1, int(expires_at - datetime.now(timezone.utc).timestamp()))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many requests. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
 
 
 def _queue_login_alert_if_new_device(
@@ -95,13 +110,19 @@ def _login_response(db: Session, user: dict) -> LoginResponse:
     )
 
 
-@router.post("/register", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=RegistrationPendingResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 def register(
     registration: RegistrationRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
 ):
+    _enforce_auth_rate_limit(db, http_request, "register", 5, 60 * 60)
     try:
-        user = register_account(
+        auth_service.request_registration_verification(
             db,
             name=registration.name,
             email=str(registration.email),
@@ -118,6 +139,52 @@ def register(
             detail=str(exc),
         ) from exc
 
+    return {"message": "Check your Gmail inbox for an 8-digit verification code."}
+
+
+@router.post("/register/resend", response_model=RegistrationPendingResponse)
+def resend_registration_code(
+    request: RegistrationResendRequest,
+    http_request: Request,
+    db: Session = Depends(get_db),
+):
+    _enforce_auth_rate_limit(db, http_request, "register-resend", 3, 15 * 60)
+    try:
+        auth_service.resend_registration_verification(db, str(request.email))
+    except AuthenticationSetupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    return {"message": "If registration is pending, a new code has been sent."}
+
+
+@router.post("/register/verify", response_model=LoginResponse)
+def verify_registration_email(
+    request: RegistrationVerifyRequest,
+    http_request: Request,
+    db: Session = Depends(get_db),
+):
+    _enforce_auth_rate_limit(db, http_request, "register-verify", 20, 15 * 60)
+    try:
+        user = auth_service.verify_registration(
+            db, str(request.email), request.code
+        )
+    except InvalidRegistrationCodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="That code is invalid or expired. Request a new code and try again.",
+        ) from exc
+    except AccountAlreadyExistsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists. Sign in instead.",
+        ) from exc
+    except AuthenticationSetupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
     return _login_response(db, user)
 
 
@@ -125,8 +192,10 @@ def register(
 def login(
     credentials: LoginRequest,
     background_tasks: BackgroundTasks,
+    http_request: Request,
     db: Session = Depends(get_db),
 ):
+    _enforce_auth_rate_limit(db, http_request, "login", 20, 15 * 60)
     try:
         user = authenticate_user(
             db,
@@ -190,8 +259,10 @@ def verify_two_factor_login(
 def google_login(
     request: GoogleCredentialRequest,
     background_tasks: BackgroundTasks,
+    http_request: Request,
     db: Session = Depends(get_db),
 ):
+    _enforce_auth_rate_limit(db, http_request, "google-login", 20, 15 * 60)
     try:
         user = authenticate_google_user(db, request.credential, request.nonce)
         settings_repository.mark_google_account_connected(db, user["email"])
@@ -228,12 +299,7 @@ def forgot_password(
     http_request: Request,
     db: Session = Depends(get_db),
 ):
-    client_key = http_request.client.host if http_request.client else "unknown"
-    if not _allow_password_reset_request(client_key):
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Too many reset requests. Try again later.",
-        )
+    _enforce_auth_rate_limit(db, http_request, "forgot-password", 5, 15 * 60)
     try:
         reset = request_password_reset(db, str(request.email))
         if reset:
@@ -249,8 +315,10 @@ def forgot_password(
 @router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
 def reset_password_route(
     request: ResetPasswordRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
 ):
+    _enforce_auth_rate_limit(db, http_request, "reset-password", 10, 15 * 60)
     try:
         updated = reset_password(db, request.token, request.new_password)
     except SQLAlchemyError as exc:

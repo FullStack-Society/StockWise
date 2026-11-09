@@ -130,11 +130,34 @@ def register_login_device(db: Session, email: str, device_hash: str) -> bool:
 
 def get_settings(db: Session, email: str) -> dict | None:
     result = db.execute(
-        text("SELECT * FROM public.stockwise_settings_get(:email)"),
+        text("""
+            SELECT settings.*, user_settings.avatar_data
+            FROM public.stockwise_settings_get(:email) AS settings
+            LEFT JOIN public.user_settings AS user_settings
+              ON lower(user_settings.email) = lower(settings.email)
+        """),
         {"email": email.strip().lower()},
     )
     row = result.mappings().first()
     return dict(row) if row is not None else None
+
+
+def update_avatar(db: Session, email: str, avatar_data: str | None) -> dict:
+    normalized_email = email.strip().lower()
+    db.execute(
+        text("SELECT public.stockwise_settings_ensure(:email)"),
+        {"email": normalized_email},
+    )
+    row = db.execute(
+        text("""
+            UPDATE public.user_settings
+            SET avatar_data = :avatar_data, updated_at = CURRENT_TIMESTAMP
+            WHERE lower(email) = lower(:email)
+            RETURNING avatar_data
+        """),
+        {"email": normalized_email, "avatar_data": avatar_data},
+    ).mappings().one()
+    return dict(row)
 
 
 def update_profile(

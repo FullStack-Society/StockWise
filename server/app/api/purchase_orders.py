@@ -26,7 +26,11 @@ def serialize_items(items):
         {
             "product_id": item.product_id,
             "quantity_ordered": item.quantity_ordered,
-            "unit_price": str(Decimal(item.unit_price).quantize(Decimal("0.01"))),
+            # The database function validates unit_price as a JSON number.
+            # Returning this as text makes jsonb_typeof(...) report "string".
+            "unit_price": float(
+                Decimal(item.unit_price).quantize(Decimal("0.01"))
+            ),
         }
         for item in items
     ]
