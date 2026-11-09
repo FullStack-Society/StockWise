@@ -9,13 +9,6 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=128)
     device_id: str | None = Field(default=None, min_length=32, max_length=128)
 
-    @field_validator("email")
-    @classmethod
-    def require_gmail_address(cls, value: EmailStr) -> EmailStr:
-        if value.rsplit("@", 1)[-1].lower() not in {"gmail.com", "googlemail.com"}:
-            raise ValueError("Use the Gmail address linked to your StockWise account.")
-        return value
-
 
 def validate_password_strength(value: str) -> str:
     if len(value) < 12:
@@ -36,41 +29,6 @@ class RegistrationRequest(BaseModel):
     @classmethod
     def validate_password_strength(cls, value: str) -> str:
         return validate_password_strength(value)
-
-    @field_validator("email")
-    @classmethod
-    def require_gmail_address(cls, value: EmailStr) -> EmailStr:
-        if value.rsplit("@", 1)[-1].lower() not in {"gmail.com", "googlemail.com"}:
-            raise ValueError("Register with a Gmail address.")
-        return value
-
-
-class RegistrationVerifyRequest(BaseModel):
-    email: EmailStr
-    code: str = Field(min_length=8, max_length=8, pattern=r"^\d{8}$")
-
-    @field_validator("email")
-    @classmethod
-    def require_gmail_address(cls, value: EmailStr) -> EmailStr:
-        if value.rsplit("@", 1)[-1].lower() not in {"gmail.com", "googlemail.com"}:
-            raise ValueError("Use the Gmail address from your registration.")
-        return value
-
-
-class RegistrationResendRequest(BaseModel):
-    email: EmailStr
-
-    @field_validator("email")
-    @classmethod
-    def require_gmail_address(cls, value: EmailStr) -> EmailStr:
-        if value.rsplit("@", 1)[-1].lower() not in {"gmail.com", "googlemail.com"}:
-            raise ValueError("Use your Gmail address.")
-        return value
-
-
-class RegistrationPendingResponse(BaseModel):
-    message: str
-
 
 class GoogleCredentialRequest(BaseModel):
     credential: str = Field(min_length=1, max_length=8192)

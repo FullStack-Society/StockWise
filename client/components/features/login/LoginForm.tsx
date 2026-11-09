@@ -114,7 +114,7 @@ export default function LoginForm({
       <p className={styles.cardSubtitle}>sign in to your StockWise account.</p>
       {accountExists && (
         <p role="alert" className={styles.error}>
-          An account already exists for this Gmail. Sign in instead.
+          An account already exists for this email. Sign in instead.
         </p>
       )}
       {googleError && (
@@ -124,7 +124,7 @@ export default function LoginForm({
       )}
       <form action={formAction} className={styles.form}>
         <label htmlFor="email" className={styles.label}>
-          Gmail address
+          Email address
         </label>
         <div className={styles.field}>
           <Mail size={12} />
@@ -132,9 +132,7 @@ export default function LoginForm({
             id="email"
             name="email"
             type="email"
-            placeholder="email@gmail.com"
-            pattern="[^@]+@(gmail\.com|googlemail\.com)"
-            title="Use the Gmail address linked to your StockWise account."
+            placeholder="name@example.com"
             autoComplete="email"
             defaultValue={state.email}
             required

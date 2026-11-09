@@ -4,38 +4,14 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Eye, EyeOff, Lock, Mail, UserRound } from "lucide-react";
 import Logo from "@/components/ui/Logo";
-import {
-  register,
-  resendRegistrationVerification,
-  verifyRegistration,
-  type RegisterState,
-  type ResendRegistrationState,
-} from "@/lib/auth/actions";
+import { register, type RegisterState } from "@/lib/auth/actions";
 import styles from "@/styles/login/LoginForm.module.css";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className={styles.submit}>
-      {pending ? "Sending code…" : "Continue with Gmail"}
-    </button>
-  );
-}
-
-function VerifyButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" disabled={pending} className={styles.submit}>
-      {pending ? "Verifying…" : "Verify Gmail and create account"}
-    </button>
-  );
-}
-
-function ResendButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" disabled={pending} className={styles.linkButton}>
-      {pending ? "Sending…" : "Resend verification code"}
+      {pending ? "Creating account…" : "Create account"}
     </button>
   );
 }
@@ -51,14 +27,6 @@ export default function RegisterForm({
     register,
     {},
   );
-  const [verifyState, verifyAction] = useActionState<RegisterState, FormData>(
-    verifyRegistration,
-    {},
-  );
-  const [resendState, resendAction] = useActionState<
-    ResendRegistrationState,
-    FormData
-  >(resendRegistrationVerification, {});
   const [passwordVisible, setPasswordVisible] = useState({
     password: false,
     confirm: false,
@@ -71,67 +39,14 @@ export default function RegisterForm({
       </div>
       <h2 className={styles.cardTitle}>Create your StockWise account</h2>
       <p className={styles.cardSubtitle}>
-        {state.verificationRequired
-          ? `Enter the 8-digit code sent to ${state.email}. Your account is created after Gmail is verified.`
-          : "Verify your Gmail address before creating your StockWise account."}
+        Create an account with your email address and password.
       </p>
       {googleError && (
         <p role="alert" className={styles.error}>
           Google sign-in did not complete. Please try again.
         </p>
       )}
-      {state.verificationRequired ? (
-        <>
-          <form action={verifyAction} className={styles.form}>
-            <input type="hidden" name="email" value={state.email ?? ""} />
-            <label htmlFor="registration-code" className={styles.label}>
-              Gmail verification code
-            </label>
-            <div className={styles.field}>
-              <Mail size={12} />
-              <input
-                id="registration-code"
-                name="code"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]{8}"
-                maxLength={8}
-                autoFocus
-                required
-                className={styles.input}
-              />
-            </div>
-            <p className={styles.fieldHint}>The code expires in 10 minutes.</p>
-            {verifyState.error && (
-              <p role="alert" className={styles.error}>
-                {verifyState.error}
-              </p>
-            )}
-            <VerifyButton />
-          </form>
-          <form action={resendAction} className={styles.resendForm}>
-            <input type="hidden" name="email" value={state.email ?? ""} />
-            <ResendButton />
-            {resendState.message && (
-              <p role="status" className={styles.fieldHint}>
-                {resendState.message}
-              </p>
-            )}
-            {resendState.error && (
-              <p role="alert" className={styles.error}>
-                {resendState.error}
-              </p>
-            )}
-          </form>
-          <p className={styles.help}>
-            <a className={styles.link} href="/register">
-              Use a different Gmail address
-            </a>
-          </p>
-        </>
-      ) : (
-        <form action={formAction} className={styles.form}>
+      <form action={formAction} className={styles.form}>
           <div className={styles.nameFields}>
             <div className={styles.nameField}>
               <label htmlFor="first_name" className={styles.label}>
@@ -172,7 +87,7 @@ export default function RegisterForm({
           </div>
 
           <label htmlFor="email" className={styles.labelSpaced}>
-            Gmail address
+            Email address
           </label>
           <div className={styles.field}>
             <Mail size={12} />
@@ -180,9 +95,7 @@ export default function RegisterForm({
               id="email"
               name="email"
               type="email"
-              placeholder="name@gmail.com"
-              pattern="[^@]+@(gmail\.com|googlemail\.com)"
-              title="Use a Gmail address to register manually."
+              placeholder="name@example.com"
               autoComplete="email"
               defaultValue={state.email}
               required
@@ -278,8 +191,7 @@ export default function RegisterForm({
             </p>
           )}
           <SubmitButton />
-        </form>
-      )}
+      </form>
 
       <div className={styles.orDivider}>
         <span>or</span>

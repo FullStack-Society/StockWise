@@ -53,7 +53,8 @@ npm run build
 
 The app includes authentication, organization membership, inventory and CSV
 import, purchase orders, dashboard summaries, reports, role management, and
-account and organization settings. Manual registration verifies the Gmail
-address before creating a StockWise account; its password is separate from the
-Gmail password. Email verification, password reset, and new-device login alerts
-require SMTP configuration in `server/.env`.
+account and organization settings. Manual registration creates the StockWise
+account immediately without email verification. Email sending is currently
+disabled; password reset and new-device alerts can use Resend when
+`EMAIL_ENABLED=true`, `RESEND_API_KEY`, and `EMAIL_FROM` are set in the backend
+environment.

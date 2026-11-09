@@ -6,7 +6,7 @@ This document describes the current user-management implementation. The frontend
 
 - Authentication uses database-backed accounts and signed session cookies.
 - Users can register and sign in with a password or Google. Password reset is
-  email-based and requires SMTP configuration. Authenticator-app two-factor
+  email-based and requires Resend configuration. Authenticator-app two-factor
   authentication is optional.
 - Users can belong to organizations with role-based access.
 - Owners can create and own multiple organizations, then switch the active

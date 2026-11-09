@@ -3,10 +3,7 @@ import hmac
 import logging
 import os
 import secrets
-import smtplib
-import ssl
 from datetime import datetime, timezone
-from email.message import EmailMessage
 from urllib.parse import quote
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -17,6 +14,7 @@ from google.oauth2 import id_token as google_id_token
 from app.db import auth_repository as repository
 from app.db import user_repository
 from app.core.config import settings
+from app.services.resend_email import ResendEmailError, send_resend_email
 
 logger = logging.getLogger(__name__)
 HASH_NAME = "pbkdf2_sha256"
@@ -204,7 +202,11 @@ def _registration_code_hash(email: str, code: str) -> str:
 
 
 def _require_registration_email() -> None:
-    if not settings.smtp_username or not settings.smtp_app_password:
+    if (
+        not settings.email_enabled
+        or not settings.resend_api_key
+        or not settings.email_from
+    ):
         raise AuthenticationSetupError(
             "Email verification is not configured. Contact the StockWise administrator."
         )
@@ -404,7 +406,11 @@ def authenticate_google_user(db: Session, credential: str, nonce: str) -> dict:
 
 
 def request_password_reset(db: Session, email: str) -> tuple[str, str] | None:
-    if not settings.smtp_username or not settings.smtp_app_password:
+    if (
+        not settings.email_enabled
+        or not settings.resend_api_key
+        or not settings.email_from
+    ):
         raise AuthenticationSetupError("Password reset email is not configured.")
 
     normalized_email = email.strip().lower()
@@ -438,78 +444,75 @@ def send_password_reset_email(email: str, token: str) -> None:
         f"{settings.client_url.rstrip('/')}/reset-password?token="
         f"{quote(token)}"
     )
-    message = EmailMessage()
-    message["Subject"] = "Reset your StockWise password"
-    message["To"] = email
-    message.set_content(
+    body = (
         "We received a request to reset your StockWise password.\n\n"
         f"Use this link within 30 minutes: {reset_url}\n\n"
         "If you did not request this, you can ignore this email."
     )
     _send_email(
-        message,
+        email,
+        "Reset your StockWise password",
+        body,
         "Unable to send a password reset email.",
-        "Password reset email was skipped because SMTP is not configured.",
+        "Password reset email was skipped because Resend is not configured.",
     )
 
 
 def send_registration_verification_email(email: str, code: str) -> None:
-    message = EmailMessage()
-    message["Subject"] = "Verify your StockWise email"
-    message["To"] = email.strip().lower()
-    message.set_content(
+    body = (
         "Use this 8-digit code to verify your email and create your StockWise account:\n\n"
         f"{code}\n\n"
         "This code expires in 10 minutes. Your StockWise password is separate from your Gmail password."
     )
     _send_email(
-        message,
+        email.strip().lower(),
+        "Verify your StockWise email",
+        body,
         "Unable to send a StockWise registration verification email.",
-        "Email verification is not configured.",
+        "Email verification is not configured in Resend.",
         required=True,
     )
 
 
 def send_login_alert_email(email: str) -> None:
-    message = EmailMessage()
-    message["Subject"] = "New device signed in to StockWise"
-    message["To"] = email.strip().lower()
     signed_in_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    message.set_content(
+    body = (
         "Your StockWise account was accessed from a device or browser that has not signed in before.\n\n"
         f"Time: {signed_in_at}\n\n"
         "If this was not you, change your password and review your account security settings."
     )
     _send_email(
-        message,
+        email.strip().lower(),
+        "New device signed in to StockWise",
+        body,
         "Unable to send a StockWise login alert email.",
-        "Login alert email is enabled, but SMTP is not configured.",
+        "Login alert email is enabled, but Resend is not configured.",
     )
 
 
 def _send_email(
-    message: EmailMessage,
+    to: str,
+    subject: str,
+    text: str,
     failure_message: str,
     unavailable_message: str,
     required: bool = False,
 ) -> None:
-    if not settings.smtp_username or not settings.smtp_app_password:
+    if (
+        not settings.email_enabled
+        or not settings.resend_api_key
+        or not settings.email_from
+    ):
         if required:
             raise AuthenticationSetupError(unavailable_message)
         logger.warning(unavailable_message)
         return
-    message["From"] = settings.smtp_username
-    message.replace_header("To", str(message["To"]).strip().lower())
-    smtp_password = settings.smtp_app_password.replace(" ", "")
     try:
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as smtp:
-            smtp.starttls(context=ssl.create_default_context())
-            smtp.login(settings.smtp_username, smtp_password)
-            smtp.send_message(message)
-    except (OSError, smtplib.SMTPException):
+        send_resend_email(to=to, subject=subject, text=text)
+    except ResendEmailError as exc:
         logger.exception(failure_message)
         if required:
-            raise AuthenticationSetupError(failure_message)
+            raise AuthenticationSetupError(failure_message) from exc
 
 
 def reset_password(db: Session, token: str, new_password: str) -> bool:

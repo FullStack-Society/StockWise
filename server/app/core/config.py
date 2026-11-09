@@ -11,10 +11,9 @@ class Settings(BaseSettings):
     internal_api_key: str | None = None
     totp_encryption_keys: str | None = None
     google_client_id: str | None = None
-    smtp_host: str = "smtp.gmail.com"
-    smtp_port: int = 587
-    smtp_username: str | None = None
-    smtp_app_password: str | None = None
+    email_enabled: bool = False
+    resend_api_key: str | None = None
+    email_from: str | None = None
     owner_name: str = "StockWise Owner"
     owner_email: EmailStr | None = None
     owner_password: str | None = None

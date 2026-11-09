@@ -15,10 +15,8 @@ import {
   rememberLastOrganization,
 } from "./session";
 import {
-  requestRegistrationCode,
-  resendRegistrationCode as resendRegistrationCodeRequest,
+  registerAccount,
   verifyCredentials,
-  verifyRegistrationCode,
   verifyTwoFactorCredential,
 } from "./users";
 import { listOrganizations, publishMemberLogin } from "@/lib/api/organizations";
@@ -35,9 +33,7 @@ export type RegisterState = {
   firstName?: string;
   lastName?: string;
   email?: string;
-  verificationRequired?: boolean;
 };
-export type ResendRegistrationState = { error?: string; message?: string };
 export type ForgotPasswordState = {
   error?: string;
   message?: string;
@@ -145,14 +141,6 @@ export async function register(
       email,
     };
   }
-  if (!/^[^@]+@(gmail\.com|googlemail\.com)$/.test(email)) {
-    return {
-      error: "Use a Gmail address to register manually.",
-      firstName,
-      lastName,
-      email,
-    };
-  }
   if (password.length < 12 || password.length > 128) {
     return {
       error: "Use a password between 12 and 128 characters.",
@@ -186,8 +174,8 @@ export async function register(
     };
   }
   try {
-    await requestRegistrationCode(name, email, password);
-    return { verificationRequired: true, firstName, lastName, email };
+    const user = await registerAccount(name, email, password);
+    await createSession({ ...user, organizationId: null }, false);
   } catch (error) {
     unstable_rethrow(error);
     if (error instanceof ApiError && error.status === 409) {
@@ -198,77 +186,13 @@ export async function register(
       error:
         error instanceof ApiError
           ? error.message
-          : "Unable to begin registration right now.",
+          : "Unable to create your account right now.",
       firstName,
       lastName,
       email,
     };
   }
-}
-
-export async function verifyRegistration(
-  _prev: RegisterState,
-  formData: FormData,
-): Promise<RegisterState> {
-  const email = String(formData.get("email") ?? "")
-    .trim()
-    .toLowerCase();
-  const code = String(formData.get("code") ?? "")
-    .replace(/\D/g, "")
-    .slice(0, 8);
-  if (!email || !code) {
-    return {
-      error: "Enter the 8-digit code sent to your Gmail inbox.",
-      email,
-      verificationRequired: true,
-    };
-  }
-
-  try {
-    const user = await verifyRegistrationCode(email, code);
-    await createSession({ ...user, organizationId: null }, false);
-  } catch (error) {
-    unstable_rethrow(error);
-    if (error instanceof ApiError && error.status === 409) {
-      return {
-        error: "An account with this email already exists. Sign in instead.",
-        email,
-        verificationRequired: true,
-      };
-    }
-    return {
-      error:
-        error instanceof ApiError
-          ? error.message
-          : "Unable to verify your Gmail address right now.",
-      email,
-      verificationRequired: true,
-    };
-  }
-
   redirect(ROUTES.users);
-}
-
-export async function resendRegistrationVerification(
-  _prev: ResendRegistrationState,
-  formData: FormData,
-): Promise<ResendRegistrationState> {
-  const email = String(formData.get("email") ?? "")
-    .trim()
-    .toLowerCase();
-  if (!email) return { error: "Enter your Gmail address first." };
-  try {
-    const result = await resendRegistrationCodeRequest(email);
-    return { message: result.message };
-  } catch (error) {
-    unstable_rethrow(error);
-    return {
-      error:
-        error instanceof ApiError
-          ? error.message
-          : "Unable to resend the verification code right now.",
-    };
-  }
 }
 
 export async function login(
@@ -284,14 +208,6 @@ export async function login(
   if (!email || !password) {
     return { error: "Enter your email and password.", email, remember };
   }
-  if (!/^[^@]+@(gmail\.com|googlemail\.com)$/.test(email)) {
-    return {
-      error: "Sign in manually with your Gmail address.",
-      email,
-      remember,
-    };
-  }
-
   let authResult: Awaited<ReturnType<typeof verifyCredentials>>;
   try {
     authResult = await verifyCredentials(

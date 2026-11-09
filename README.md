@@ -22,9 +22,9 @@ inventory activity across an organization.
 
 ### Accounts and organizations
 
-- Register manually with a Gmail address verified by an emailed code, then sign
-  in with a StockWise-specific password. Google sign-in uses Google OAuth and
-  does not use the StockWise password.
+- Register manually with an email address and StockWise-specific password.
+  Registration currently does not require email verification. Google sign-in
+  uses Google OAuth and does not use the StockWise password.
 - Sign in or register with Google, and reset a password through a time-limited email link.
 - Optionally require an authenticator-app code at sign-in, with one-use recovery codes.
 - Registration requires a password with at least 12 characters, including an
@@ -282,8 +282,9 @@ SESSION_SECRET=your-unique-random-secret-at-least-32-characters
 Google sign-in is optional. To enable it, configure `GOOGLE_CLIENT_ID`,
 `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` in the frontend environment,
 and `GOOGLE_CLIENT_ID` in `server/.env`. The redirect URI must match the one
-registered with Google. Manual registration email verification, password-reset
-email, and new-device alerts require SMTP settings in `server/.env`.
+registered with Google. Email sending is disabled by default. To enable Resend
+for password-reset emails and new-device alerts, set `EMAIL_ENABLED=true` along
+with `RESEND_API_KEY` and `EMAIL_FROM` in the backend environment.
 
 Install the locked frontend dependencies and start Next.js:
 
@@ -323,7 +324,7 @@ are controlled by the app's role and permission checks.
 ## Current limitations
 
 - Password reset and new-device login alerts depend on a correctly configured
-  SMTP sender. Google sign-in depends on OAuth credentials and an authorized
+  Resend sender. Google sign-in depends on OAuth credentials and an authorized
   redirect URI.
 - Sales checkout records the selected payment method and updates inventory.
   Payment processing, payment verification, and receipt generation are not

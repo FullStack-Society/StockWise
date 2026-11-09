@@ -14,17 +14,13 @@ from app.schemas.auth import (
     GoogleCredentialRequest,
     LoginRequest,
     LoginResponse,
-    RegistrationPendingResponse,
     RegistrationRequest,
-    RegistrationResendRequest,
-    RegistrationVerifyRequest,
     ResetPasswordRequest,
     TwoFactorLoginRequest,
 )
 from app.services.auth_service import (
     AccountAlreadyExistsError,
     AuthenticationSetupError,
-    InvalidRegistrationCodeError,
     InvalidCredentialsError,
     InvalidGoogleCredentialError,
     authenticate_google_user,
@@ -112,8 +108,8 @@ def _login_response(db: Session, user: dict) -> LoginResponse:
 
 @router.post(
     "/register",
-    response_model=RegistrationPendingResponse,
-    status_code=status.HTTP_202_ACCEPTED,
+    response_model=LoginResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 def register(
     registration: RegistrationRequest,
@@ -122,7 +118,7 @@ def register(
 ):
     _enforce_auth_rate_limit(db, http_request, "register", 5, 60 * 60)
     try:
-        auth_service.request_registration_verification(
+        user = auth_service.register_account(
             db,
             name=registration.name,
             email=str(registration.email),
@@ -139,52 +135,6 @@ def register(
             detail=str(exc),
         ) from exc
 
-    return {"message": "Check your Gmail inbox for an 8-digit verification code."}
-
-
-@router.post("/register/resend", response_model=RegistrationPendingResponse)
-def resend_registration_code(
-    request: RegistrationResendRequest,
-    http_request: Request,
-    db: Session = Depends(get_db),
-):
-    _enforce_auth_rate_limit(db, http_request, "register-resend", 3, 15 * 60)
-    try:
-        auth_service.resend_registration_verification(db, str(request.email))
-    except AuthenticationSetupError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
-        ) from exc
-    return {"message": "If registration is pending, a new code has been sent."}
-
-
-@router.post("/register/verify", response_model=LoginResponse)
-def verify_registration_email(
-    request: RegistrationVerifyRequest,
-    http_request: Request,
-    db: Session = Depends(get_db),
-):
-    _enforce_auth_rate_limit(db, http_request, "register-verify", 20, 15 * 60)
-    try:
-        user = auth_service.verify_registration(
-            db, str(request.email), request.code
-        )
-    except InvalidRegistrationCodeError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="That code is invalid or expired. Request a new code and try again.",
-        ) from exc
-    except AccountAlreadyExistsError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="An account with this email already exists. Sign in instead.",
-        ) from exc
-    except AuthenticationSetupError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
-        ) from exc
     return _login_response(db, user)
 
 
