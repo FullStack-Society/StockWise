@@ -356,15 +356,23 @@ def _verified_google_claims(credential: str, nonce: str) -> dict:
             credential, google_requests.Request(), settings.google_client_id
         )
     except Exception as exc:
+        logger.warning(
+            "Google ID token validation failed (%s).",
+            type(exc).__name__,
+        )
         raise InvalidGoogleCredentialError from exc
 
     email = claims.get("email")
-    if (
-        claims.get("nonce") != nonce
-        or claims.get("email_verified") is not True
-        or not isinstance(email, str)
-        or not email.strip()
-    ):
+    nonce_matches = claims.get("nonce") == nonce
+    email_verified = claims.get("email_verified") is True
+    email_present = isinstance(email, str) and bool(email.strip())
+    if not (nonce_matches and email_verified and email_present):
+        logger.warning(
+            "Google ID token claims rejected (nonce_matches=%s, email_verified=%s, email_present=%s).",
+            nonce_matches,
+            email_verified,
+            email_present,
+        )
         raise InvalidGoogleCredentialError
     return claims
 
