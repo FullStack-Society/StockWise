@@ -34,3 +34,8 @@ Thumbs.db
 
 migrations/
 supabase/
+
+# Keep new database migrations versioned while leaving historical local SQL ignored.
+!migrations/
+migrations/*
+!migrations/033_organization_payment_qr.sql

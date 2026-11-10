@@ -37,10 +37,7 @@ function toMovement(raw: unknown): InventoryMovement {
   const value = record(raw);
   const type = String(value.transaction_type);
   const recognized =
-    type === "IN" ||
-    type === "OUT" ||
-    type === "STOCKTAKE" ||
-    type === "OTHER";
+    type === "IN" || type === "OUT" || type === "STOCKTAKE" || type === "OTHER";
   return {
     id: Number(value.movement_id),
     occurredAt: String(value.occurred_at ?? ""),
@@ -118,9 +115,7 @@ export function deleteCategory(categoryId: number) {
 }
 
 /** POST /api/inventory/ -> create_inventory() */
-export async function createProduct(
-  input: ProductInput,
-): Promise<Product> {
+export async function createProduct(input: ProductInput): Promise<Product> {
   return toProduct(
     await apiRequest<unknown>(ENDPOINTS.inventory.root, {
       method: "POST",

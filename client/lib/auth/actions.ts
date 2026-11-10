@@ -2,6 +2,8 @@
 
 import { redirect, unstable_rethrow } from "next/navigation";
 import { cookies } from "next/headers";
+import { createHash } from "node:crypto";
+import { jwtDecrypt } from "jose";
 import { ApiError } from "@/lib/api/client";
 import { apiRequest } from "@/lib/api/client";
 import { ENDPOINTS } from "@/lib/api/endpoints";
@@ -47,6 +49,107 @@ export type ResetPasswordState = { error?: string; success?: boolean };
 export type TwoFactorLoginState = { error?: string };
 
 const MFA_CHALLENGE_COOKIE = "stockwise_mfa_challenge";
+const GOOGLE_REGISTRATION_COOKIE = "stockwise_google_registration";
+
+function googleRegistrationKey() {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error("Google registration is not configured securely.");
+  }
+  return createHash("sha256").update(secret).digest();
+}
+
+type GoogleRegistrationState = { error?: string };
+
+export async function completeGoogleRegistration(
+  _previous: GoogleRegistrationState,
+  formData: FormData,
+): Promise<GoogleRegistrationState> {
+  const password = String(formData.get("password") ?? "");
+  const confirmation = String(formData.get("confirm_password") ?? "");
+  if (password.length < 12 || password.length > 128) {
+    return { error: "Use a password between 12 and 128 characters." };
+  }
+  if (!/[A-Z]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+    return {
+      error: "Your password must include a capital letter and a special character.",
+    };
+  }
+  if (password !== confirmation) {
+    return { error: "The passwords do not match." };
+  }
+
+  const jar = await cookies();
+  const token = jar.get(GOOGLE_REGISTRATION_COOKIE)?.value;
+  if (!token) return { error: "Google registration expired. Start again." };
+
+  try {
+    const { payload } = await jwtDecrypt(token, googleRegistrationKey(), {
+      keyManagementAlgorithms: ["dir"],
+      contentEncryptionAlgorithms: ["A256GCM"],
+    });
+    if (
+      typeof payload.credential !== "string" ||
+      typeof payload.nonce !== "string"
+    ) {
+      return { error: "Google registration expired. Start again." };
+    }
+
+    const result = await apiRequest<{
+      user?: { id: number; name: string; email: string; role: string } | null;
+      two_factor_required?: boolean;
+      challenge_token?: string | null;
+    }>(ENDPOINTS.auth.googleRegister, {
+      method: "POST",
+      body: {
+        credential: payload.credential,
+        nonce: payload.nonce,
+        password,
+        device_id: await getOrCreateLoginDeviceId(),
+      },
+    });
+    jar.delete(GOOGLE_REGISTRATION_COOKIE);
+
+    if (result.two_factor_required && result.challenge_token) {
+      jar.set(MFA_CHALLENGE_COOKIE, result.challenge_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 300,
+      });
+      redirect("/login?twoFactor=1");
+    }
+    if (!result.user) return { error: "Unable to complete Google registration." };
+
+    const organizations = await listOrganizations(result.user.email);
+    const owned = organizations.find((organization) => organization.role === "owner");
+    const organization = owned ?? organizations[0] ?? null;
+    await createSession(
+      {
+        id: String(result.user.id),
+        name: result.user.name,
+        email: result.user.email,
+        role: organization?.role ?? result.user.role,
+        organizationId: organization?.organization_id ?? null,
+      },
+      false,
+    );
+    redirect(organization ? ROUTES.dashboard : ROUTES.users);
+  } catch (error) {
+    unstable_rethrow(error);
+    if (error instanceof ApiError && error.status === 401) {
+      jar.delete(GOOGLE_REGISTRATION_COOKIE);
+      return { error: "Google registration expired. Start again." };
+    }
+    return {
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "Unable to save your StockWise password right now.",
+    };
+  }
+}
 
 async function notifyOrganizationOfLogin() {
   try {

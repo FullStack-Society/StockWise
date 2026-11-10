@@ -19,6 +19,9 @@ export default async function SalesPage() {
     <main className={`${styles.page} pageEnterSales`}>
       <SalesBrowser
         organizationId={organization.organization_id}
+        canManageMerchantQr={
+          organization.role === "owner" || organization.role === "manager"
+        }
         products={products}
         recentSales={movements.filter(
           (movement) =>

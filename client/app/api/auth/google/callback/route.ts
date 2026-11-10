@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { EncryptJWT } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 import { apiRequest, ApiError } from "@/lib/api/client";
 import { ENDPOINTS } from "@/lib/api/endpoints";
@@ -14,6 +15,7 @@ import { ROUTES } from "@/lib/routes";
 const STATE_COOKIE = "stockwise_google_state";
 const NONCE_COOKIE = "stockwise_google_nonce";
 const MODE_COOKIE = "stockwise_google_mode";
+const GOOGLE_REGISTRATION_COOKIE = "stockwise_google_registration";
 const CALLBACK_URI =
   process.env.GOOGLE_REDIRECT_URI ??
   "http://localhost:3000/api/auth/google/callback";
@@ -22,6 +24,7 @@ type GoogleLoginResponse = {
   user?: { id: string; name: string; email: string; role: string } | null;
   two_factor_required?: boolean;
   challenge_token?: string | null;
+  registration_required?: boolean;
 };
 
 function failure(request: NextRequest, mode: string) {
@@ -33,6 +36,13 @@ function matchesState(received: string, expected: string) {
   const receivedBytes = Buffer.from(received);
   const expectedBytes = Buffer.from(expected);
   return receivedBytes.length === expectedBytes.length && timingSafeEqual(receivedBytes, expectedBytes);
+}
+
+function registrationKey() {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32)
+    throw new Error("SESSION_SECRET is not configured securely.");
+  return createHash("sha256").update(secret).digest();
 }
 
 export async function GET(request: NextRequest) {
@@ -112,8 +122,30 @@ export async function GET(request: NextRequest) {
         credential: tokens.id_token,
         nonce,
         device_id: await getOrCreateLoginDeviceId(),
+        mode,
       },
     });
+    if (result.registration_required) {
+      const registrationToken = await new EncryptJWT({
+        credential: tokens.id_token,
+        nonce,
+      })
+        .setProtectedHeader({ alg: "dir", enc: "A256GCM" })
+        .setIssuedAt()
+        .setExpirationTime("10m")
+        .encrypt(registrationKey());
+      const response = NextResponse.redirect(
+        new URL("/register?googlePassword=1", request.url),
+      );
+      response.cookies.set(GOOGLE_REGISTRATION_COOKIE, registrationToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 600,
+      });
+      return response;
+    }
     if (result.two_factor_required && result.challenge_token) {
       const response = NextResponse.redirect(
         new URL("/login?twoFactor=1", request.url),

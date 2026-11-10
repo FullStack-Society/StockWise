@@ -18,3 +18,15 @@ class SaleCreate(BaseModel):
 class SaleResponse(BaseModel):
     sale_id: UUID
     items_sold: int
+
+
+class MerchantQrUpdate(BaseModel):
+    image_data: str = Field(
+        min_length=32,
+        max_length=2_100_000,
+        pattern=r"^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$",
+    )
+
+
+class MerchantQrResponse(BaseModel):
+    image_data: str | None

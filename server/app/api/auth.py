@@ -14,6 +14,7 @@ from app.schemas.auth import (
     GoogleCredentialRequest,
     LoginRequest,
     LoginResponse,
+    GoogleRegistrationRequest,
     RegistrationPendingResponse,
     RegistrationRequest,
     RegistrationResendRequest,
@@ -265,6 +266,8 @@ def google_login(
     _enforce_auth_rate_limit(db, http_request, "google-login", 20, 15 * 60)
     try:
         user = authenticate_google_user(db, request.credential, request.nonce)
+        if user is None or request.mode == "register":
+            return LoginResponse(registration_required=True)
         settings_repository.mark_google_account_connected(db, user["email"])
         db.commit()
     except InvalidGoogleCredentialError as exc:
@@ -282,6 +285,50 @@ def google_login(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Unable to sign in with Google right now.",
+        ) from exc
+
+    response = _login_response(db, user)
+    if response.user is not None:
+        _queue_login_alert_if_new_device(
+            db, user["email"], request.device_id, background_tasks
+        )
+    return response
+
+
+@router.post("/google/register", response_model=LoginResponse)
+def complete_google_registration(
+    request: GoogleRegistrationRequest,
+    background_tasks: BackgroundTasks,
+    http_request: Request,
+    db: Session = Depends(get_db),
+):
+    _enforce_auth_rate_limit(db, http_request, "google-register", 10, 60 * 60)
+    try:
+        user = auth_service.register_google_account(
+            db, request.credential, request.nonce, request.password
+        )
+        settings_repository.mark_google_account_connected(db, user["email"])
+        db.commit()
+    except InvalidGoogleCredentialError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google sign-in expired. Start again to create your account.",
+        ) from exc
+    except AccountAlreadyExistsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists. Sign in instead.",
+        ) from exc
+    except AuthenticationSetupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to complete Google registration right now.",
         ) from exc
 
     response = _login_response(db, user)

@@ -76,6 +76,19 @@ class GoogleCredentialRequest(BaseModel):
     credential: str = Field(min_length=1, max_length=8192)
     nonce: str = Field(min_length=16, max_length=128)
     device_id: str | None = Field(default=None, min_length=32, max_length=128)
+    mode: Literal["login", "register"] = "login"
+
+
+class GoogleRegistrationRequest(BaseModel):
+    credential: str = Field(min_length=1, max_length=8192)
+    nonce: str = Field(min_length=16, max_length=128)
+    password: str = Field(min_length=12, max_length=128)
+    device_id: str | None = Field(default=None, min_length=32, max_length=128)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, value: str) -> str:
+        return validate_password_strength(value)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -131,3 +144,4 @@ class LoginResponse(BaseModel):
     user: AuthenticatedUser | None = None
     two_factor_required: bool = False
     challenge_token: str | None = None
+    registration_required: bool = False

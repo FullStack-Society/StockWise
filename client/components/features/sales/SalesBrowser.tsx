@@ -12,12 +12,26 @@ import type { Product, InventoryMovement } from "@/lib/inventory/types";
 import { normalizeScannedUpc } from "@/lib/inventory/upc";
 import { useUserPreferences } from "@/components/providers/UserPreferencesProvider";
 import { formatDateTime, formatPreferredCurrency } from "@/lib/utils/format";
-import { checkoutSaleAction } from "@/lib/sales/actions";
+import {
+  checkoutSaleAction,
+  getMerchantQrAction,
+  saveMerchantQrAction,
+} from "@/lib/sales/actions";
 import styles from "@/styles/sales/SalesBrowser.module.css";
 
-type Props = { organizationId: number; products: Product[]; recentSales: InventoryMovement[] };
+type Props = {
+  organizationId: number;
+  canManageMerchantQr: boolean;
+  products: Product[];
+  recentSales: InventoryMovement[];
+};
 
-export default function SalesBrowser({ organizationId, products, recentSales }: Props) {
+export default function SalesBrowser({
+  organizationId,
+  canManageMerchantQr,
+  products,
+  recentSales,
+}: Props) {
   const router = useRouter();
   const { currency, currencyRates, date_format, timezone } = useUserPreferences();
   const [search, setSearch] = useState("");
@@ -25,15 +39,10 @@ export default function SalesBrowser({ organizationId, products, recentSales }: 
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "qr">("cash");
   const [externalCardPaymentConfirmed, setExternalCardPaymentConfirmed] = useState(false);
   const [qrPaymentOpen, setQrPaymentOpen] = useState(false);
-  const [merchantQr, setMerchantQr] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return window.localStorage.getItem(`stockwise-sales-merchant-qr-${organizationId}`);
-    } catch {
-      return null;
-    }
-  });
+  const [merchantQr, setMerchantQr] = useState<string | null>(null);
   const [merchantQrError, setMerchantQrError] = useState("");
+  const [merchantQrLoading, setMerchantQrLoading] = useState(true);
+  const [merchantQrSaved, setMerchantQrSaved] = useState(false);
   const [scannerCode, setScannerCode] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -46,7 +55,6 @@ export default function SalesBrowser({ organizationId, products, recentSales }: 
   const lastScannedCodeRef = useRef("");
   const scanLockedRef = useRef(false);
   const saleIdRef = useRef<{ id: string; signature: string } | null>(null);
-  const merchantQrStorageKey = `stockwise-sales-merchant-qr-${organizationId}`;
   const totalQuantity = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
   const lines = useMemo(
     () => products.filter((product) => cart[product.id]).map((product) => ({
@@ -61,6 +69,73 @@ export default function SalesBrowser({ organizationId, products, recentSales }: 
     .filter((product) => product.quantity > 0)
     .filter((product) => `${product.name} ${product.sku} ${product.upc ?? ""}`.toLowerCase().includes(search.toLowerCase()))
     .slice(0, 40);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadMerchantQr = async () => {
+      setMerchantQrLoading(true);
+      const result = await getMerchantQrAction();
+      if (cancelled) return;
+      if (!result.ok) {
+        setMerchantQrError(result.error);
+        setMerchantQrLoading(false);
+        return;
+      }
+      if (result.imageData) {
+        setMerchantQr(result.imageData);
+        setMerchantQrLoading(false);
+        return;
+      }
+
+      // Migrate a QR previously saved in this browser into shared storage.
+      const legacyKey = `stockwise-sales-merchant-qr-${organizationId}`;
+      let legacyImage: string | null = null;
+      try {
+        legacyImage = window.localStorage.getItem(legacyKey);
+      } catch {
+        // Ignore unavailable browser storage; a manager can upload the image again.
+      }
+      if (
+        legacyImage &&
+        legacyImage.length <= 2_100_000 &&
+        /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(
+          legacyImage,
+        )
+      ) {
+        setMerchantQr(legacyImage);
+        const migration = await saveMerchantQrAction(legacyImage);
+        if (cancelled) return;
+        if (migration.ok) {
+          try {
+            window.localStorage.removeItem(legacyKey);
+          } catch {
+            // The shared copy is saved; a leftover local copy is harmless.
+          }
+        } else {
+          setMerchantQrError(migration.error);
+        }
+      }
+      setMerchantQrLoading(false);
+    };
+
+    void loadMerchantQr();
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId]);
+
+  useEffect(() => {
+    if (!qrPaymentOpen) return;
+    let cancelled = false;
+    void getMerchantQrAction().then((result) => {
+      if (cancelled) return;
+      if (result.ok && result.imageData) setMerchantQr(result.imageData);
+      else if (!result.ok) setMerchantQrError(result.error);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId, qrPaymentOpen]);
 
   const addProduct = useCallback((product: Product) => {
     setCart((current) => ({
@@ -144,29 +219,38 @@ export default function SalesBrowser({ organizationId, products, recentSales }: 
     };
   }, [addScannedUpc, scannerCycle, scannerOpen]);
 
-  const saveMerchantQr = (file: File | undefined) => {
+  const saveMerchantQr = async (file: File | undefined) => {
     if (!file) return;
     setMerchantQrError("");
-    if (!file.type.startsWith("image/")) {
-      setMerchantQrError("Choose an image file containing your merchant payment QR.");
+    setMerchantQrSaved(false);
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setMerchantQrError("Choose a PNG, JPEG, or WebP image containing your merchant payment QR.");
       return;
     }
     if (file.size > 1_500_000) {
       setMerchantQrError("Choose an image smaller than 1.5 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = typeof reader.result === "string" ? reader.result : "";
-      try {
-        window.localStorage.setItem(merchantQrStorageKey, image);
-        setMerchantQr(image);
-      } catch {
-        setMerchantQrError("Could not save this QR on the current register. Try a smaller image.");
+    try {
+      const image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () =>
+          typeof reader.result === "string"
+            ? resolve(reader.result)
+            : reject(new Error("Could not read that QR image."));
+        reader.onerror = () => reject(new Error("Could not read that QR image."));
+        reader.readAsDataURL(file);
+      });
+      const result = await saveMerchantQrAction(image);
+      if (!result.ok) {
+        setMerchantQrError(result.error);
+        return;
       }
-    };
-    reader.onerror = () => setMerchantQrError("Could not read that QR image.");
-    reader.readAsDataURL(file);
+      setMerchantQr(image);
+      setMerchantQrSaved(true);
+    } catch {
+      setMerchantQrError("Could not save this QR. Try the upload again.");
+    }
   };
 
   const submitSale = async () => {
@@ -491,6 +575,9 @@ export default function SalesBrowser({ organizationId, products, recentSales }: 
           amount={money(total)}
           merchantQr={merchantQr}
           error={merchantQrError}
+          isLoading={merchantQrLoading}
+          saved={merchantQrSaved}
+          canManageQr={canManageMerchantQr}
           isSaving={isSaving}
           canComplete={Boolean(merchantQr && lines.length)}
           onSaveQr={saveMerchantQr}

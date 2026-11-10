@@ -6,6 +6,7 @@ export const ENDPOINTS = {
     verifyRegistration: "/api/auth/register/verify",
     resendRegistrationCode: "/api/auth/register/resend",
     google: "/api/auth/google",
+    googleRegister: "/api/auth/google/register",
     forgotPassword: "/api/auth/forgot-password",
     resetPassword: "/api/auth/reset-password",
     verifyTwoFactor: "/api/auth/verify-2fa",
@@ -28,7 +29,10 @@ export const ENDPOINTS = {
     receive: (orderId: number, itemId: number) =>
       `/api/orders/${orderId}/items/${itemId}/receive`,
   },
-  sales: { checkout: "/api/sales/" },
+  sales: {
+    checkout: "/api/sales/",
+    merchantQr: "/api/sales/merchant-qr",
+  },
   organizations: {
     create: "/api/organizations/",
     mine: "/api/organizations/mine",

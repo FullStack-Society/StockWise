@@ -14,3 +14,14 @@ export async function checkoutSale(input: SaleInput) {
     { method: "POST", body: input },
   );
 }
+
+export function getMerchantQr() {
+  return apiRequest<{ image_data: string | null }>(ENDPOINTS.sales.merchantQr);
+}
+
+export function saveMerchantQr(imageData: string) {
+  return apiRequest<void>(ENDPOINTS.sales.merchantQr, {
+    method: "PUT",
+    body: { image_data: imageData },
+  });
+}

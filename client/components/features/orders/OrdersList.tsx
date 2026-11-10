@@ -72,26 +72,30 @@ export default function OrdersList({
             >
               {order.status === "Received" ? "Done" : order.status}
             </span>
-            {order.status === "Open" && (
+
+            <div className={styles.actions}>
+              {order.status === "Open" && (
+                <button
+                  type="button"
+                  className={styles.editOrder}
+                  onClick={() => onEdit(order)}
+                  aria-label={`Edit order ${order.orderNumber}`}
+                >
+                  <Pencil size={14} aria-hidden />
+                  Edit order
+                </button>
+              )}
+
               <button
                 type="button"
-                className={styles.editOrder}
-                onClick={() => onEdit(order)}
-                aria-label={`Edit order ${order.orderNumber}`}
+                className={styles.deleteOrder}
+                onClick={() => onDelete(order)}
+                aria-label={`Delete order ${order.orderNumber}`}
               >
-                <Pencil size={14} aria-hidden />
-                Edit order
+                <Trash2 size={14} aria-hidden />
+                Delete
               </button>
-            )}
-            <button
-              type="button"
-              className={styles.deleteOrder}
-              onClick={() => onDelete(order)}
-              aria-label={`Delete order ${order.orderNumber}`}
-            >
-              <Trash2 size={14} aria-hidden />
-              Delete
-            </button>
+            </div>
           </header>
           <div className={`${styles.tableWrap} mobileTableScroll`}>
             <table>

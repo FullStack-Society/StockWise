@@ -8,6 +8,9 @@ type Props = {
   amount: string;
   merchantQr: string | null;
   error: string;
+  isLoading: boolean;
+  saved: boolean;
+  canManageQr: boolean;
   isSaving: boolean;
   canComplete: boolean;
   onSaveQr: (file: File | undefined) => void;
@@ -19,6 +22,9 @@ export default function MerchantPaymentModal({
   amount,
   merchantQr,
   error,
+  isLoading,
+  saved,
+  canManageQr,
   isSaving,
   canComplete,
   onSaveQr,
@@ -60,30 +66,43 @@ export default function MerchantPaymentModal({
         ) : (
           <div className={styles.merchantQrEmpty}>
             <QrCode size={36} />
-            <span>Add your merchant QR image to this register.</span>
+            <span>
+              {isLoading
+                ? "Loading the organization's payment QR…"
+                : canManageQr
+                  ? "Add your organization's merchant QR image."
+                  : "Ask an owner or manager to add the merchant QR image."}
+            </span>
           </div>
         )}
-        <label className={styles.uploadQr}>
-          {merchantQr ? "Replace merchant QR image" : "Upload merchant QR image"}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(event) => {
-              onSaveQr(event.target.files?.[0]);
-              event.target.value = "";
-            }}
-          />
-        </label>
+        {canManageQr && (
+          <label className={styles.uploadQr}>
+            {merchantQr ? "Replace merchant QR image" : "Upload merchant QR image"}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => {
+                onSaveQr(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+          </label>
+        )}
         {error && <p className={styles.error} role="alert">{error}</p>}
+        {saved && (
+          <p className={styles.scannerMessage} role="status">
+            The merchant QR is saved for all members of this organization.
+          </p>
+        )}
         <p className={styles.scannerMessage}>
           StockWise does not process or verify this payment. Confirm that the
           payment arrived in your provider app before recording the sale. The
-          QR image is saved on this browser and register only.
+          QR image is shared with members of this organization.
         </p>
         <button
           type="button"
           className={styles.completeButton}
-          disabled={!canComplete || isSaving}
+          disabled={!canComplete || isSaving || isLoading}
           onClick={onComplete}
         >
           {isSaving

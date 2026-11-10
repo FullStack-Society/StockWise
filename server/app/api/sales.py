@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -7,14 +7,67 @@ from app.core.security import (
     require_organization_membership,
 )
 from app.db.session import get_db
+from app.db import payment_settings_repository
 from app.db.sales_repository import (
     SaleProductNotFoundError,
     create_sale,
     get_existing_sale_items_sold,
 )
-from app.schemas.sales import SaleCreate, SaleResponse
+from app.schemas.sales import (
+    MerchantQrResponse,
+    MerchantQrUpdate,
+    SaleCreate,
+    SaleResponse,
+)
 
 router = APIRouter()
+
+
+@router.get("/merchant-qr", response_model=MerchantQrResponse)
+def get_merchant_qr(
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    try:
+        return {
+            "image_data": payment_settings_repository.get_merchant_qr(
+                db, context.organization_id
+            )
+        }
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to load this organization's payment QR.",
+        ) from exc
+
+
+@router.put("/merchant-qr", status_code=status.HTTP_204_NO_CONTENT)
+def save_merchant_qr(
+    request: MerchantQrUpdate,
+    context: OrganizationContext = Depends(require_organization_membership),
+    db: Session = Depends(get_db),
+):
+    if context.role.lower() not in {"owner", "manager"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only owners and managers can update the merchant payment QR.",
+        )
+    try:
+        payment_settings_repository.save_merchant_qr(
+            db,
+            context.organization_id,
+            context.email,
+            request.image_data,
+        )
+        db.commit()
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to save this organization's payment QR.",
+        ) from exc
 
 
 @router.post(

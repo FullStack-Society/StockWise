@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BrandPanel from "@/components/features/login/BrandPanel";
 import LoginForm from "@/components/features/login/LoginForm";
 import RegisterForm from "@/components/features/login/RegisterForm";
+import GooglePasswordSetupForm from "@/components/features/login/GooglePasswordSetupForm";
 import styles from "@/styles/login/LoginPage.module.css";
 
 type Mode = "login" | "register";
@@ -21,11 +22,13 @@ export default function AuthPage({
   googleError = false,
   accountExists = false,
   twoFactorRequired = false,
+  googlePasswordSetup = false,
 }: {
   initialMode: Mode;
   googleError?: boolean;
   accountExists?: boolean;
   twoFactorRequired?: boolean;
+  googlePasswordSetup?: boolean;
 }) {
   const [mode, setMode] = useState(initialMode);
   const [visibleGoogleError] = useState(googleError);
@@ -116,10 +119,14 @@ export default function AuthPage({
             twoFactorRequired={twoFactorRequired}
           />
         ) : (
-          <RegisterForm
-            onSwitch={() => switchMode("login")}
-            googleError={visibleGoogleError}
-          />
+          googlePasswordSetup ? (
+            <GooglePasswordSetupForm />
+          ) : (
+            <RegisterForm
+              onSwitch={() => switchMode("login")}
+              googleError={visibleGoogleError}
+            />
+          )
         )}
       </section>
     </main>

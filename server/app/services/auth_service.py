@@ -10,6 +10,7 @@ from email.message import EmailMessage
 from urllib.parse import quote
 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
@@ -347,7 +348,7 @@ def authenticate_user(
     return user
 
 
-def authenticate_google_user(db: Session, credential: str, nonce: str) -> dict:
+def _verified_google_claims(credential: str, nonce: str) -> dict:
     if not settings.google_client_id:
         raise AuthenticationSetupError("Google sign-in is not configured.")
     try:
@@ -358,15 +359,21 @@ def authenticate_google_user(db: Session, credential: str, nonce: str) -> dict:
         raise InvalidGoogleCredentialError from exc
 
     email = claims.get("email")
-    name = claims.get("name")
     if (
         claims.get("nonce") != nonce
         or claims.get("email_verified") is not True
         or not isinstance(email, str)
-        or not isinstance(name, str)
         or not email.strip()
     ):
         raise InvalidGoogleCredentialError
+    return claims
+
+
+def authenticate_google_user(
+    db: Session, credential: str, nonce: str
+) -> dict | None:
+    claims = _verified_google_claims(credential, nonce)
+    email = claims["email"]
 
     try:
         normalized_email = email.strip().lower()
@@ -380,26 +387,102 @@ def authenticate_google_user(db: Session, credential: str, nonce: str) -> dict:
             if legacy["is_deleted"]:
                 raise InvalidGoogleCredentialError
             return legacy
-        try:
-            return register_account(
-                db,
-                name=name.strip()[:160] or normalized_email,
-                email=normalized_email,
-                password=secrets.token_urlsafe(48),
-            )
-        except AccountAlreadyExistsError:
-            account = repository.get_user_by_email(db, normalized_email)
-            if account and account["is_active"] and not account["is_deleted"]:
-                return account
-            legacy = user_repository.get_user_by_email(db, normalized_email)
-            if legacy and not legacy["is_deleted"]:
-                return legacy
-            raise InvalidGoogleCredentialError
+        return None
     except SQLAlchemyError as exc:
         db.rollback()
         logger.exception("Database error during Google account lookup or creation")
         raise AuthenticationSetupError(
             "Unable to sign in with Google right now. Please try again."
+        ) from exc
+
+
+def register_google_account(
+    db: Session, credential: str, nonce: str, password: str
+) -> dict:
+    claims = _verified_google_claims(credential, nonce)
+    normalized_email = claims["email"].strip().lower()
+    given_name = claims.get("given_name")
+    family_name = claims.get("family_name")
+    full_name = " ".join(
+        part.strip()
+        for part in (given_name, family_name)
+        if isinstance(part, str) and part.strip()
+    )
+    if not full_name:
+        full_name = str(claims.get("name") or normalized_email)
+    full_name = full_name[:160]
+
+    try:
+        account = repository.get_user_by_email(db, normalized_email)
+        if account:
+            if not account["is_active"] or account["is_deleted"]:
+                raise InvalidGoogleCredentialError
+            db.execute(
+                text("""
+                    UPDATE public.auth_users
+                    SET password_hash = :password_hash
+                    WHERE lower(email) = :email
+                """),
+                {
+                    "email": normalized_email,
+                    "password_hash": hash_password(password),
+                },
+            )
+            db.commit()
+            return repository.get_user_by_email(db, normalized_email)
+
+        legacy = user_repository.get_user_by_email(db, normalized_email)
+        if legacy:
+            if legacy["is_deleted"]:
+                raise InvalidGoogleCredentialError
+            from app.db import settings_repository
+
+            updated = settings_repository.update_password(
+                db,
+                normalized_email,
+                "users",
+                hash_password(password),
+            )
+            if not updated:
+                raise AuthenticationSetupError("Unable to save your StockWise password.")
+            db.commit()
+            return user_repository.get_user_by_email(db, normalized_email)
+
+        try:
+            account = repository.create_account(
+                db,
+                name=full_name,
+                email=normalized_email,
+                password_hash=hash_password(password),
+            )
+            db.commit()
+            return account
+        except IntegrityError as exc:
+            db.rollback()
+            existing = repository.get_user_by_email(db, normalized_email)
+            if existing and existing["is_active"] and not existing["is_deleted"]:
+                db.execute(
+                    text("""
+                        UPDATE public.auth_users
+                        SET password_hash = :password_hash
+                        WHERE lower(email) = :email
+                    """),
+                    {
+                        "email": normalized_email,
+                        "password_hash": hash_password(password),
+                    },
+                )
+                db.commit()
+                return repository.get_user_by_email(db, normalized_email)
+            raise AccountAlreadyExistsError from exc
+    except (InvalidGoogleCredentialError, AuthenticationSetupError):
+        db.rollback()
+        raise
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.exception("Database error while setting a Google account password")
+        raise AuthenticationSetupError(
+            "Unable to save your StockWise password right now. Please try again."
         ) from exc
 
 

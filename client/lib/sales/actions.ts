@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
-import { checkoutSale } from "@/lib/api/sales";
+import { checkoutSale, getMerchantQr, saveMerchantQr } from "@/lib/api/sales";
 import { requireOrganizationSession } from "@/lib/auth/session";
 import { ROUTES } from "@/lib/routes";
 
@@ -14,6 +14,48 @@ type SaleInput = {
 };
 
 const SALE_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export async function getMerchantQrAction() {
+  await requireOrganizationSession();
+  try {
+    const result = await getMerchantQr();
+    return { ok: true as const, imageData: result.image_data };
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      ok: false as const,
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "Could not load the organization's payment QR.",
+    };
+  }
+}
+
+export async function saveMerchantQrAction(imageData: string) {
+  await requireOrganizationSession();
+  if (
+    typeof imageData !== "string" ||
+    imageData.length > 2_100_000 ||
+    !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(imageData)
+  ) {
+    return { ok: false as const, error: "Choose a PNG, JPEG, or WebP image under 1.5 MB." };
+  }
+  try {
+    await saveMerchantQr(imageData);
+    revalidatePath(ROUTES.sales);
+    return { ok: true as const };
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      ok: false as const,
+      error:
+        error instanceof ApiError
+          ? error.message
+          : "Could not save the organization's payment QR.",
+    };
+  }
+}
 
 export async function checkoutSaleAction(input: SaleInput) {
   await requireOrganizationSession();

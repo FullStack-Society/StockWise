@@ -8,7 +8,7 @@ export const instant = false;
 export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ googleError?: string }>;
+  searchParams: Promise<{ googleError?: string; googlePassword?: string }>;
 }) {
   const session = await getSession();
   if (session)
@@ -19,6 +19,7 @@ export default async function RegisterPage({
     <AuthPage
       initialMode="register"
       googleError={params.googleError === "1"}
+      googlePasswordSetup={params.googlePassword === "1"}
     />
   );
 }
