@@ -29,8 +29,8 @@ export default function GooglePasswordSetupForm() {
       </div>
       <h2 className={styles.cardTitle}>Create your StockWise password</h2>
       <p className={styles.cardSubtitle}>
-        Your Google account is verified. Create a separate StockWise password
-        so you can sign in with your email and password too.
+        Your Google account is verified. Create a separate StockWise password so
+        you can sign in with your email and password too.
       </p>
       <form action={action} className={styles.form}>
         <label htmlFor="password" className={styles.label}>
@@ -43,10 +43,10 @@ export default function GooglePasswordSetupForm() {
             name="password"
             type={passwordVisible.password ? "text" : "password"}
             autoComplete="new-password"
-            minLength={12}
+            minLength={8}
             maxLength={128}
-            pattern="(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,128}"
-            title="Use at least 12 characters, including a capital letter and a special character."
+            pattern="(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,128}"
+            title="Use at least 8 characters, including a capital letter and a special character."
             required
             className={styles.input}
           />
@@ -59,7 +59,9 @@ export default function GooglePasswordSetupForm() {
                 password: !current.password,
               }))
             }
-            aria-label={passwordVisible.password ? "Hide password" : "Show password"}
+            aria-label={
+              passwordVisible.password ? "Hide password" : "Show password"
+            }
             aria-pressed={passwordVisible.password}
           >
             {passwordVisible.password ? (
@@ -70,7 +72,7 @@ export default function GooglePasswordSetupForm() {
           </button>
         </div>
         <p className={styles.fieldHint}>
-          Use at least 12 characters, including a capital letter and a special
+          Use at least 8 characters, including a capital letter and a special
           character. This is not your Google password.
         </p>
         <label htmlFor="confirm_password" className={styles.labelSpaced}>
@@ -83,7 +85,7 @@ export default function GooglePasswordSetupForm() {
             name="confirm_password"
             type={passwordVisible.confirmation ? "text" : "password"}
             autoComplete="new-password"
-            minLength={12}
+            minLength={8}
             maxLength={128}
             required
             className={styles.input}
@@ -119,8 +121,8 @@ export default function GooglePasswordSetupForm() {
         <SubmitButton />
       </form>
       <p className={styles.help}>
-        <a className={styles.link} href="/api/auth/google/start?mode=register">
-          Start again with Google
+        <a className={styles.link} href="/login">
+          Back to sign in
         </a>
       </p>
     </div>

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { apiRequest } from "./client";
 import { ENDPOINTS } from "./endpoints";
 
@@ -82,11 +83,11 @@ export function updateUsageAnalyticsConsent(enabled: boolean) {
     { method: "PUT", body: { enabled }, signActor: true },
   );
 }
-export function getAccountSettings() {
-  return apiRequest<AccountSettings>(ENDPOINTS.settings.root, {
+export const getAccountSettings = cache(() =>
+  apiRequest<AccountSettings>(ENDPOINTS.settings.root, {
     signActor: true,
-  });
-}
+  }),
+);
 
 export function updateAccountProfile(
   input: { name: string; timezone: string },

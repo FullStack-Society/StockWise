@@ -338,7 +338,10 @@ export default function TopBarSearch({ role }: { role: string | null }) {
   const listboxId = "topbar-search-results";
 
   return (
-    <div className={styles.container} ref={containerRef}>
+    <div
+      className={`${styles.container} ${open ? styles.containerOpen : ""}`}
+      ref={containerRef}
+    >
       <label className={styles.search}>
         <Search size={15} aria-hidden />
         <input
@@ -363,6 +366,7 @@ export default function TopBarSearch({ role }: { role: string | null }) {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
           onKeyDown={handleKeyDown}
         />
         <kbd className={styles.shortcut}>Ctrl K</kbd>

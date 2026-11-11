@@ -1,7 +1,7 @@
 # Dependencies
 client/node_modules/
-server/.venv/
 node_modules/
+server/node_modules/
 
 # Environment variables and secrets
 .env
@@ -11,6 +11,9 @@ client/.env
 client/.env.*
 !client/.env.example
 !client/.env.local.example
+server-node/.env
+server-node/.env.*
+!server-node/.env.example
 server/.env
 server/.env.*
 !server/.env.example
@@ -18,11 +21,11 @@ server/.env.*
 # Build outputs
 client/.next/
 client/out/
+server-node/node_modules/
+server-node/dist/
+server/node_modules/
+server/dist/
 client/*.tsbuildinfo
-server/__pycache__/
-**/__pycache__/
-*.py[cod]
-
 # Logs
 *.log
 npm-debug.log*
@@ -33,9 +36,10 @@ npm-debug.log*
 Thumbs.db
 
 migrations/
-supabase/
 
-# Keep new database migrations versioned while leaving historical local SQL ignored.
-!migrations/
-migrations/*
-!migrations/033_organization_payment_qr.sql
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

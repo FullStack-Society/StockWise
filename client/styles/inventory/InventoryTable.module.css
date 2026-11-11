@@ -58,18 +58,8 @@
   outline-offset: 2px;
 }
 .product {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   color: var(--color-text);
   font-weight: 500;
-}
-.thumb {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--color-border);
-  background: rgba(190, 120, 70, 0.35);
 }
 .qty {
   font-weight: 700;

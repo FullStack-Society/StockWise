@@ -1,5 +1,10 @@
 {
   "dependencies": {
     "@supabase/server": "^1.9.2"
-  }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^26.6.6"
+  },
+  "scripts": {}
 }

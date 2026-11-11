@@ -95,10 +95,7 @@ export default function InventoryTable({
                   />
                 </td>
                 <td>
-                  <div className={styles.product}>
-                    <span className={styles.thumb} aria-hidden />
-                    {p.name}
-                  </div>
+                  <span className={styles.product}>{p.name}</span>
                 </td>
                 <td>{p.sku}</td>
                 <td>{p.upc ?? "—"}</td>
