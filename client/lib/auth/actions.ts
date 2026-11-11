@@ -67,8 +67,8 @@ export async function completeGoogleRegistration(
 ): Promise<GoogleRegistrationState> {
   const password = String(formData.get("password") ?? "");
   const confirmation = String(formData.get("confirm_password") ?? "");
-  if (password.length < 12 || password.length > 128) {
-    return { error: "Use a password between 12 and 128 characters." };
+  if (password.length < 8 || password.length > 128) {
+    return { error: "Use a password between 8 and 128 characters." };
   }
   if (!/[A-Z]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
     return {
@@ -256,9 +256,9 @@ export async function register(
       email,
     };
   }
-  if (password.length < 12 || password.length > 128) {
+  if (password.length < 8 || password.length > 128) {
     return {
-      error: "Use a password between 12 and 128 characters.",
+      error: "Use a password between 8 and 128 characters.",
       firstName,
       lastName,
       email,

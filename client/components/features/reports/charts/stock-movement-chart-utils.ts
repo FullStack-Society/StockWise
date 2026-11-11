@@ -10,7 +10,15 @@ export const GROUP_LABELS: Record<GroupBy, string> = {
 };
 
 export function bucketDate(day: string, groupBy: GroupBy) {
-  const date = new Date(`${day}T00:00:00Z`);
+  const datePart = /^(\d{4}-\d{2}-\d{2})(?:$|T)/.exec(day)?.[1];
+  if (!datePart) throw new RangeError(`Invalid stock movement date: ${day}`);
+  const date = new Date(`${datePart}T00:00:00Z`);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== datePart
+  ) {
+    throw new RangeError(`Invalid stock movement date: ${day}`);
+  }
   if (groupBy === "week") {
     date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
   } else if (groupBy === "month") {

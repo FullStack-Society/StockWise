@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth/session";
 const BASE_URL = (
   process.env.BACKEND_API_URL ??
   process.env.API_URL ??
-  "http://127.0.0.1:8000"
+  "http://127.0.0.1:8001"
 ).replace(/\/+$/, "");
 const INTERNAL_API_KEY = process.env.BACKEND_API_KEY;
 

@@ -27,7 +27,7 @@ inventory activity across an organization.
   does not use the StockWise password.
 - Sign in or register with Google, and reset a password through a time-limited email link.
 - Optionally require an authenticator-app code at sign-in, with one-use recovery codes.
-- Registration requires a password with at least 12 characters, including an
+- Registration requires a password with at least 8 characters, including an
   uppercase letter and a special character.
 - Create an organization or join one by invitation.
 - Switch between organizations the signed-in user belongs to.
@@ -90,10 +90,9 @@ branding style.
 | --------------- | -------------------------------- |
 | Web application | Next.js 16, React 19, TypeScript |
 | Styling         | CSS Modules                      |
-| API             | Python, FastAPI, Pydantic        |
-| Database access | SQLAlchemy                       |
+| API             | Node.js, Express, TypeScript     |
+| Database access | node-postgres (`pg`)             |
 | Database        | PostgreSQL                       |
-| API driver      | psycopg 3                        |
 
 ## System overview
 
@@ -105,9 +104,9 @@ Next.js client (client/)
   |  Server Components, Server Actions, server-side API client
   |  Auth/session handling and input validation
   v
-FastAPI service (server/)
+Express/TypeScript API (server/)
   |  Authentication, organization and role checks
-  |  API routes -> services -> database repositories
+  |  Routes -> controllers -> PostgreSQL functions and procedures
   v
 PostgreSQL
 ```
@@ -140,14 +139,18 @@ StockWise/
 │   │   └── routes.ts               # Application route definitions
 │   └── styles/                     # Feature and layout CSS Modules
 ├── server/
-│   ├── app/
-│   │   ├── api/                    # FastAPI route handlers
-│   │   ├── core/                   # Configuration and security
-│   │   ├── db/                     # Database sessions and repositories
-│   │   ├── schemas/                # Request and response models
-│   │   └── services/               # Application and business logic
+│   ├── src/
+│   │   ├── config/                 # Environment and database pool
+│   │   ├── controllers/            # API-domain request handlers
+│   │   ├── middlewares/            # Authentication, authorization, and errors
+│   │   ├── models/                 # Domain and database-row types
+│   │   ├── routes/                 # API endpoint definitions
+│   │   ├── schemas/                # Request validation and DTOs
+│   │   ├── services/               # Reusable business and integration logic
+│   │   ├── types/                  # Shared API and Express types
+│   │   └── utils/                  # Shared helpers
 │   ├── .env.example                # Backend environment template
-│   └── requirements.txt            # Python dependencies
+│   └── package.json                # Node.js backend dependencies and scripts
 ├── docs/                           # User-management implementation guide
 └── README.md
 ```
@@ -170,8 +173,7 @@ StockWise/
 
 The API is mounted under `/api`. Its main route groups are `/api/auth`,
 `/api/health`, `/api/inventory`, `/api/orders`, `/api/organizations`,
-`/api/sales`, `/api/settings`, and `/api/reports`. During local development,
-FastAPI's interactive API documentation is available at `/docs`.
+`/api/sales`, `/api/settings`, and `/api/reports`.
 
 ## Important files
 
@@ -195,15 +197,15 @@ FastAPI's interactive API documentation is available at `/docs`.
 
 ### Backend
 
-| Path                          | Responsibility                                                                                       |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `server/app/main.py`          | FastAPI application setup and route registration                                                     |
-| `server/app/core/config.py`   | Environment-based backend settings                                                                   |
-| `server/app/core/security.py` | API request and organization security helpers                                                        |
-| `server/app/api/`             | FastAPI endpoints for authentication, inventory, orders, sales, reports, organizations, and settings |
-| `server/app/schemas/`         | Pydantic input/output schemas                                                                        |
-| `server/app/services/`        | Validation and business rules                                                                        |
-| `server/app/db/`              | Database sessions and PostgreSQL operations                                                          |
+| Path                      | Responsibility                                                 |
+| ------------------------- | -------------------------------------------------------------- |
+| `server/src/server.ts`    | API startup, initial-owner provisioning, and graceful shutdown |
+| `server/src/app.ts`       | Express middleware and route registration                      |
+| `server/src/routes/`      | API endpoint definitions grouped by domain                     |
+| `server/src/controllers/` | HTTP handlers grouped by domain                                |
+| `server/src/schemas/`     | Runtime request validation and inferred DTOs                   |
+| `server/src/models/`      | Domain entities and PostgreSQL row types                       |
+| `server/src/config/`      | Environment configuration and PostgreSQL pool                  |
 
 ### Documentation
 
@@ -215,7 +217,6 @@ FastAPI's interactive API documentation is available at `/docs`.
 
 ### Requirements
 
-- Python 3.10 or later
 - Node.js 20.9 or later
 - PostgreSQL
 
@@ -226,6 +227,7 @@ In PowerShell from the repository root:
 ```powershell
 Set-Location server
 Copy-Item .env.example .env
+npm ci
 ```
 
 Edit `server/.env` and configure at least:
@@ -238,26 +240,24 @@ Before starting the application, provision a PostgreSQL database configured for
 StockWise. Keep database credentials and private database setup details out of
 public documentation.
 
-Optional initial-owner settings are `OWNER_NAME`, `OWNER_EMAIL`, and
-`OWNER_PASSWORD`. Set the email and a unique password when creating the initial
-owner. Do not commit `.env` files.
+If the database has no owner yet, set `OWNER_EMAIL` and `OWNER_PASSWORD` to
+create the initial owner. The owner password must be at least 12 characters.
+Do not commit `.env` files.
 
-For authenticator-based two-factor authentication, set `TOTP_ENCRYPTION_KEYS`
-to a comma-separated Fernet key ring. Generate a URL-safe key with:
+For authenticator-based two-factor authentication, `TOTP_ENCRYPTION_KEYS` can
+be set to a comma-separated Fernet key ring. Generate a URL-safe key with:
 
 ```powershell
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url').padEnd(44, '='))"
 ```
 
 Keep prior keys in the key ring when rotating keys so existing authenticator
 secrets remain decryptable. Keep all keys private.
 
-Install dependencies and start FastAPI:
+Start the API:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+npm run dev
 ```
 
 Keep the backend process running.
@@ -274,7 +274,7 @@ Copy-Item .env.local.example .env.local
 Set these values in `client/.env.local`:
 
 ```env
-BACKEND_API_URL=http://127.0.0.1:8000
+BACKEND_API_URL=http://127.0.0.1:8001
 BACKEND_API_KEY=the-same-private-value-as-server-INTERNAL_API_KEY
 SESSION_SECRET=your-unique-random-secret-at-least-32-characters
 ```
@@ -292,8 +292,8 @@ npm ci
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The API documentation is
-at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+Open [http://localhost:3000](http://localhost:3000). The API health check is
+at [http://127.0.0.1:8001/api/health/](http://127.0.0.1:8001/api/health/).
 
 ### Useful frontend checks
 

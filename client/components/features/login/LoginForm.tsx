@@ -13,10 +13,15 @@ import {
 } from "@/lib/auth/actions";
 import styles from "@/styles/login/LoginForm.module.css";
 
-function SubmitButton() {
+function SubmitButton({ onClick }: { onClick?: () => void }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className={styles.submit}>
+    <button
+      type="submit"
+      disabled={pending}
+      onClick={onClick}
+      className={styles.submit}
+    >
       {pending ? "Signing in..." : "Sign in"}
     </button>
   );
@@ -43,6 +48,7 @@ export default function LoginForm({
   twoFactorRequired?: boolean;
 }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [showAccountExists, setShowAccountExists] = useState(accountExists);
   const [state, formAction] = useActionState<LoginState, FormData>(login, {});
   const [mfaState, mfaAction] = useActionState<TwoFactorLoginState, FormData>(
     verifySecondFactor,
@@ -112,7 +118,7 @@ export default function LoginForm({
       </div>
       <h2 className={styles.cardTitle}>Sign in</h2>
       <p className={styles.cardSubtitle}>sign in to your StockWise account.</p>
-      {accountExists && (
+      {showAccountExists && (
         <p role="alert" className={styles.error}>
           An account already exists for this Gmail. Sign in instead.
         </p>
@@ -122,9 +128,13 @@ export default function LoginForm({
           Google sign-in did not complete. Please try again.
         </p>
       )}
-      <form action={formAction} className={styles.form}>
+      <form
+        action={formAction}
+        className={styles.form}
+        onSubmit={() => setShowAccountExists(false)}
+      >
         <label htmlFor="email" className={styles.label}>
-          Gmail address
+          Email
         </label>
         <div className={styles.field}>
           <Mail size={12} />
@@ -191,7 +201,7 @@ export default function LoginForm({
           </p>
         )}
 
-        <SubmitButton />
+        <SubmitButton onClick={() => setShowAccountExists(false)} />
       </form>
 
       <div className={styles.orDivider}>

@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Eye, EyeOff, Lock, Mail, UserRound } from "lucide-react";
+import { Lock, Mail, UserRound } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 import {
   register,
@@ -17,7 +17,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className={styles.submit}>
-      {pending ? "Sending code…" : "Continue with Gmail"}
+      {pending ? "Sending verification…" : "Create account"}
     </button>
   );
 }
@@ -59,10 +59,7 @@ export default function RegisterForm({
     ResendRegistrationState,
     FormData
   >(resendRegistrationVerification, {});
-  const [passwordVisible, setPasswordVisible] = useState({
-    password: false,
-    confirm: false,
-  });
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   return (
     <div className={`${styles.card} ${styles.registerCard}`}>
@@ -73,7 +70,7 @@ export default function RegisterForm({
       <p className={styles.cardSubtitle}>
         {state.verificationRequired
           ? `Enter the 8-digit code sent to ${state.email}. Your account is created after Gmail is verified.`
-          : "Verify your Gmail address before creating your StockWise account."}
+          : "Enter your details to create your account."}
       </p>
       {googleError && (
         <p role="alert" className={styles.error}>
@@ -126,7 +123,7 @@ export default function RegisterForm({
           </form>
           <p className={styles.help}>
             <a className={styles.link} href="/register">
-              Use a different Gmail address
+              Use a different Email address
             </a>
           </p>
         </>
@@ -172,7 +169,7 @@ export default function RegisterForm({
           </div>
 
           <label htmlFor="email" className={styles.labelSpaced}>
-            Gmail address
+            Email
           </label>
           <div className={styles.field}>
             <Mail size={12} />
@@ -191,45 +188,25 @@ export default function RegisterForm({
           </div>
 
           <label htmlFor="password" className={styles.labelSpaced}>
-            password
+            Password
           </label>
           <div className={styles.field}>
             <Lock size={12} />
             <input
               id="password"
               name="password"
-              type={passwordVisible.password ? "text" : "password"}
+              type={passwordVisible ? "text" : "password"}
               autoComplete="new-password"
               minLength={8}
               maxLength={128}
-              pattern="(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{12,128}"
-              title="Use at least 8 characters, including a capital letter and a special character."
+              pattern="(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,128}"
+              title="Use 8 to 128 characters, including a capital letter and a special character."
               required
               className={styles.input}
             />
-            <button
-              type="button"
-              className={styles.iconButton}
-              onClick={() =>
-                setPasswordVisible((current) => ({
-                  ...current,
-                  password: !current.password,
-                }))
-              }
-              aria-label={
-                passwordVisible.password ? "Hide password" : "Show password"
-              }
-              aria-pressed={passwordVisible.password}
-            >
-              {passwordVisible.password ? (
-                <EyeOff size={14} aria-hidden />
-              ) : (
-                <Eye size={14} aria-hidden />
-              )}
-            </button>
           </div>
           <p className={styles.fieldHint}>
-            Use at least 8 characters, including a capital letter and a special
+            Use 8 to 128 characters, including a capital letter and a special
             character.
           </p>
 
@@ -241,36 +218,24 @@ export default function RegisterForm({
             <input
               id="confirm_password"
               name="confirm_password"
-              type={passwordVisible.confirm ? "text" : "password"}
+              type={passwordVisible ? "text" : "password"}
               autoComplete="new-password"
-              minLength={12}
+              minLength={8}
               maxLength={128}
               required
               className={styles.input}
             />
-            <button
-              type="button"
-              className={styles.iconButton}
-              onClick={() =>
-                setPasswordVisible((current) => ({
-                  ...current,
-                  confirm: !current.confirm,
-                }))
-              }
-              aria-label={
-                passwordVisible.confirm
-                  ? "Hide password confirmation"
-                  : "Show password confirmation"
-              }
-              aria-pressed={passwordVisible.confirm}
-            >
-              {passwordVisible.confirm ? (
-                <EyeOff size={14} aria-hidden />
-              ) : (
-                <Eye size={14} aria-hidden />
-              )}
-            </button>
           </div>
+
+          <label className={styles.passwordVisibility}>
+            <input
+              type="checkbox"
+              checked={passwordVisible}
+              onChange={(event) => setPasswordVisible(event.target.checked)}
+              className={styles.checkbox}
+            />
+            Show both passwords
+          </label>
 
           {state.error && (
             <p role="alert" className={styles.error}>

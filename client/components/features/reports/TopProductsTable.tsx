@@ -47,12 +47,7 @@ export default function TopProductsTable({
                     : "In stock";
               return (
                 <tr key={p.id}>
-                  <td>
-                    <div className={styles.productCell}>
-                      <span className={styles.thumb} aria-hidden />
-                      {p.name}
-                    </div>
-                  </td>
+                  <td>{p.name}</td>
                   <td>{p.units_issued.toLocaleString()}</td>
                   <td>{p.quantity.toLocaleString()}</td>
                   <td>

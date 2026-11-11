@@ -1,6 +1,7 @@
 # StockWise user and organization management
 
-This document describes the current user-management implementation. The frontend is in `client/`; the FastAPI backend is in `server/app/`.
+This document describes the current user-management implementation. The
+frontend is in `client/`; the Express/TypeScript backend is in `server-node/`.
 
 ## Current behavior
 
@@ -31,8 +32,8 @@ This document describes the current user-management implementation. The frontend
 - `client/lib/api/organizations.ts` — server-side organization API calls.
 - `client/components/layout/PresenceHeartbeat.tsx` — member presence updates.
 - `client/components/layout/TopBar.tsx` — organization switching and top-level controls.
-- `server/app/api/organizations.py` — organization endpoints.
-- `server/app/services/` — organization and user business rules.
-- `server/app/db/` — database access.
+- `server-node/src/routes/organizations.ts` — organization endpoints.
+- `server-node/src/http/security.ts` — signed actor and membership checks.
+- `server-node/src/db/pool.ts` — PostgreSQL connection pool.
 
 Update this overview when routes, role rules, or ownership behavior change. Do not use this document as a substitute for reviewing the backend authorization checks.

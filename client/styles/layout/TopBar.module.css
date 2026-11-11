@@ -354,96 +354,106 @@
   color: var(--color-text-muted);
 }
 
-@media (max-width: 640px) {
-  .createOrgButton {
-    width: 38px;
-    padding: 0;
-  }
-  .createOrgButton span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-  }
-  .user {
-    min-width: 0;
-    gap: 8px;
-  }
-
-  .userText {
-    display: block;
-    min-width: 0;
-  }
-
-  .userName {
-    max-width: 24vw;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .userRole {
-    max-width: 24vw;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+@media (max-width: 1300px) {
+  .topbar {
+    gap: 10px;
+    padding-inline: 20px;
   }
 
   .right {
-    gap: 10px;
+    flex: 0 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    gap: clamp(6px, 1vw, 12px);
   }
+
+  .createOrgButton {
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+  }
+
+  .createOrgButton span {
+    display: none;
+  }
+
   .organizationSelect {
-    max-width: 125px;
+    max-width: 140px;
+    height: 34px;
+    padding-inline: 8px 22px;
+  }
+
+  .bell,
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .user {
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .userText {
+    min-width: 0;
+    max-width: min(130px, 18vw);
+  }
+
+  .userName,
+  .userRole {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
 @media (max-width: 900px) {
   .topbar {
-    gap: 10px;
-    padding: 0 16px;
+    gap: 8px;
+    padding-inline: 12px;
   }
 
   .right {
-    gap: 10px;
+    gap: 8px;
   }
 
   .organizationSelect {
-    max-width: min(180px, 25vw);
+    width: min(140px, 22vw);
+    max-width: none;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .createOrgButton {
+    flex: 0 0 34px;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .organizationSelectWrap {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .userText {
+    display: none;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .organizationSelect {
+    width: min(110px, 22vw);
+    min-width: 0;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .bell,
+  .topbar:has(input[aria-expanded="true"]) .avatar {
+    flex: 0 0 36px;
   }
 }
 
 @media (max-width: 700px) {
-  .topbar {
-    height: auto;
-    min-height: var(--header-height);
-    flex-wrap: wrap;
-    row-gap: 8px;
-    padding: 8px 12px;
-  }
-
-  .right {
-    flex: 1 1 100%;
-    justify-content: flex-end;
-    min-width: 0;
-    flex-wrap: wrap;
-  }
-
-  .organizationSelect {
-    width: min(125px, 34vw);
-    max-width: none;
-  }
-
-  .userText {
-    max-width: 90px;
-  }
-
-  .userName,
-  .userRole {
-    max-width: 90px;
-  }
-
   .notificationPanel {
     position: fixed;
     top: 50%;
@@ -457,13 +467,47 @@
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .topbar {
+    gap: 6px;
     padding-inline: 8px;
   }
 
   .right {
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .organizationSelect {
+    width: min(100px, 27vw);
+    padding-inline: 6px 18px;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .organizationSelect {
+    width: min(70px, 22vw);
+    padding-inline: 4px 14px;
+    font-size: 10px;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .right {
+    gap: 4px;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .createOrgButton {
+    flex-basis: 32px;
+    width: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .bell,
+  .topbar:has(input[aria-expanded="true"]) .avatar {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .topbar:has(input[aria-expanded="true"]) .user {
+    flex: 0 0 32px;
   }
 
   .userText {

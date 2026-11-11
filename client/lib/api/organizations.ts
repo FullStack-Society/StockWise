@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { apiRequest } from "./client";
 import { ENDPOINTS } from "./endpoints";
 
@@ -71,11 +72,11 @@ export function markOrganizationLoginNotificationRead(notificationId: number) {
   );
 }
 
-export function listOrganizations(email: string) {
-  return apiRequest<OrganizationSummary[]>(ENDPOINTS.organizations.mine, {
+export const listOrganizations = cache((email: string) =>
+  apiRequest<OrganizationSummary[]>(ENDPOINTS.organizations.mine, {
     query: { email },
-  });
-}
+  }),
+);
 
 export function createOrganization(email: string, organizationName: string) {
   return apiRequest<OrganizationSummary>(ENDPOINTS.organizations.create, {
