@@ -1,0 +1,29 @@
+-- Triggers for the current fresh-install schema.
+
+CREATE TRIGGER trg_stockwise_prevent_delete_open_order_product
+BEFORE UPDATE OF is_deleted ON public.products
+FOR EACH ROW EXECUTE FUNCTION public.stockwise_prevent_delete_open_order_product();
+
+CREATE TRIGGER trg_stockwise_assign_purchase_order_number
+BEFORE INSERT ON public.purchase_orders
+FOR EACH ROW EXECUTE FUNCTION public.stockwise_assign_purchase_order_number();
+
+CREATE CONSTRAINT TRIGGER trg_stockwise_purchase_order_created
+AFTER INSERT ON public.purchase_orders
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION public.stockwise_purchase_order_history_trigger();
+
+CREATE CONSTRAINT TRIGGER trg_stockwise_purchase_order_updated
+AFTER UPDATE OF notes, deleted_at ON public.purchase_orders
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION public.stockwise_purchase_order_history_trigger();
+
+CREATE TRIGGER trg_stockwise_purchase_order_item_received
+AFTER UPDATE OF quantity_received ON public.purchase_order_items
+FOR EACH ROW
+WHEN (OLD.quantity_received IS DISTINCT FROM NEW.quantity_received)
+EXECUTE FUNCTION public.stockwise_purchase_order_item_history_trigger();
+
+CREATE TRIGGER trg_stockwise_guard_deleted_purchase_order_item
+BEFORE INSERT OR UPDATE ON public.purchase_order_items
+FOR EACH ROW EXECUTE FUNCTION public.stockwise_guard_deleted_purchase_order_item();
