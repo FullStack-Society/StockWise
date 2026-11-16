@@ -35,7 +35,10 @@ function failure(request: NextRequest, mode: string) {
 function matchesState(received: string, expected: string) {
   const receivedBytes = Buffer.from(received);
   const expectedBytes = Buffer.from(expected);
-  return receivedBytes.length === expectedBytes.length && timingSafeEqual(receivedBytes, expectedBytes);
+  return (
+    receivedBytes.length === expectedBytes.length &&
+    timingSafeEqual(receivedBytes, expectedBytes)
+  );
 }
 
 function registrationKey() {
@@ -116,15 +119,18 @@ export async function GET(request: NextRequest) {
       return failure(request, mode);
     }
 
-    const result = await apiRequest<GoogleLoginResponse>(ENDPOINTS.auth.google, {
-      method: "POST",
-      body: {
-        credential: tokens.id_token,
-        nonce,
-        device_id: await getOrCreateLoginDeviceId(),
-        mode,
+    const result = await apiRequest<GoogleLoginResponse>(
+      ENDPOINTS.auth.google,
+      {
+        method: "POST",
+        body: {
+          credential: tokens.id_token,
+          nonce,
+          device_id: await getOrCreateLoginDeviceId(),
+          mode,
+        },
       },
-    });
+    );
     if (result.registration_required) {
       const registrationToken = await new EncryptJWT({
         credential: tokens.id_token,
@@ -182,11 +188,17 @@ export async function GET(request: NextRequest) {
     try {
       await publishMemberLogin();
     } catch (error) {
-      console.error("[StockWise] Unable to create the organization login alert:", error);
+      console.error(
+        "[StockWise] Unable to create the organization login alert:",
+        error,
+      );
     }
 
     return NextResponse.redirect(
-      new URL(activeOrganization ? ROUTES.dashboard : ROUTES.users, request.url),
+      new URL(
+        activeOrganization ? ROUTES.dashboard : ROUTES.users,
+        request.url,
+      ),
     );
   } catch (error) {
     if (error instanceof ApiError) {

@@ -46,7 +46,7 @@ export async function seedInitialOwner(
 
   const email = z.string().email().parse(ownerEmail).trim().toLowerCase();
   const account = await pool.query(
-    "SELECT * FROM public.stockwise_auth_get_auth_user($1)",
+    "SELECT * FROM public.stockwise_auth_get_user($1)",
     [email],
   );
   if (account.rowCount) {

@@ -40,8 +40,12 @@ export const memberRoleChangeSchema = z.object({
 export type OrganizationCreateInput = z.input<typeof organizationCreateSchema>;
 export type OrganizationCreate = z.output<typeof organizationCreateSchema>;
 
-export type OrganizationNameUpdateInput = z.input<typeof organizationNameUpdateSchema>;
-export type OrganizationNameUpdate = z.output<typeof organizationNameUpdateSchema>;
+export type OrganizationNameUpdateInput = z.input<
+  typeof organizationNameUpdateSchema
+>;
+export type OrganizationNameUpdate = z.output<
+  typeof organizationNameUpdateSchema
+>;
 
 export type OwnershipTransferInput = z.input<typeof ownershipTransferSchema>;
 export type OwnershipTransfer = z.output<typeof ownershipTransferSchema>;

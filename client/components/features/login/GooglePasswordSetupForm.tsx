@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Eye, EyeOff, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 import { completeGoogleRegistration } from "@/lib/auth/actions";
 import styles from "@/styles/login/LoginForm.module.css";
@@ -18,10 +18,7 @@ function SubmitButton() {
 
 export default function GooglePasswordSetupForm() {
   const [state, action] = useActionState(completeGoogleRegistration, {});
-  const [passwordVisible, setPasswordVisible] = useState({
-    password: false,
-    confirmation: false,
-  });
+  const [passwordVisible, setPasswordVisible] = useState(false);
   return (
     <div className={styles.card}>
       <div className={styles.mobileBrand}>
@@ -41,7 +38,7 @@ export default function GooglePasswordSetupForm() {
           <input
             id="password"
             name="password"
-            type={passwordVisible.password ? "text" : "password"}
+            type={passwordVisible ? "text" : "password"}
             autoComplete="new-password"
             minLength={8}
             maxLength={128}
@@ -50,26 +47,6 @@ export default function GooglePasswordSetupForm() {
             required
             className={styles.input}
           />
-          <button
-            type="button"
-            className={styles.iconButton}
-            onClick={() =>
-              setPasswordVisible((current) => ({
-                ...current,
-                password: !current.password,
-              }))
-            }
-            aria-label={
-              passwordVisible.password ? "Hide password" : "Show password"
-            }
-            aria-pressed={passwordVisible.password}
-          >
-            {passwordVisible.password ? (
-              <EyeOff size={14} aria-hidden />
-            ) : (
-              <Eye size={14} aria-hidden />
-            )}
-          </button>
         </div>
         <p className={styles.fieldHint}>
           Use at least 8 characters, including a capital letter and a special
@@ -83,36 +60,23 @@ export default function GooglePasswordSetupForm() {
           <input
             id="confirm_password"
             name="confirm_password"
-            type={passwordVisible.confirmation ? "text" : "password"}
+            type={passwordVisible ? "text" : "password"}
             autoComplete="new-password"
             minLength={8}
             maxLength={128}
             required
             className={styles.input}
           />
-          <button
-            type="button"
-            className={styles.iconButton}
-            onClick={() =>
-              setPasswordVisible((current) => ({
-                ...current,
-                confirmation: !current.confirmation,
-              }))
-            }
-            aria-label={
-              passwordVisible.confirmation
-                ? "Hide password confirmation"
-                : "Show password confirmation"
-            }
-            aria-pressed={passwordVisible.confirmation}
-          >
-            {passwordVisible.confirmation ? (
-              <EyeOff size={14} aria-hidden />
-            ) : (
-              <Eye size={14} aria-hidden />
-            )}
-          </button>
         </div>
+        <label className={styles.passwordVisibility}>
+          <input
+            type="checkbox"
+            checked={passwordVisible}
+            onChange={(event) => setPasswordVisible(event.target.checked)}
+            className={styles.checkbox}
+          />
+          Show both passwords
+        </label>
         {state.error && (
           <p role="alert" className={styles.error}>
             {state.error}

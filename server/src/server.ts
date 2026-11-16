@@ -19,7 +19,10 @@ async function shutdown(signal: string) {
     try {
       await pool.end();
     } catch (poolError) {
-      console.error("[StockWise Node API] Failed to close PostgreSQL pool:", poolError);
+      console.error(
+        "[StockWise Node API] Failed to close PostgreSQL pool:",
+        poolError,
+      );
       process.exitCode = 1;
     }
     if (error) {

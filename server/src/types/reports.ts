@@ -1,21 +1,28 @@
-import type { Request, Response } from "express";
-import type { PoolClient } from "pg";
-import type { OrganizationContext } from "../models/organization.js";
+import type { QueryResultRow } from "pg";
 
-export type { Page, PageInput } from "../schemas/reports.schema.js";
-export type {
-  DailyStockMovementRow,
-  ReportObject,
-  UsageAnalyticsRow,
-  YearlyStockMovementRow,
-} from "../models/reports.js";
+export type ReportObject = Record<string, unknown>;
 
-export type ReportRequest = Request & {
-  organization: OrganizationContext;
-};
+export interface SalesReportTotalsRow extends QueryResultRow {
+  sales_count: number;
+  units_sold: number;
+  previous_sales_count: number;
+}
 
-export type ReportHandler = (
-  req: ReportRequest,
-  res: Response,
-  client: PoolClient,
-) => Promise<void>;
+export interface UsageAnalyticsRow extends QueryResultRow {
+  page: string;
+  views: number | string;
+}
+
+export interface DailyStockMovementRow extends QueryResultRow {
+  day: string;
+  units_received: number | string;
+  units_issued: number | string;
+  received_value: string;
+}
+
+export interface YearlyStockMovementRow extends QueryResultRow {
+  year: number | string;
+  units_received: number | string;
+  units_issued: number | string;
+  received_value: string;
+}

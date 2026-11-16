@@ -1,34 +1,15 @@
-import type { Request, Response } from "express";
-import type { PoolClient } from "pg";
+import type { QueryResultRow } from "pg";
 
-export type {
-  Avatar,
-  AvatarInput,
-  Code,
-  CodeInput,
-  Consent,
-  ConsentInput,
-  InventoryDefaults,
-  InventoryDefaultsInput,
-  Password,
-  PasswordInput,
-  Preferences,
-  PreferencesInput,
-  Profile,
-  ProfileInput,
-  SecurityPreferences,
-  SecurityPreferencesInput,
-} from "../schemas/settings.schema.js";
-export type {
-  MfaSettingsRow,
-  SettingsRecord,
-  UserSettingsRow,
-} from "../models/settings.js";
+export interface UserSettingsRow extends QueryResultRow {
+  email: string;
+  timezone: string;
+}
 
-export type SettingsRequest = Request & { actorEmail: string };
+export interface MfaSettingsRow extends QueryResultRow {
+  enabled: boolean;
+  secret_ciphertext: string | null;
+  recovery_code_hashes: string[] | null;
+  last_totp_step: string | number | null;
+}
 
-export type SettingsHandler = (
-  req: SettingsRequest,
-  res: Response,
-  client: PoolClient,
-) => Promise<void>;
+export type SettingsRecord = Record<string, unknown>;

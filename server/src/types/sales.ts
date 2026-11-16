@@ -1,2 +1,9 @@
-export type { Sale, SaleInput, MerchantQr, MerchantQrInput } from "../schemas/sales.schema.js";
-export type { SaleItemInput, SaleProductRow } from "../models/sales.js";
+export type SaleItemInput = {
+  product_id: number;
+  quantity: number;
+};
+
+export type SaleProductRow = {
+  product_id: number;
+  price: string;
+};

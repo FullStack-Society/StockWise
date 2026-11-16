@@ -65,9 +65,7 @@ class SmtpSession {
 
   async writeData(data: string): Promise<void> {
     await new Promise<void>((resolve, reject) => {
-      this.socket.write(data, (error) =>
-        error ? reject(error) : resolve(),
-      );
+      this.socket.write(data, (error) => (error ? reject(error) : resolve()));
     });
   }
 
@@ -96,7 +94,9 @@ async function openSession(host: string, port: number): Promise<SmtpSession> {
   await new Promise<void>((resolve, reject) => {
     socket.once("connect", resolve);
     socket.once("error", reject);
-    socket.setTimeout(15_000, () => reject(new Error("SMTP connection timed out.")));
+    socket.setTimeout(15_000, () =>
+      reject(new Error("SMTP connection timed out.")),
+    );
   });
   const session = new SmtpSession(socket);
   const greeting = await session.response();
@@ -138,7 +138,9 @@ export async function sendStockWiseEmail(
       "Content-Type: text/plain; charset=UTF-8",
       "Content-Transfer-Encoding: 8bit",
       "",
-      message.text.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+      message.text
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
         .split("\n")
         .map((line) => (line.startsWith(".") ? `.${line}` : line))
         .join("\r\n"),
@@ -146,7 +148,8 @@ export async function sendStockWiseEmail(
     ].join("\r\n");
     await session.writeData(`${body}\r\n`);
     const sent = await session.response();
-    if (sent.code !== 250) throw new Error("SMTP server did not accept the email.");
+    if (sent.code !== 250)
+      throw new Error("SMTP server did not accept the email.");
     await session.command("QUIT");
     return true;
   } finally {
@@ -156,7 +159,6 @@ export async function sendStockWiseEmail(
 
 export function registrationEmailConfigured(): boolean {
   return Boolean(
-    process.env.SMTP_USERNAME?.trim() &&
-      process.env.SMTP_APP_PASSWORD?.trim(),
+    process.env.SMTP_USERNAME?.trim() && process.env.SMTP_APP_PASSWORD?.trim(),
   );
 }

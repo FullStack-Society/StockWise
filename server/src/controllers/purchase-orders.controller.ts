@@ -1,3 +1,5 @@
+import * as transactionModel from "../models/transaction.js";
+import * as model from "../models/purchase-orders.js";
 import {
   historyQuerySchema,
   maxInteger,
@@ -5,11 +7,7 @@ import {
   purchaseOrderSchema,
   receiptSchema,
 } from "../schemas/purchase-orders.schema.js";
-import {
-  type Request,
-  type RequestHandler,
-  type Response,
-} from "express";
+import { type Request, type RequestHandler, type Response } from "express";
 import type { Pool, PoolClient } from "pg";
 import type { AppConfig } from "../config/app-config.js";
 import { HttpError } from "../middlewares/error-handler.js";
@@ -17,7 +15,7 @@ import { requireOrganizationMembership } from "../middlewares/security.js";
 import type {
   PurchaseOrder as PurchaseOrderModel,
   PurchaseOrderRow,
-} from "../models/purchase-orders.js";
+} from "../types/purchase-orders.js";
 import { parseAt } from "../utils/parse-schema.js";
 
 function organizationId(req: Request): number {
@@ -135,15 +133,15 @@ async function inTransaction<T>(
   const client = await pool.connect();
   let begun = false;
   try {
-    await client.query("BEGIN");
+    await transactionModel.begin(client);
     begun = true;
     const result = await work(client);
-    await client.query("COMMIT");
+    await transactionModel.commit(client);
     return result;
   } catch (error) {
     if (begun) {
       try {
-        await client.query("ROLLBACK");
+        await transactionModel.rollback(client);
       } catch {
         // Preserve the original database error.
       }
@@ -193,191 +191,193 @@ async function queryOrder(
   orderId: number | null,
   limit: number,
 ) {
-  const result = await client.query<PurchaseOrderRow>(
-    `SELECT *
-       FROM public.stockwise_get_purchase_orders($1, $2, $3)`,
+  const result = await model.runGetPurchaseOrdersQuery<PurchaseOrderRow>(
+    client,
     [orgId, orderId, limit],
   );
   return groupOrders(result.rows);
 }
 
-export function createPurchaseOrdersController(pool: Pool, config: AppConfig): Record<string, RequestHandler[]> {
+export function createPurchaseOrdersController(
+  pool: Pool,
+  config: AppConfig,
+): Record<string, RequestHandler[]> {
   const handlers: Record<string, RequestHandler[]> = {};
   handlers["USE 1"] = [requireOrganizationMembership(pool, config)];
 
-  handlers["GET /"] = [async (req, res) => {
-    const query = parseAt(listQuerySchema, req.query, "query", res);
-    if (!query) return;
-    try {
-      const orders = await queryOrder(
-        pool,
-        organizationId(req),
-        null,
-        query.limit,
-      );
-      res.json(orders);
-    } catch (error) {
-      throw purchaseOrderError(error, "Unable to retrieve purchase orders.");
-    }
-  }];
+  handlers["GET /"] = [
+    async (req, res) => {
+      const query = parseAt(listQuerySchema, req.query, "query", res);
+      if (!query) return;
+      try {
+        const orders = await queryOrder(
+          pool,
+          organizationId(req),
+          null,
+          query.limit,
+        );
+        res.json(orders);
+      } catch (error) {
+        throw purchaseOrderError(error, "Unable to retrieve purchase orders.");
+      }
+    },
+  ];
 
-  handlers["GET /history"] = [async (req, res) => {
-    const query = parseAt(historyQuerySchema, req.query, "query", res);
-    if (!query) return;
-    try {
-      const result = await pool.query(
-        `SELECT *
-           FROM public.stockwise_get_purchase_order_history($1, $2)`,
-        [organizationId(req), query.limit],
-      );
-      res.json(
-        result.rows.map((row) => ({
-          ...row,
-          event_id: Number(row.event_id),
-          order_id: Number(row.order_id),
-          order_number: Number(row.order_number),
-        })),
-      );
-    } catch (error) {
-      throw purchaseOrderError(
-        error,
-        "Unable to retrieve purchase order history.",
-      );
-    }
-  }];
+  handlers["GET /history"] = [
+    async (req, res) => {
+      const query = parseAt(historyQuerySchema, req.query, "query", res);
+      if (!query) return;
+      try {
+        const result = await model.runGetPurchaseOrderHistoryQuery(pool, [
+          organizationId(req),
+          query.limit,
+        ]);
+        res.json(
+          result.rows.map((row) => ({
+            ...row,
+            event_id: Number(row.event_id),
+            order_id: Number(row.order_id),
+            order_number: Number(row.order_number),
+          })),
+        );
+      } catch (error) {
+        throw purchaseOrderError(
+          error,
+          "Unable to retrieve purchase order history.",
+        );
+      }
+    },
+  ];
 
-  handlers["POST /"] = [async (req, res) => {
-    const body = purchaseOrderSchema.parse(req.body);
-    const items = body.items.map((item) => ({
-      product_id: item.product_id,
-      quantity_ordered: item.quantity_ordered,
-      unit_price: Number(item.unit_price),
-    }));
-    try {
-      const order = await inTransaction(pool, async (client) => {
-        const created = await client.query(
-          `CALL public.stockwise_create_purchase_order_write(
-             $1, $2, $3, $4::jsonb, NULL
-           )`,
-          [
+  handlers["POST /"] = [
+    async (req, res) => {
+      const body = purchaseOrderSchema.parse(req.body);
+      const items = body.items.map((item) => ({
+        product_id: item.product_id,
+        quantity_ordered: item.quantity_ordered,
+        unit_price: Number(item.unit_price),
+      }));
+      try {
+        const order = await inTransaction(pool, async (client) => {
+          const created = await model.runCreatePurchaseOrderWriteQuery(client, [
             organizationId(req),
             actorEmail(req),
             body.notes ?? null,
             JSON.stringify(items),
-          ],
-        );
-        const orders = await queryOrder(
-          client,
-          organizationId(req),
-          Number(created.rows[0]?.o_order_id),
-          1,
-        );
-        if (!orders.length) {
-          throw new HttpError(
-            503,
-            "The purchase order was created but could not be retrieved.",
+          ]);
+          const orders = await queryOrder(
+            client,
+            organizationId(req),
+            Number(created.rows[0]?.o_order_id),
+            1,
           );
-        }
-        return orders[0];
-      });
-      res.status(201).json(order);
-    } catch (error) {
-      throw purchaseOrderError(error, "Unable to create the purchase order.");
-    }
-  }];
+          if (!orders.length) {
+            throw new HttpError(
+              503,
+              "The purchase order was created but could not be retrieved.",
+            );
+          }
+          return orders[0];
+        });
+        res.status(201).json(order);
+      } catch (error) {
+        throw purchaseOrderError(error, "Unable to create the purchase order.");
+      }
+    },
+  ];
 
-  handlers["PUT /:order_id"] = [async (req, res) => {
-    const orderId = positivePathInteger(req, res, "order_id");
-    if (orderId === undefined) return;
-    const body = purchaseOrderSchema.parse(req.body);
-    const items = body.items.map((item) => ({
-      product_id: item.product_id,
-      quantity_ordered: item.quantity_ordered,
-      unit_price: Number(item.unit_price),
-    }));
-    try {
-      const order = await inTransaction(pool, async (client) => {
-        await client.query(
-          `CALL public.stockwise_update_purchase_order_write($1, $2, $3, $4, $5::jsonb)`,
-          [
+  handlers["PUT /:order_id"] = [
+    async (req, res) => {
+      const orderId = positivePathInteger(req, res, "order_id");
+      if (orderId === undefined) return;
+      const body = purchaseOrderSchema.parse(req.body);
+      const items = body.items.map((item) => ({
+        product_id: item.product_id,
+        quantity_ordered: item.quantity_ordered,
+        unit_price: Number(item.unit_price),
+      }));
+      try {
+        const order = await inTransaction(pool, async (client) => {
+          await model.runUpdatePurchaseOrderWriteQuery(client, [
             organizationId(req),
             actorEmail(req),
             orderId,
             body.notes ?? null,
             JSON.stringify(items),
-          ],
-        );
-        const orders = await queryOrder(
-          client,
-          organizationId(req),
-          orderId,
-          1,
-        );
-        if (!orders.length) {
-          throw new HttpError(404, "Purchase order was not found.");
-        }
-        return orders[0];
-      });
-      res.json(order);
-    } catch (error) {
-      throw purchaseOrderError(error, "Unable to update the purchase order.");
-    }
-  }];
+          ]);
+          const orders = await queryOrder(
+            client,
+            organizationId(req),
+            orderId,
+            1,
+          );
+          if (!orders.length) {
+            throw new HttpError(404, "Purchase order was not found.");
+          }
+          return orders[0];
+        });
+        res.json(order);
+      } catch (error) {
+        throw purchaseOrderError(error, "Unable to update the purchase order.");
+      }
+    },
+  ];
 
-  handlers["DELETE /:order_id"] = [async (req, res) => {
-    const orderId = positivePathInteger(req, res, "order_id");
-    if (orderId === undefined) return;
-    try {
-      await inTransaction(pool, async (client) => {
-        await client.query(
-          `CALL public.stockwise_delete_purchase_order_write($1, $2, $3)`,
-          [organizationId(req), actorEmail(req), orderId],
-        );
-      });
-      res.status(204).end();
-    } catch (error) {
-      throw purchaseOrderError(error, "Unable to delete the purchase order.");
-    }
-  }];
+  handlers["DELETE /:order_id"] = [
+    async (req, res) => {
+      const orderId = positivePathInteger(req, res, "order_id");
+      if (orderId === undefined) return;
+      try {
+        await inTransaction(pool, async (client) => {
+          await model.runDeletePurchaseOrderWriteQuery(client, [
+            organizationId(req),
+            actorEmail(req),
+            orderId,
+          ]);
+        });
+        res.status(204).end();
+      } catch (error) {
+        throw purchaseOrderError(error, "Unable to delete the purchase order.");
+      }
+    },
+  ];
 
-  handlers["POST /:order_id/items/:item_id/receive"] = [async (req, res) => {
-    const orderId = positivePathInteger(req, res, "order_id");
-    if (orderId === undefined) return;
-    const itemId = positivePathInteger(req, res, "item_id");
-    if (itemId === undefined) return;
-    const body = receiptSchema.parse(req.body);
-    try {
-      const order = await inTransaction(pool, async (client) => {
-        await client.query(
-          `CALL public.stockwise_receive_purchase_order_item_write($1, $2, $3, $4, $5)`,
-          [
+  handlers["POST /:order_id/items/:item_id/receive"] = [
+    async (req, res) => {
+      const orderId = positivePathInteger(req, res, "order_id");
+      if (orderId === undefined) return;
+      const itemId = positivePathInteger(req, res, "item_id");
+      if (itemId === undefined) return;
+      const body = receiptSchema.parse(req.body);
+      try {
+        const order = await inTransaction(pool, async (client) => {
+          await model.runReceivePurchaseOrderItemWriteQuery(client, [
             organizationId(req),
             actorEmail(req),
             orderId,
             itemId,
             body.quantity,
-          ],
+          ]);
+          const orders = await queryOrder(
+            client,
+            organizationId(req),
+            orderId,
+            1,
+          );
+          if (!orders.length) {
+            throw new HttpError(404, "Purchase order was not found.");
+          }
+          return orders[0];
+        });
+        res.json(order);
+      } catch (error) {
+        throw purchaseOrderError(
+          error,
+          "Unable to receive the purchase order item.",
         );
-        const orders = await queryOrder(
-          client,
-          organizationId(req),
-          orderId,
-          1,
-        );
-        if (!orders.length) {
-          throw new HttpError(404, "Purchase order was not found.");
-        }
-        return orders[0];
-      });
-      res.json(order);
-    } catch (error) {
-      throw purchaseOrderError(
-        error,
-        "Unable to receive the purchase order item.",
-      );
-    }
-  }];
+      }
+    },
+  ];
 
   return handlers;
-
 }

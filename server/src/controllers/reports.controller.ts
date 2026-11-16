@@ -1,3 +1,5 @@
+import * as transactionModel from "../models/transaction.js";
+import * as model from "../models/reports.js";
 import { pageSchema } from "../schemas/reports.schema.js";
 import {
   type NextFunction,
@@ -6,16 +8,24 @@ import {
   type Response,
 } from "express";
 import type { Pool, PoolClient } from "pg";
+
 import { ZodError } from "zod";
 import type { AppConfig } from "../config/app-config.js";
 import { HttpError } from "../middlewares/error-handler.js";
 import { requireOrganizationMembership } from "../middlewares/security.js";
-import type { OrganizationContext } from "../models/organization.js";
-import type { ReportHandler, ReportRequest } from "../types/reports.js";
+import type { OrganizationContext } from "../types/organization.js";
 import type {
   DailyStockMovementRow,
   ReportObject,
-} from "../models/reports.js";
+  UsageAnalyticsRow,
+} from "../types/reports.js";
+
+type ReportRequest = Request & { organization: OrganizationContext };
+type ReportHandler = (
+  req: ReportRequest,
+  res: Response,
+  client: PoolClient,
+) => Promise<void>;
 
 async function transaction<T>(
   pool: Pool,
@@ -23,13 +33,13 @@ async function transaction<T>(
 ): Promise<T> {
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
+    await transactionModel.begin(client);
     const result = await operation(client);
-    await client.query("COMMIT");
+    await transactionModel.commit(client);
     return result;
   } catch (error) {
     try {
-      await client.query("ROLLBACK");
+      await transactionModel.rollback(client);
     } catch {
       // Preserve the original request error.
     }
@@ -91,10 +101,9 @@ async function userTimezone(
   client: PoolClient,
   email: string,
 ): Promise<string> {
-  const result = await client.query(
-    "SELECT public.stockwise_get_user_timezone($1) AS timezone",
-    [email.trim().toLowerCase()],
-  );
+  const result = await model.runGetUserTimezoneQuery(client, [
+    email.trim().toLowerCase(),
+  ]);
   const timezone = result.rows[0]?.timezone;
   const supported = new Set([
     "Asia/Manila",
@@ -123,48 +132,47 @@ async function inventoryReport(
   offset: number,
   yearOffset: number,
 ): Promise<ReportObject> {
-  const baseResult = await client.query(
-    `SELECT public.stockwise_get_inventory_report($1, $2, $3) AS report`,
-    [organizationId, days, timezone],
-  );
+  const baseResult = await model.runGetInventoryReportQuery(client, [
+    organizationId,
+    days,
+    timezone,
+  ]);
   const report = jsonObject(baseResult.rows[0]?.report);
 
-  const salesTotals = await client.query(
-    `SELECT * FROM public.stockwise_get_sales_report_totals($1, $2, $3)`,
-    [organizationId, days, timezone],
-  );
+  const salesTotals = await model.runGetSalesReportTotalsQuery(client, [
+    organizationId,
+    days,
+    timezone,
+  ]);
   Object.assign(report, salesTotals.rows[0]);
 
-  const revenueTotals = await client.query(
-    `SELECT * FROM public.stockwise_get_sales_revenue_totals($1, $2, $3)`,
-    [organizationId, days, timezone],
-  );
+  const revenueTotals = await model.runGetSalesRevenueTotalsQuery(client, [
+    organizationId,
+    days,
+    timezone,
+  ]);
   Object.assign(report, revenueTotals.rows[0]);
 
-  const dailyMovement = await client.query<DailyStockMovementRow>(
-    `SELECT to_char(movement.day, 'YYYY-MM-DD') AS day,
-            movement.units_received,
-            movement.units_issued,
-            movement.received_value
-     FROM public.stockwise_get_daily_inventory_movement($1, $2, $3, $4) AS movement`,
-    [organizationId, days, offset, timezone],
-  );
+  const dailyMovement =
+    await model.runGetDailyInventoryMovementQuery<DailyStockMovementRow>(
+      client,
+      [organizationId, days, offset, timezone],
+    );
   report.daily_movement = dailyMovement.rows;
 
-  const yearlyMovement = await client.query(
-    `SELECT * FROM public.stockwise_get_yearly_inventory_movement($1, $2, $3)`,
+  const yearlyMovement = await model.runGetYearlyInventoryMovementQuery(
+    client,
     [organizationId, yearOffset, timezone],
   );
   report.yearly_movement = yearlyMovement.rows;
 
-  const monthlyTotals = await client.query(
-    `SELECT * FROM public.stockwise_get_monthly_inventory_movement_totals($1, $2)`,
+  const monthlyTotals = await model.runGetMonthlyInventoryMovementTotalsQuery(
+    client,
     [organizationId, timezone],
   );
-  const reorderSummary = await client.query(
-    "SELECT public.stockwise_get_reorder_summary($1) AS summary",
-    [organizationId],
-  );
+  const reorderSummary = await model.runGetReorderSummaryQuery(client, [
+    organizationId,
+  ]);
   const summary = jsonObject(reorderSummary.rows[0]?.summary);
   Object.assign(report, {
     low_stock_count: summary.low_stock_count,
@@ -190,10 +198,11 @@ export function createReportsController(
       async (req, res, client) => {
         const { page } = pageSchema.parse(req.body);
         const member = organization(req);
-        await client.query(
-          "CALL public.stockwise_record_usage_page_view($1, $2, $3)",
-          [member.organizationId, page, member.email.trim().toLowerCase()],
-        );
+        await model.runRecordUsagePageViewQuery(client, [
+          member.organizationId,
+          page,
+          member.email.trim().toLowerCase(),
+        ]);
         res.status(204).end();
       },
     ),
@@ -208,15 +217,15 @@ export function createReportsController(
           "Usage analytics are available to Owners and Managers.",
         );
       }
-      const result = await client.query(
-        "SELECT * FROM public.stockwise_get_usage_analytics($1, $2)",
+      const result = await model.runGetUsageAnalyticsQuery<UsageAnalyticsRow>(
+        client,
         [member.organizationId, days],
       );
       const byPage = result.rows;
       res.json({
         days,
         total_views: byPage.reduce(
-          (total: number, row: { views: number }) => total + Number(row.views),
+          (total: number, row: UsageAnalyticsRow) => total + Number(row.views),
           0,
         ),
         by_page: byPage,
@@ -234,10 +243,11 @@ export function createReportsController(
         }
         const member = organization(req);
         const timezone = await userTimezone(client, member.email);
-        const result = await client.query(
-          "SELECT public.stockwise_get_dashboard_stock_flow($1, $2, $3) AS report",
-          [member.organizationId, days, timezone],
-        );
+        const result = await model.runGetDashboardStockFlowQuery(client, [
+          member.organizationId,
+          days,
+          timezone,
+        ]);
         res.json(jsonObject(result.rows[0]?.report));
       },
     ),

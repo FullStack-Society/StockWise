@@ -1,3 +1,5 @@
+import * as transactionModel from "../models/transaction.js";
+import * as model from "../models/settings.js";
 import {
   avatarSchema,
   codeSchema,
@@ -25,11 +27,18 @@ import {
   type RequestHandler,
 } from "express";
 import type { Pool, PoolClient } from "pg";
+
 import { ZodError } from "zod";
 import type { AppConfig } from "../config/app-config.js";
 import { HttpError } from "../middlewares/error-handler.js";
 import { requireInternalApiKey } from "../middlewares/security.js";
-import type { SettingsHandler, SettingsRequest } from "../types/settings.js";
+
+type SettingsRequest = Request & { actorEmail: string };
+type SettingsHandler = (
+  req: SettingsRequest,
+  res: Response,
+  client: PoolClient,
+) => Promise<void>;
 
 const pbkdf2Async = promisify(pbkdf2);
 
@@ -39,13 +48,13 @@ async function transaction<T>(
 ): Promise<T> {
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
+    await transactionModel.begin(client);
     const result = await operation(client);
-    await client.query("COMMIT");
+    await transactionModel.commit(client);
     return result;
   } catch (error) {
     try {
-      await client.query("ROLLBACK");
+      await transactionModel.rollback(client);
     } catch {
       // Preserve the original request error.
     }
@@ -373,58 +382,66 @@ async function verifyPassword(
   return timingSafeEqual(actual, expected);
 }
 
-export function createSettingsController(pool: Pool, config: AppConfig): Record<string, RequestHandler[]> {
+export function createSettingsController(
+  pool: Pool,
+  config: AppConfig,
+): Record<string, RequestHandler[]> {
   const handlers: Record<string, RequestHandler[]> = {};
-  handlers["USE 1"] = [requireInternalApiKey(config), requireSettingsActor(config)];
+  handlers["USE 1"] = [
+    requireInternalApiKey(config),
+    requireSettingsActor(config),
+  ];
 
-  handlers["GET /security-privacy-preferences"] = [route(
+  handlers["GET /security-privacy-preferences"] = [
+    route(
       pool,
       "Unable to load security preferences.",
       async (req, res, client) => {
         const email = req.actorEmail;
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_get_security_privacy_preferences($1)",
-          [email],
-        );
+        const result =
+          await model.runSettingsGetSecurityPrivacyPreferencesQuery(client, [
+            email,
+          ]);
         res.json(result.rows[0]);
       },
-    )];
-  handlers["PUT /security-privacy-preferences"] = [route(
+    ),
+  ];
+  handlers["PUT /security-privacy-preferences"] = [
+    route(
       pool,
       "Unable to save security preferences.",
       async (req, res, client) => {
         const preferences = securityPreferencesSchema.parse(req.body);
         const email = req.actorEmail;
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_update_security_privacy_preferences($1, $2, $3)",
-          [
+        const result =
+          await model.runSettingsUpdateSecurityPrivacyPreferencesQuery(client, [
             email,
             preferences.login_alert_emails,
             preferences.auto_sign_out_idle,
-          ],
-        );
+          ]);
         if (!preferences.login_alert_emails) {
-          await client.query(
-            "CALL public.stockwise_settings_clear_login_devices($1)",
-            [email],
-          );
+          await model.runSettingsClearLoginDevicesQuery(client, [email]);
         }
         res.json(result.rows[0]);
       },
-    )];
-  handlers["GET /inventory-defaults"] = [route(
+    ),
+  ];
+  handlers["GET /inventory-defaults"] = [
+    route(
       pool,
       "Unable to load inventory defaults.",
       async (req, res, client) => {
         const email = req.actorEmail;
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_get_inventory_defaults($1)",
+        const result = await model.runSettingsGetInventoryDefaultsQuery(
+          client,
           [email],
         );
         res.json(result.rows[0]);
       },
-    )];
-  handlers["PUT /inventory-defaults"] = [route(
+    ),
+  ];
+  handlers["PUT /inventory-defaults"] = [
+    route(
       pool,
       "Unable to save inventory defaults.",
       async (req, res, client) => {
@@ -432,21 +449,22 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
           req.body,
         );
         const email = req.actorEmail;
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_update_inventory_defaults($1, $2)",
+        const result = await model.runSettingsUpdateInventoryDefaultsQuery(
+          client,
           [email, value],
         );
         res.json(result.rows[0]);
       },
-    )];
-  handlers["GET /security-status"] = [route(
+    ),
+  ];
+  handlers["GET /security-status"] = [
+    route(
       pool,
       "Unable to load account security status.",
       async (req, res, client) => {
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_get_security_status($1)",
-          [req.actorEmail],
-        );
+        const result = await model.runSettingsGetSecurityStatusQuery(client, [
+          req.actorEmail,
+        ]);
         res.json({
           two_factor_enabled: Boolean(result.rows[0]?.two_factor_enabled),
           google_account_connected: Boolean(
@@ -454,48 +472,50 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
           ),
         });
       },
-    )];
-  handlers["GET /usage-analytics-consent"] = [route(
+    ),
+  ];
+  handlers["GET /usage-analytics-consent"] = [
+    route(
       pool,
       "Unable to load analytics preference.",
       async (req, res, client) => {
         const email = req.actorEmail;
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_get_usage_analytics_consent($1)",
+        const result = await model.runSettingsGetUsageAnalyticsConsentQuery(
+          client,
           [email],
         );
         res.json({ enabled: Boolean(result.rows[0]?.enabled) });
       },
-    )];
-  handlers["PUT /usage-analytics-consent"] = [route(
+    ),
+  ];
+  handlers["PUT /usage-analytics-consent"] = [
+    route(
       pool,
       "Unable to save analytics preference.",
       async (req, res, client) => {
         const { enabled } = consentSchema.parse(req.body);
         const email = req.actorEmail;
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_update_usage_analytics_consent($1, $2)",
+        const result = await model.runSettingsUpdateUsageAnalyticsConsentQuery(
+          client,
           [email, enabled],
         );
         res.json({ enabled: Boolean(result.rows[0]?.usage_analytics) });
       },
-    )];
-  handlers["GET /mfa"] = [route(pool, "Unable to load security status.", async (req, res, client) => {
-      const result = await client.query(
-        "SELECT enabled FROM public.stockwise_auth_mfa_get($1)",
-        [req.actorEmail],
-      );
+    ),
+  ];
+  handlers["GET /mfa"] = [
+    route(pool, "Unable to load security status.", async (req, res, client) => {
+      const result = await model.runAuthMfaGetQuery(client, [req.actorEmail]);
       res.json({ enabled: Boolean(result.rows[0]?.enabled) });
-    })];
-  handlers["POST /mfa/enroll"] = [route(
+    }),
+  ];
+  handlers["POST /mfa/enroll"] = [
+    route(
       pool,
       "Unable to begin setup right now.",
       async (req, res, client) => {
         const email = req.actorEmail;
-        const current = await client.query(
-          "SELECT enabled FROM public.stockwise_auth_mfa_get($1)",
-          [email],
-        );
+        const current = await model.runAuthMfaGetQuery2(client, [email]);
         if (current.rows[0]?.enabled) {
           throw new HttpError(
             409,
@@ -515,10 +535,7 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
               : "Two-factor setup is unavailable.",
           );
         }
-        await client.query("SELECT public.stockwise_auth_mfa_begin($1, $2)", [
-          email,
-          encrypted,
-        ]);
+        await model.runAuthMfaBeginQuery(client, [email, encrypted]);
         const account = encodeQueryComponent(email);
         const issuer = encodeQueryComponent("StockWise");
         res.json({
@@ -526,17 +543,16 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
           otpauth_uri: `otpauth://totp/${issuer}:${account}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`,
         });
       },
-    )];
-  handlers["POST /mfa/confirm"] = [route(
+    ),
+  ];
+  handlers["POST /mfa/confirm"] = [
+    route(
       pool,
       "Unable to enable two-factor authentication.",
       async (req, res, client) => {
         const { code } = codeSchema.parse(req.body);
         const email = req.actorEmail;
-        const result = await client.query(
-          "SELECT pending_secret_ciphertext FROM public.stockwise_auth_mfa_get($1)",
-          [email],
-        );
+        const result = await model.runAuthMfaGetQuery3(client, [email]);
         let secret: string;
         try {
           secret = decryptSecret(
@@ -571,27 +587,28 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
           createHash("sha256").update(value, "ascii").digest("hex"),
         );
         const encrypted = encryptSecret(secret, config);
-        await client.query(
-          "SELECT public.stockwise_auth_mfa_enable($1, $2, $3::text[], $4)",
-          [email, encrypted, hashes, step],
-        );
+        await model.runAuthMfaEnableQuery(client, [
+          email,
+          encrypted,
+          hashes,
+          step,
+        ]);
         res.json({
           recovery_codes: recoveryCodes.map(
             (value) => `${value.slice(0, 4)}-${value.slice(4)}`,
           ),
         });
       },
-    )];
-  handlers["POST /mfa/disable"] = [route(
+    ),
+  ];
+  handlers["POST /mfa/disable"] = [
+    route(
       pool,
       "Unable to disable two-factor authentication.",
       async (req, res, client) => {
         const { code } = codeSchema.parse(req.body);
         const email = req.actorEmail;
-        const current = await client.query(
-          "SELECT secret_ciphertext, enabled FROM public.stockwise_auth_mfa_get($1)",
-          [email],
-        );
+        const current = await model.runAuthMfaGetQuery4(client, [email]);
         if (!current.rows[0]?.enabled) {
           throw new HttpError(
             400,
@@ -615,10 +632,9 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
               : "Unable to disable two-factor authentication.",
           );
         }
-        const allowed = await client.query(
-          "SELECT public.stockwise_auth_mfa_disable_allowed($1) AS allowed",
-          [email],
-        );
+        const allowed = await model.runAuthMfaDisableAllowedQuery(client, [
+          email,
+        ]);
         if (!allowed.rows[0]?.allowed) {
           throw new HttpError(
             400,
@@ -628,103 +644,102 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
         const step = matchingTotpStep(secret, code);
         let valid = false;
         if (step !== null) {
-          const accepted = await client.query(
-            "SELECT public.stockwise_auth_mfa_accept_totp($1, $2) AS accepted",
-            [email, step],
-          );
+          const accepted = await model.runAuthMfaAcceptTotpQuery(client, [
+            email,
+            step,
+          ]);
           valid = Boolean(accepted.rows[0]?.accepted);
         }
         if (!valid) {
           const codeHash = recoveryHash(code);
           if (codeHash) {
-            const consumed = await client.query(
-              "SELECT public.stockwise_auth_mfa_recovery_consume($1, $2) AS consumed",
+            const consumed = await model.runAuthMfaRecoveryConsumeQuery(
+              client,
               [email, codeHash],
             );
             valid = Boolean(consumed.rows[0]?.consumed);
           }
         }
         if (!valid) {
-          await client.query(
-            "SELECT public.stockwise_auth_mfa_disable_fail($1)",
-            [email],
-          );
+          await model.runAuthMfaDisableFailQuery(client, [email]);
           res.status(400).json({
             detail:
               "Enter a valid authenticator code to disable two-factor authentication.",
           });
           return;
         }
-        await client.query("SELECT public.stockwise_auth_mfa_disable($1)", [
-          email,
-        ]);
+        await model.runAuthMfaDisableQuery(client, [email]);
         res.status(204).end();
       },
-    )];
-  handlers["GET /"] = [route(
+    ),
+  ];
+  handlers["GET /"] = [
+    route(
       pool,
       "Unable to load account settings.",
       async (req, res, client) => {
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_get_account($1)",
-          [req.actorEmail],
-        );
+        const result = await model.runSettingsGetAccountQuery(client, [
+          req.actorEmail,
+        ]);
         if (!result.rows[0]) throw new HttpError(404, "Account not found.");
         res.json(result.rows[0]);
       },
-    )];
-  handlers["PUT /profile"] = [route(
+    ),
+  ];
+  handlers["PUT /profile"] = [
+    route(
       pool,
       "Unable to save profile settings.",
       async (req, res, client) => {
         const request = profileSchema.parse(req.body);
         const name = request.name.trim();
         if (!name) throw new HttpError(422, "Enter your name.");
-        const result = await client.query(
-          `SELECT * FROM public.stockwise_settings_update_profile($1, $2, $3)`,
-          [req.actorEmail, name, request.timezone.trim()],
-        );
+        const result = await model.runSettingsUpdateProfileQuery(client, [
+          req.actorEmail,
+          name,
+          request.timezone.trim(),
+        ]);
         if (!result.rows[0]) throw new HttpError(404, "Account not found.");
         res.json({ ...result.rows[0], avatar_data: null });
       },
-    )];
-  handlers["PUT /avatar"] = [route(pool, "Unable to save profile image.", async (req, res, client) => {
+    ),
+  ];
+  handlers["PUT /avatar"] = [
+    route(pool, "Unable to save profile image.", async (req, res, client) => {
       const request = avatarSchema.parse(req.body);
       const avatarData = parseAvatar(request.avatar_data);
       const email = req.actorEmail;
-      const result = await client.query(
-        "SELECT * FROM public.stockwise_settings_update_avatar($1, $2)",
-        [email, avatarData],
-      );
+      const result = await model.runSettingsUpdateAvatarQuery(client, [
+        email,
+        avatarData,
+      ]);
       res.json(result.rows[0]);
-    })];
-  handlers["PUT /preferences"] = [route(pool, "Unable to save preferences.", async (req, res, client) => {
+    }),
+  ];
+  handlers["PUT /preferences"] = [
+    route(pool, "Unable to save preferences.", async (req, res, client) => {
       const request = preferencesSchema.parse(req.body);
-      const result = await client.query(
-        `SELECT * FROM public.stockwise_settings_update_preferences(
-          $1, $2, $3, $4, $5, $6, $7, $8
-        )`,
-        [
-          req.actorEmail,
-          request.invitation_notifications,
-          request.theme,
-          request.date_format,
-          request.currency,
-          request.density,
-          request.auto_sync_reports,
-          request.prioritize_low_stock,
-        ],
-      );
+      const result = await model.runSettingsUpdatePreferencesQuery(client, [
+        req.actorEmail,
+        request.invitation_notifications,
+        request.theme,
+        request.date_format,
+        request.currency,
+        request.density,
+        request.auto_sync_reports,
+        request.prioritize_low_stock,
+      ]);
       if (!result.rows[0]) throw new HttpError(404, "Account not found.");
       res.json({ ...result.rows[0], avatar_data: null });
-    })];
-  handlers["PUT /password"] = [route(pool, "Unable to update your password.", async (req, res, client) => {
+    }),
+  ];
+  handlers["PUT /password"] = [
+    route(pool, "Unable to update your password.", async (req, res, client) => {
       const request = passwordSchema.parse(req.body);
       const email = req.actorEmail;
-      const result = await client.query(
-        "SELECT * FROM public.stockwise_settings_get_password_account($1)",
-        [email],
-      );
+      const result = await model.runSettingsGetPasswordAccountQuery(client, [
+        email,
+      ]);
       const account = result.rows[0];
       if (!account) throw new HttpError(404, "Account not found.");
       if (
@@ -738,26 +753,24 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
           "Choose a new password different from your current password.",
         );
       }
-      const updated = await client.query(
-        "SELECT public.stockwise_settings_update_password($1, $2, $3) AS updated",
-        [
-          email,
-          account.account_table,
-          await passwordHash(request.new_password),
-        ],
-      );
+      const updated = await model.runSettingsUpdatePasswordQuery(client, [
+        email,
+        account.account_table,
+        await passwordHash(request.new_password),
+      ]);
       if (!updated.rows[0]?.updated)
         throw new HttpError(404, "Account not found.");
       res.status(204).end();
-    })];
-  handlers["DELETE /account"] = [route(
+    }),
+  ];
+  handlers["DELETE /account"] = [
+    route(
       pool,
       "Unable to delete this account right now.",
       async (req, res, client) => {
-        const result = await client.query(
-          "SELECT * FROM public.stockwise_settings_delete_account($1)",
-          [req.actorEmail],
-        );
+        const result = await model.runSettingsDeleteAccountQuery(client, [
+          req.actorEmail,
+        ]);
         const deletion = result.rows[0]!;
         if (deletion.owner_membership) {
           throw new HttpError(
@@ -770,8 +783,8 @@ export function createSettingsController(pool: Pool, config: AppConfig): Record<
         }
         res.status(204).end();
       },
-    )];
+    ),
+  ];
 
   return handlers;
-
 }

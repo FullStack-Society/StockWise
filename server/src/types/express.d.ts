@@ -1,4 +1,4 @@
-import type { OrganizationContext } from "../models/organization.js";
+import type { OrganizationContext } from "../types/organization.js";
 
 declare global {
   namespace Express {

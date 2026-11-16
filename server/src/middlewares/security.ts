@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import type { Pool } from "pg";
 import type { AppConfig } from "../config/app-config.js";
 import { HttpError } from "./error-handler.js";
-import type { OrganizationContext } from "../models/organization.js";
+import type { OrganizationContext } from "../types/organization.js";
 
 function headerString(
   value: string | string[] | undefined,

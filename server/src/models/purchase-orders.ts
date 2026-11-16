@@ -1,44 +1,61 @@
-import type { QueryResultRow } from "pg";
+import type { Pool, PoolClient, QueryResultRow } from "pg";
 
-export interface PurchaseOrderRow extends QueryResultRow {
-  order_id: number | string;
-  order_number: number | string;
-  notes: string | null;
-  created_by_email: string;
-  created_at: Date | string;
-  status: string;
-  item_id: number | string;
-  product_id: number | string;
-  product_name: string;
-  sku: string;
-  quantity_ordered: number | string;
-  quantity_received: number | string;
-  unit_price: number | string;
+type QueryExecutor = Pick<Pool, "query"> | PoolClient;
+
+export function runGetPurchaseOrdersQuery<
+  T extends QueryResultRow = QueryResultRow,
+>(executor: QueryExecutor, values: any[] = []) {
+  return executor.query<T>(
+    `SELECT *
+       FROM public.stockwise_get_purchase_orders($1, $2, $3)`,
+    values,
+  );
 }
 
-export interface PurchaseOrderHistoryRow extends QueryResultRow {
-  event_id: number | string;
-  order_id: number | string;
-  order_number: number | string;
+export function runGetPurchaseOrderHistoryQuery<
+  T extends QueryResultRow = QueryResultRow,
+>(executor: QueryExecutor, values: any[] = []) {
+  return executor.query<T>(
+    `SELECT *
+           FROM public.stockwise_get_purchase_order_history($1, $2)`,
+    values,
+  );
 }
 
-export type PurchaseOrderItem = {
-  item_id: number;
-  product_id: number;
-  product_name: string;
-  sku: string;
-  quantity_ordered: number;
-  unit_price: number;
-  quantity_received: number;
-  quantity_remaining: number;
-};
+export function runCreatePurchaseOrderWriteQuery<
+  T extends QueryResultRow = QueryResultRow,
+>(executor: QueryExecutor, values: any[] = []) {
+  return executor.query<T>(
+    `CALL public.stockwise_create_purchase_order_write(
+             $1, $2, $3, $4::jsonb, NULL
+           )`,
+    values,
+  );
+}
 
-export type PurchaseOrder = {
-  order_id: number;
-  order_number: number;
-  notes: string | null;
-  created_by_email: string;
-  created_at: Date | string;
-  status: string;
-  items: PurchaseOrderItem[];
-};
+export function runUpdatePurchaseOrderWriteQuery<
+  T extends QueryResultRow = QueryResultRow,
+>(executor: QueryExecutor, values: any[] = []) {
+  return executor.query<T>(
+    `CALL public.stockwise_update_purchase_order_write($1, $2, $3, $4, $5::jsonb)`,
+    values,
+  );
+}
+
+export function runDeletePurchaseOrderWriteQuery<
+  T extends QueryResultRow = QueryResultRow,
+>(executor: QueryExecutor, values: any[] = []) {
+  return executor.query<T>(
+    `CALL public.stockwise_delete_purchase_order_write($1, $2, $3)`,
+    values,
+  );
+}
+
+export function runReceivePurchaseOrderItemWriteQuery<
+  T extends QueryResultRow = QueryResultRow,
+>(executor: QueryExecutor, values: any[] = []) {
+  return executor.query<T>(
+    `CALL public.stockwise_receive_purchase_order_item_write($1, $2, $3, $4, $5)`,
+    values,
+  );
+}
