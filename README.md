@@ -1,27 +1,24 @@
-# StockWise
+# StockWise: Retail Inventory Management System
 
-StockWise is a web-based retail inventory management system. It helps retail
-teams organize products, monitor stock, manage purchase orders, and review
-inventory activity across an organization.
+## Project Description
 
-> **Project status:** Active development. Features and interfaces may change.
+StockWise is a web-based retail inventory management system designed to help retail business owners and managers manage products and monitor stock levels efficiently. It aims to simplify inventory management by providing a centralized system for maintaining product records, tracking stock quantities, and identifying products that need restocking.
 
-## Contents
+The system is intended for retail businesses that need a more organized way to manage their inventory and monitor product availability.
 
-- [Features](#features)
-- [Technology](#technology)
-- [System overview](#system-overview)
-- [Repository structure](#repository-structure)
-- [Main application routes](#main-application-routes)
-- [Important files](#important-files)
-- [Local development](#local-development)
-- [Roles and organization behavior](#roles-and-organization-behavior)
-- [Current limitations](#current-limitations)
+## Objectives
 
-## Features
+- Develop a web-based inventory management system for retail businesses.
+- Manage product information and inventory records.
+- Monitor current product stock quantities.
+- Track stock additions and deductions through inventory management functions.
+- Identify products that reach or fall below their minimum stock levels.
+- Provide secure user authentication and role-based access.
+- Store and manage inventory data using a centralized PostgreSQL database.
 
-### Accounts and organizations
+## Scope and Limitations
 
+<<<<<<< HEAD
 - Register manually with a Gmail address verified by an emailed code, then sign
   in with a StockWise-specific password. Google sign-in uses Google OAuth and
   does not use the StockWise password.
@@ -42,45 +39,37 @@ inventory activity across an organization.
 - Notify active owners and managers when a non-owner leaves an organization.
 - Configure account preferences, including display, currency, timezone, and
   notification options.
+=======
+### Scope
+>>>>>>> origin/main
 
-### Inventory
+StockWise will focus on the following functions:
 
-- Create, edit, and soft-delete products.
-- Manage product categories; deleting a category leaves its products available
-  without a category.
-- Import products from CSV and export inventory data.
-- Track on-hand quantities, reorder points, stock status, and inventory value.
-- Optionally record product variants.
-- Record opening stock, stock issues, stock adjustments, physical counts, and
-  stock movement history.
-- Confirm product deletion in a centered in-app dialog. Deleted products are
-  hidden from active inventory.
-- Use the same confirmation flow for deleting one product or a selection of
-  products.
+- Product information management
+- Inventory stock monitoring
+- Recording stock additions and deductions
+- Minimum stock level monitoring
+- Low-stock alerts
+- Email and password authentication
+- Role-based access control
+- Centralized inventory data management
 
-### Purchase orders
+### Limitations
 
-- Create purchase orders from products in the inventory.
-- Receive orders, including partial deliveries, and update inventory as stock
-  is received.
-- Edit orders while they are still open. Orders with received quantities cannot
-  be edited.
-- Filter orders by a date range.
-- Show order statistics below the order list in normal page flow.
+The system will not include the following features:
 
-### Dashboard and reports
+- Full Point-of-Sale (POS) checkout and receipt generation
+- Online payment processing
+- Accounting and payroll management
+- Supplier marketplace
+- Advanced AI-based demand forecasting
+- Multi-branch inventory management
+- Automatic supplier ordering
+- Offline inventory updates and synchronization
 
-- View dashboard inventory summaries and recent inventory activity.
-- Review inventory reports and export report data.
-- Review report footer totals for the current calendar month.
-- Review current inventory selling value and stock movement in reports.
-- Record sales from an inventory-backed checkout and review recorded sales
-  revenue in reports. Payment confirmation is handled outside StockWise.
-- Review stock received and issued by day, week, month, or year; chart value is
-  an estimate based on current selling prices, not historical sales.
-- Optionally collect anonymous daily page-view totals from opted-in members;
-  owners and managers can review the organization totals in Reports.
+StockWise is designed for a single retail store and requires an internet connection to access the centralized inventory system.
 
+<<<<<<< HEAD
 The login and registration pages share a larger, more readable form and
 branding style.
 
@@ -176,27 +165,30 @@ The API is mounted under `/api`. Its main route groups are `/api/auth`,
 `/api/sales`, `/api/settings`, and `/api/reports`.
 
 ## Important files
+=======
+## Technologies and Tools
+>>>>>>> origin/main
 
 ### Frontend
+- HTML
+- CSS
+- JavaScript
 
-| Path                                                                             | Responsibility                                        |
-| -------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `client/app/`                                                                    | Next.js route entry points                            |
-| `client/components/features/sales/`                                              | Sales checkout, barcode scanning, and payment prompts |
-| `client/components/features/inventory/`                                          | Inventory browser, table, filters, and dialogs        |
-| `client/components/features/inventory/modals/DeleteProductConfirmationModal.tsx` | Centered product-delete confirmation                  |
-| `client/components/features/orders/`                                             | Order list, filters, and create/edit/receive dialogs  |
-| `client/components/features/reports/`                                            | Report tables and summary UI                          |
-| `client/components/features/login/`                                              | Login, registration, and brand panels                 |
-| `client/lib/api/`                                                                | Backend API clients used by the app                   |
-| `client/lib/sales/`                                                              | Sales server actions                                  |
-| `client/lib/inventory/actions.ts`                                                | Inventory server actions                              |
-| `client/lib/inventory/validation.ts`                                             | Product form validation                               |
-| `client/lib/organization/page-context.ts`                                        | Active organization and membership context            |
-| `client/styles/`                                                                 | Feature-specific CSS Modules                          |
+### Database
+- PostgreSQL
+- pgAdmin
+
+### Development Tools
+- Visual Studio Code
+- Postman
+- Git
+- GitHub
 
 ### Backend
+- Framework and programming language: To be determined
+- API architecture: RESTful API
 
+<<<<<<< HEAD
 | Path                      | Responsibility                                                 |
 | ------------------------- | -------------------------------------------------------------- |
 | `server/src/server.ts`    | API startup, initial-owner provisioning, and graceful shutdown |
@@ -206,17 +198,22 @@ The API is mounted under `/api`. Its main route groups are `/api/auth`,
 | `server/src/schemas/`     | Runtime request validation and inferred DTOs                   |
 | `server/src/models/`      | Domain entities and PostgreSQL row types                       |
 | `server/src/config/`      | Environment configuration and PostgreSQL pool                  |
+=======
+## Hardware Requirements
+>>>>>>> origin/main
 
-### Documentation
+- Existing laptop or desktop computer
+- At least 8 GB RAM
+- Internet connection
+- Smartphone for testing, when needed
 
-| Path                                           | Responsibility                       |
-| ---------------------------------------------- | ------------------------------------ |
-| `docs/user-management-implementation-guide.md` | User-management implementation notes |
+## Project Status
 
-## Local development
+**Status:** Planning and Development
 
-### Requirements
+The project is currently being prepared for implementation. The backend framework and programming language will be finalized during the development process.
 
+<<<<<<< HEAD
 - Node.js 20.9 or later
 - PostgreSQL
 
@@ -340,3 +337,8 @@ are controlled by the app's role and permission checks.
 
 - [User-management implementation guide](./docs/user-management-implementation-guide.md)
 - [Frontend-specific setup notes](./client/README.md)
+=======
+## Project Purpose
+
+StockWise aims to help retail business owners and managers organize inventory records, monitor product availability, and identify products that require restocking through a centralized web-based system.
+>>>>>>> origin/main
