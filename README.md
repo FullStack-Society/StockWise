@@ -18,7 +18,6 @@ The system is intended for retail businesses that need a more organized way to m
 
 ## Scope and Limitations
 
-<<<<<<< HEAD
 - Register manually with a Gmail address verified by an emailed code, then sign
   in with a StockWise-specific password. Google sign-in uses Google OAuth and
   does not use the StockWise password.
@@ -39,9 +38,6 @@ The system is intended for retail businesses that need a more organized way to m
 - Notify active owners and managers when a non-owner leaves an organization.
 - Configure account preferences, including display, currency, timezone, and
   notification options.
-=======
-### Scope
->>>>>>> origin/main
 
 StockWise will focus on the following functions:
 
@@ -69,7 +65,6 @@ The system will not include the following features:
 
 StockWise is designed for a single retail store and requires an internet connection to access the centralized inventory system.
 
-<<<<<<< HEAD
 The login and registration pages share a larger, more readable form and
 branding style.
 
@@ -165,30 +160,7 @@ The API is mounted under `/api`. Its main route groups are `/api/auth`,
 `/api/sales`, `/api/settings`, and `/api/reports`.
 
 ## Important files
-=======
-## Technologies and Tools
->>>>>>> origin/main
 
-### Frontend
-- HTML
-- CSS
-- JavaScript
-
-### Database
-- PostgreSQL
-- pgAdmin
-
-### Development Tools
-- Visual Studio Code
-- Postman
-- Git
-- GitHub
-
-### Backend
-- Framework and programming language: To be determined
-- API architecture: RESTful API
-
-<<<<<<< HEAD
 | Path                      | Responsibility                                                 |
 | ------------------------- | -------------------------------------------------------------- |
 | `server/src/server.ts`    | API startup, initial-owner provisioning, and graceful shutdown |
@@ -198,22 +170,9 @@ The API is mounted under `/api`. Its main route groups are `/api/auth`,
 | `server/src/schemas/`     | Runtime request validation and inferred DTOs                   |
 | `server/src/models/`      | Domain entities and PostgreSQL row types                       |
 | `server/src/config/`      | Environment configuration and PostgreSQL pool                  |
-=======
-## Hardware Requirements
->>>>>>> origin/main
 
-- Existing laptop or desktop computer
-- At least 8 GB RAM
-- Internet connection
-- Smartphone for testing, when needed
+## Local development
 
-## Project Status
-
-**Status:** Planning and Development
-
-The project is currently being prepared for implementation. The backend framework and programming language will be finalized during the development process.
-
-<<<<<<< HEAD
 - Node.js 20.9 or later
 - PostgreSQL
 
@@ -337,8 +296,3 @@ are controlled by the app's role and permission checks.
 
 - [User-management implementation guide](./docs/user-management-implementation-guide.md)
 - [Frontend-specific setup notes](./client/README.md)
-=======
-## Project Purpose
-
-StockWise aims to help retail business owners and managers organize inventory records, monitor product availability, and identify products that require restocking through a centralized web-based system.
->>>>>>> origin/main
