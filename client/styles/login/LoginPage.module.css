@@ -1,0 +1,240 @@
+/* Shared page frame and scrolling */
+.page {
+  /* Keep the public login and registration screens on the original dark palette
+     regardless of the signed-in app's appearance preference. */
+  --color-ink: #050a12;
+  --color-text: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.6);
+  --color-line: rgba(255, 255, 255, 0.7);
+  --color-line-soft: rgba(255, 255, 255, 0.3);
+  --color-surface-glass: rgba(0, 0, 0, 0.2);
+  --color-accent: #e07a2e;
+  --scrollbar-thumb: transparent;
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+}
+.page::-webkit-scrollbar {
+  width: 6px;
+}
+.page::-webkit-scrollbar-track {
+  background: transparent;
+}
+.page::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+}
+.page.scrolling {
+  --scrollbar-thumb: #080b10;
+}
+.pageEntering {
+  animation: authPageEnter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Login mode: brand panel on the left, form panel on the right */
+.brandSwap {
+  display: flex;
+  flex: 0 0 53%;
+  order: 0;
+  min-width: 0;
+  animation: brandFadeIn 240ms ease both;
+}
+.formPanel {
+  order: 1;
+}
+/* Registration mode: form panel on the left, brand panel on the right */
+.registerMode .brandSwap {
+  order: 1;
+}
+.registerMode .formPanel {
+  order: 0;
+}
+.brandEnterFromLeft {
+  animation: brandMoveRight 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.brandEnterFromRight {
+  animation: brandMoveLeft 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.brandSwap > * {
+  flex: 1 1 auto;
+}
+
+/* Shared form panel styling */
+.formPanel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 85px;
+  color: var(--color-text);
+}
+
+/* Shared login/register slide transitions */
+.formTransition {
+  will-change: transform, opacity;
+}
+.exit-to-right {
+  animation: slideOutRight 320ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+.exit-to-left {
+  animation: slideOutLeft 320ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+.enter-from-left {
+  animation: slideInLeft 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.enter-from-right {
+  animation: slideInRight 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes slideOutRight {
+  to {
+    transform: translate3d(105%, 0, 0);
+    opacity: 0.7;
+  }
+}
+@keyframes slideOutLeft {
+  to {
+    transform: translate3d(-105%, 0, 0);
+    opacity: 0.7;
+  }
+}
+@keyframes slideInLeft {
+  from {
+    transform: translate3d(-105%, 0, 0);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+@keyframes slideInRight {
+  from {
+    transform: translate3d(105%, 0, 0);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+@keyframes brandFadeIn {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes authPageEnter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes brandMoveRight {
+  from {
+    transform: translate3d(-89%, 0, 0);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+@keyframes brandMoveLeft {
+  from {
+    transform: translate3d(89%, 0, 0);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+/* Shared form panel background */
+.formPanel::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  background:
+    radial-gradient(
+      100% 30% at 50% 30%,
+      hsla(195, 36%, 36%, 0.8) 40%,
+      rgba(38, 112, 128, 0) 60%
+    ),
+    radial-gradient(
+      200% 20% at 0% 45%,
+      hsla(22, 70%, 49%, 0.8) 100%,
+      rgba(214, 122, 52, 0) 70%
+    ),
+    radial-gradient(
+      60% 50% at 50% 60%,
+      hsla(357, 23%, 15%, 0.8) 0%,
+      rgba(120, 70, 40, 0) 70%
+    ),
+    linear-gradient(
+      180deg,
+      #12303ccc 5%,
+      #2b5867cc 40%,
+      #b55923cc 40%,
+      #301e1fcc 85%,
+      #06090ecc 100%
+    );
+  filter: blur(100px);
+  transform: rotate(30deg);
+}
+@media (max-width: 767px) {
+  /* Login mode hides the brand panel on narrow screens. */
+  .brandSwap {
+    display: none;
+  }
+
+  /* Registration mode keeps the brand panel in the right column. */
+  .registerMode .brandSwap {
+    display: flex;
+    flex: 0 0 53%;
+    width: auto;
+    order: 1;
+  }
+  .registerMode .brandSwap > * {
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+    padding: 28px 24px;
+  }
+  .registerMode {
+    flex-direction: row;
+  }
+  .registerMode .formPanel {
+    order: 0;
+    flex: 1 1 47%;
+    min-width: 0;
+    min-height: 100%;
+  }
+  .formPanel {
+    padding: 32px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Accessibility: minimize motion when requested by the operating system. */
+  .pageEntering,
+  .brandSwap {
+    animation: none;
+  }
+  .formTransition {
+    animation-duration: 1ms;
+  }
+}

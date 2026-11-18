@@ -1,0 +1,46 @@
+# Dependencies
+client/node_modules/
+node_modules/
+server/node_modules/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+client/.env
+client/.env.*
+!client/.env.example
+!client/.env.local.example
+server-node/.env
+server-node/.env.*
+!server-node/.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
+# Build outputs
+client/.next/
+client/out/
+server-node/node_modules/
+server-node/dist/
+server/node_modules/
+server/dist/
+client/*.tsbuildinfo
+# Logs
+*.log
+npm-debug.log*
+
+# IDE and operating system files
+.vscode/
+.DS_Store
+Thumbs.db
+
+
+migrations/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
